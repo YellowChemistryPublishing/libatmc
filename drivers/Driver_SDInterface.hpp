@@ -194,7 +194,7 @@ namespace atmc
         {
             // `this->device` is technically not-owned, but just to be safe...
             this->device->begin();
-            HardwareStatus res = this->device->waitReadySync(4, Task<>::maxDelay);
+            HardwareStatus res = this->device->waitReadySync(4, Task<>::MaxDelay);
             __fence_value_co_return(res, res != HardwareStatus::Ok);
 
             this->generateCRCTable();

@@ -1,5 +1,7 @@
 #include <entry.h>
 
+#include <Task.hpp>
+
 using namespace atmc;
 
 struct ExampleConfig final
@@ -9,6 +11,7 @@ struct ExampleConfig final
 
 Async entryPoint()
 {
+    co_return;
 }
 
 void init()
