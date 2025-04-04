@@ -1,0 +1,299 @@
+#include <coroutine>
+#include <cxxutil.h>
+#include <cstdio>
+#include <entry.h>
+#include <iostream>
+#include <list>
+#include <mutex>
+#include <thread>
+#include <print>
+
+/* import core.Concurrency; */
+#include <Task.hpp>
+/* import core.Drivers; */
+#include <Magnetometer_LIS3MDL.hpp>
+#include <AccelGyro_LSM6DS3.hpp>
+#include <Driver_SDInterface.hpp>
+/* import core.Fundamental; */
+#include <cxxutil.hpp>
+/* import core.Math; */
+#include <Vector.hpp>
+/* import core.IO.SerialInterfaces; */
+#include <SerialInterfaceDevice.hpp>
+#include <I2CDevice.hpp>
+#include <SPIDevice.hpp>
+
+using namespace atmc;
+using namespace atmc::math;
+
+extern "C" int __io_putchar(int ch)
+{
+    HAL_UART_Transmit(&huart3, (uint8_t*)&ch, 1, HAL_MAX_DELAY);
+    return ch;
+}
+
+// void init()
+// {
+//     []() -> __async(void)
+//     {
+//         try
+//         {
+//             __fence_contract_enforce(0 == 1);
+//         }
+//         catch (const std::exception& ex)
+//         {
+//             std::println("Caught exception: {}", ex.what());
+//         }
+//         catch (...)
+//         {
+//             std::println("Caught unknown exception");
+//         }
+//         co_return;
+//     }();
+// }
+
+I2CDevice imuIF { &hi2c1, LSM6DS3::AddrLow, LSM6DS3::RegAddr::Size };
+I2CDevice magIF { &hi2c1, LIS3MDL::AddrLow, LIS3MDL::RegAddr::Size };
+
+AccelGyro_LSM6DS3 imu;
+Magnetometer_LIS3MDL mag;
+Vector3 pos(0.0f, 0.0f, 0.0f);
+Vector3 vel(0.0f, 0.0f, 0.0f);
+
+__async(void) imuTest()
+{
+    try
+    {
+        __fence_contract_enforce(1 ==0);
+    }
+    catch (...) { }
+    printf("beans\n");
+    std::println("started");
+    __fence_contract_enforce(co_await imu.begin(&imuIF) == HardwareStatus::Ok);
+    std::println("IMU detected");
+    __fence_contract_enforce(co_await mag.begin(&magIF) == HardwareStatus::Ok);
+
+    std::println("IMU and mag detected");
+
+    LSM6DS3::RegisterFIFOCtrl5 fifoCtrl5;
+    fifoCtrl5.outputDataRate = LSM6DS3::outputDataRateFrequencyToBits(6660.0f);
+    __fence_contract_enforce(co_await imu.writeConfigRegister(fifoCtrl5) == HardwareStatus::Ok);
+
+    LSM6DS3::RegisterMasterConfig masterConfig;
+    masterConfig.fifoValidSignal = LSM6DS3::DataReadySource::AccelGyroOrStepCounter;
+    LSM6DS3::RegisterFIFOCtrl2 fifoCtrl2;
+    fifoCtrl2.writeMode = LSM6DS3::FIFOWriteMode::OnDataReady;
+    fifoCtrl2.fifoTimerStepCounterEnabled = true;
+    __fence_contract_enforce(co_await imu.writeConfigRegister(masterConfig) == HardwareStatus::Ok);
+    __fence_contract_enforce(co_await imu.writeConfigRegister(fifoCtrl2) == HardwareStatus::Ok);
+
+    LSM6DS3::RegisterCtrl1Accel ctrl1;
+    ctrl1.outputDataRate = LSM6DS3::outputDataRateFrequencyToBits(104.0f);
+    __fence_contract_enforce(co_await imu.writeConfigRegister(ctrl1) == HardwareStatus::Ok);
+
+    LSM6DS3::RegisterCtrl2Gyro ctrl2;
+    ctrl2.outputDataRate = LSM6DS3::outputDataRateFrequencyToBits(104.0f);
+    __fence_contract_enforce(co_await imu.writeConfigRegister(ctrl2) == HardwareStatus::Ok);
+
+    LSM6DS3::RegisterFIFOCtrl3 fifoCtrl3;
+    fifoCtrl3.accelDecimation = LSM6DS3::decimationFactorToBits(0);
+    fifoCtrl3.gyroDecimation = LSM6DS3::decimationFactorToBits(0);
+    __fence_contract_enforce(co_await imu.writeConfigRegister(fifoCtrl3) == HardwareStatus::Ok);
+
+    LSM6DS3::RegisterFIFOCtrl4 fifoCtrl4;
+    fifoCtrl4.data3Decimation = LSM6DS3::decimationBitsForNoSensor;
+    fifoCtrl4.data4Decimation = LSM6DS3::decimationFactorToBits(0);
+
+    LSM6DS3::RegisterCtrl10 ctrl10;
+    ctrl10.enableEmbeddedFeatures = true;
+    ctrl10.enableTimestamp = true;
+    ctrl10.enableStepCounter = true;
+    __fence_contract_enforce(co_await imu.writeConfigRegister(ctrl10) == HardwareStatus::Ok);
+
+    __fence_contract_enforce(co_await imu.writeConfigRegister(fifoCtrl4) == HardwareStatus::Ok);
+    __fence_contract_enforce(co_await imu.writeConfigRegister(fifoCtrl2) == HardwareStatus::Ok);
+    __fence_contract_enforce(co_await imu.writeConfigRegister(fifoCtrl5) == HardwareStatus::Ok);
+
+    auto wakeupDur = (co_await imu.readConfigRegister<LSM6DS3::RegisterWakeupDuration>()).valueOrThrow();
+    wakeupDur.wakeupDuration = LSM6DS3::RegisterWakeupDuration::timestampResolutionToBit(0.025f);
+    __fence_contract_enforce(co_await imu.writeConfigRegister(wakeupDur) == HardwareStatus::Ok);
+
+    fifoCtrl5.mode = LSM6DS3::FIFOMode::Continuous;
+    __fence_contract_enforce(co_await imu.writeConfigRegister(fifoCtrl5) == HardwareStatus::Ok);
+
+    constexpr LSM6DS3::FIFOPatternWordType pattern[]
+    {
+        LSM6DS3::FIFOPatternWordType::GyroX,
+        LSM6DS3::FIFOPatternWordType::GyroY,
+        LSM6DS3::FIFOPatternWordType::GyroZ,
+        LSM6DS3::FIFOPatternWordType::AccelX,
+        LSM6DS3::FIFOPatternWordType::AccelY,
+        LSM6DS3::FIFOPatternWordType::AccelZ,
+        LSM6DS3::FIFOPatternWordType::TimestampHigh,
+        LSM6DS3::FIFOPatternWordType::TimestampLow,
+        LSM6DS3::FIFOPatternWordType::StepCounter
+    };
+
+    uint16_t readRemainder = LSM6DS3::FIFOChunkSize;
+    LSM6DS3::FIFOData data[LSM6DS3::FIFOChunkSize];
+    static uint16_t lastTimestamp = 0;
+    Vector3 curAccel;
+    Vector3 curVel = Vector3(0.0f, 0.0f, 0.0f);
+    Vector3 curPos = Vector3(0.0f, 0.0f, 0.0f);
+    while (true)
+    {
+        printf("Begin cycle...\n");
+        auto rA = (co_await imu.readFIFOData(pattern, readRemainder, &data[LSM6DS3::FIFOChunkSize - readRemainder]));
+        if (!rA)
+        {
+            switch (rA.takeError())
+            {
+            case HardwareStatus::Timeout:
+                printf("Timeout\n");
+                break;
+            case HardwareStatus::Error:
+                printf("Error\n");
+                break;
+            case HardwareStatus::Busy:
+                printf("Busy\n");
+                break;
+            default:
+                break;
+            }
+            continue;
+        }
+        uint16_t readCount = rA.takeValue();
+        int lastFinalIndex = -1;
+        for (uint16_t i = 0; i < readCount; i++)
+        {
+            switch (data[i].type)
+            {
+            case LSM6DS3::FIFOPatternWordType::GyroZ:
+                printf("Gyro: { %f, %f, %f }\n", data[i - 2].gx, data[i - 1].gy, data[i].gz);
+                lastFinalIndex = i;
+                break;
+            case LSM6DS3::FIFOPatternWordType::AccelZ:
+                fprintf(stderr, "Accel: { %f, %f, %f }\n", data[i - 2].ax, data[i - 1].ay, data[i].az);
+                curAccel = Vector3(data[i - 2].ax, data[i - 1].ay, data[i].az);
+                lastFinalIndex = i;
+                break;
+            case LSM6DS3::FIFOPatternWordType::TimestampLow:
+                {
+                    printf("Timestamp: %f\n", uint16_t((data[i - 1].timestampHigh << 8) | data[i].timestampLow) * imu.durSecPerLSB());
+                    if (lastTimestamp != 0)
+                    {
+                        float dT = (uint16_t((data[i - 1].timestampHigh << 8) | data[i].timestampLow) - lastTimestamp) * imu.durSecPerLSB();
+                        printf("DeltaT: %f\n", dT);
+                        curVel += curAccel * dT;
+                        curPos += curVel * dT;
+                        printf("pos: { %f, %f, %f }\n", curPos.x, curPos.y, curPos.z);
+                        lastFinalIndex = i;
+                    }
+                    lastTimestamp = (data[i - 1].timestampHigh << 8) | data[i].timestampLow;
+                }
+                break;
+            case LSM6DS3::FIFOPatternWordType::StepCounter:
+                printf("Step Counter: %u\n", data[i].stepCounter);
+                lastFinalIndex = i;
+                break;
+            case LSM6DS3::FIFOPatternWordType::GyroX:
+            case LSM6DS3::FIFOPatternWordType::GyroY:
+            case LSM6DS3::FIFOPatternWordType::AccelX:
+            case LSM6DS3::FIFOPatternWordType::AccelY:
+            case LSM6DS3::FIFOPatternWordType::TimestampHigh:
+            default:
+                break;
+            }
+        }
+        std::memmove(data, &data[lastFinalIndex + 1], (readCount - lastFinalIndex - 1) * sizeof(LSM6DS3::FIFOData));
+        readRemainder = LSM6DS3::FIFOChunkSize - (readCount - lastFinalIndex - 1);
+    }
+}
+
+void init()
+{
+    imuTest();
+}
+void tick()
+{ }
+
+// Task<> nested2()
+// {
+//     printf("nested 2\n");
+//     co_return;
+// }
+// Task<> nested1()
+// {
+//     printf("nested\n");
+//     co_await nested2();
+//     printf("nested\n");
+//     co_await nested2();
+//     printf("nested\n");
+//     co_return;
+// }
+// 
+// Task<> test()
+// {
+//     printf("test\n");
+//     co_await nested1();
+//     printf("test\n");
+//     co_await nested1();
+//     printf("done\n");
+//     co_return;
+// }
+// 
+// Task<int> mainLoop()
+// {
+//     while (true)
+//     {
+//         auto testTemp = co_await mag.readConfigRegister<LIS3MDL::RegisterCtrl1>();
+//         assert(!testTemp || testTemp.takeValue().tempEnabled);
+//         if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET)
+//         {
+//             co_await mag.calibrateUntil([]
+//             {
+//                 auto[x, y, z] = mag.debugIronOffsets();
+//                 printf("%f %f %f\n", x, y, z);
+//                 //printf("%f %f %f\n", mag.offsetSync().takeValue().x * mag.gaussPerLSB, mag.offsetSync().takeValue().y * mag.gaussPerLSB, mag.offsetSync().takeValue().z * mag.gaussPerLSB);
+//                 return HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_RESET;
+//             });
+//         }
+//         else
+//         {
+//             auto readRes = co_await mag.read();
+//             auto tempRes = co_await mag.readTemperature();
+//             if (readRes && tempRes)
+//             {
+//                 Vector3 readVal = readRes.takeValue();
+//                 float temp = tempRes.takeValue();
+//                 printf("%.4f\t%.4f\t%.4f\t%.4f\n", readVal.x, readVal.y, readVal.z, temp);
+//                 printf("heading: %.4f, offx: %f, offy: %f, offz: %f\n", atan2f((readVal.y), (readVal.x)) * 180.0f / float(std::numbers::pi), mag.softIronScale().x, mag.softIronScale().y, mag.softIronScale().z);
+//             }
+//             else
+//             {
+//                 readRes.takeError();
+//                 tempRes.takeError();
+//             }
+//         }
+// 
+//         co_await Task<>::delay(100);
+//     }
+//     co_return 0;
+// }
+// 
+// void init()
+// {
+//     printf("begin setup\n");
+//     []() -> __async(void)
+//     {
+//         assert(co_await mag.begin(&hi2c2) == HardwareStatus::Ok && "Failed to start / detect magnetometer!");
+//         auto stRes = co_await mag.selfTest();
+//         assert(stRes && stRes.takeValue() && "Failed self-test!");
+//         co_await mag.setOffset(Vector3Int16 { int16_t(-0.133255f / mag.gaussPerLSB() + 0.5f), int16_t(-0.101987 / mag.gaussPerLSB() + 0.5f), int16_t(-0.468147 / mag.gaussPerLSB() + 0.5f) });
+//         co_await mainLoop();
+//     }();
+//     printf("end setup\n");
+// }
+// 
+// void tick()
+// { }
