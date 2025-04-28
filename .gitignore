@@ -9,11 +9,16 @@ install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
 _deps
+
 /.cache/
 /.settings/
 /.vscode/
 /build/
+
 /stm32/Core
+!/stm32/Core/Src/main.c
 /stm32/Drivers
 /stm32/*.s
-/stm32/*!(_DMA).ld
+/stm32/*.mxproject
+/stm32/*.ld
+!/stm32/*_DMA.ld
