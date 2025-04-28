@@ -32,17 +32,17 @@
     {
         std::coroutine_handle<TaskPromise<T>> handle;
 
-        inline bool await_ready() const noexcept
+        __inline_always constexpr bool await_ready() const noexcept
         {
             return !this->handle || this->handle.done();
         }
-        inline std::coroutine_handle<> await_suspend(std::coroutine_handle<> parent)
+        __inline_never std::coroutine_handle<> await_suspend(std::coroutine_handle<> parent)
         {
             this->handle.promise().continuation = parent;
             taskYIELD();
             return this->handle;
         }
-        inline T await_resume() const noexcept(std::is_same<T, void>::value)
+        __inline_always constexpr T await_resume() const noexcept(std::is_same<T, void>::value)
         {
             if constexpr (!std::is_same<T, void>::value)
                 return std::move(*reinterpret_cast<T*>(this->handle.promise().value));
@@ -53,17 +53,16 @@
     {
         std::coroutine_handle<TaskPromise<T>> handle;
 
-        inline bool await_ready() const noexcept
+        __inline_always constexpr bool await_ready() const noexcept
         {
             return false;
         }
-        template <typename PromiseType>
-        inline std::coroutine_handle<> await_suspend(std::coroutine_handle<PromiseType> handle) noexcept
+        __inline_never std::coroutine_handle<> await_suspend(std::coroutine_handle<> handle) noexcept
         {
             taskYIELD();
             return this->handle.promise().continuation;
         }
-        inline void await_resume() const noexcept
+        constexpr void await_resume() const noexcept
         { }
     };
 
@@ -72,11 +71,16 @@
     {
         std::coroutine_handle<> continuation;
 
-        inline std::suspend_always initial_suspend() noexcept
+        __inline_always constexpr std::suspend_always initial_suspend() const noexcept
         {
             return std::suspend_always();
         }
         
+        __inline_always Task<T> get_return_object()
+        {
+            return Task<T>(std::coroutine_handle<TaskPromise<T>>::from_promise(*static_cast<TaskPromise<T>*>(this)));
+        }
+
         [[noreturn]] inline static Task<T> get_return_object_on_allocation_failure()
         {
             __throw(std::bad_alloc());
@@ -85,24 +89,19 @@
         {
             std::rethrow_exception(std::current_exception());
         }
-    private:
-        static uint_least8_t memAvail[Config::TaskCoroutineBlockSize];
-        static size_t memAvailEnd;
     };
     template <typename T>
     struct TaskPromise final : public TaskPromiseCore<T>
     {
         alignas(T) unsigned char value[sizeof(T)];
 
-        inline TaskFinalAwaiter<T> final_suspend() noexcept
+        __inline_always TaskFinalAwaiter<T> final_suspend() noexcept
         {
             return TaskFinalAwaiter<T> { std::coroutine_handle<TaskPromise<T>>::from_promise(*this) };
         }
 
-        inline Task<T> get_return_object();
-
         template <typename ReturnType>
-        inline void return_value(ReturnType&& ret)
+        __inline_always constexpr void return_value(ReturnType&& ret)
         {
             new(this->value) T(std::forward<ReturnType>(ret));
         }
@@ -110,14 +109,12 @@
     template <>
     struct TaskPromise<void> final : public TaskPromiseCore<void>
     {
-        inline TaskFinalAwaiter<void> final_suspend() noexcept
+        __inline_always TaskFinalAwaiter<void> final_suspend() noexcept
         {
             return TaskFinalAwaiter<void> { std::coroutine_handle<TaskPromise<void>>::from_promise(*this) };
         }
 
-        inline Task<void> get_return_object();
-
-        inline void return_void()
+        __inline_always constexpr void return_void() const noexcept
         { }
     };
 
@@ -129,49 +126,61 @@
 
         constexpr static uint32_t MaxDelay = HAL_MAX_DELAY;
 
-        inline ~Task()
+        __inline_always ~Task()
         {
             if (this->handle)
                 this->handle.destroy();
         }
 
-        inline TaskAwaiter<T> operator co_await()
+        __inline_always TaskAwaiter<T> operator co_await()
         {
             return TaskAwaiter<T>(this->handle);
         }
 
-        inline static Task<void> yield() requires (std::is_same<T, void>::value)
+        inline static auto yield() requires (std::is_same<T, void>::value)
         {
-            co_return;
-        }
-        static Task<void> delay(uint32_t ms) requires (std::is_same<T, void>::value)
-        {
-            uint32_t from = HAL_GetTick();
-            Task<void> ret = [](uint32_t from, uint32_t ms) -> Task<void>
+            struct
             {
-                while (HAL_GetTick() - from < ms)
-                    co_await Task<>::yield();
-            }(from, ms);
+                __inline_always constexpr bool await_ready() const noexcept
+                {
+                    taskYIELD();
+                    return true;
+                }
+                __inline_always void await_suspend(std::coroutine_handle<> parent) const noexcept
+                { }
+                __inline_always constexpr void await_resume() const noexcept
+                { }
+            } ret;
             return ret;
         }
+        inline static Task<void> delay(uint32_t ms) requires (std::is_same<T, void>::value)
+        {
+            Task<void> ret = [](uint32_t ms) -> Task<void>
+            {
+                uint32_t from = HAL_GetTick();
+                while (HAL_GetTick() - from < ms)
+                    co_await Task<>::yield();
+            }(ms);
+            return ret;
+        }
+        template <typename Pred>
+        inline static Task<void> waitUntil(Pred&& func)
+        {
+            if constexpr (!std::convertible_to<decltype(func()), bool>)
+                while (!co_await func());
+            else while (!func())
+                co_await Task<>::yield();
+        }
 
-        friend struct atmc::TaskPromise<T>;
+        friend struct atmc::TaskPromiseCore<T>;
     private:
         std::coroutine_handle<TaskPromise<T>> handle;
 
-        inline explicit Task(std::coroutine_handle<TaskPromise<T>> handle) : handle(handle)
-        { }
+        __inline_always explicit Task(std::coroutine_handle<TaskPromise<T>> handle) : handle(handle)
+        {
+            handle.resume();
+        }
     };
-
-    template <typename T>
-    Task<T> TaskPromise<T>::get_return_object()
-    {
-        return Task<T>(std::coroutine_handle<TaskPromise<T>>::from_promise(*this));
-    }
-    Task<void> TaskPromise<void>::get_return_object()
-    {
-        return Task<void>(std::coroutine_handle<TaskPromise<void>>::from_promise(*this));
-    }
 
     template <typename T, bool IsAsync>
     using TaskIfAsync = std::conditional<IsAsync, Task<T>, T>::type;
@@ -180,13 +189,16 @@
 
     struct AsyncPromise
     {
-        inline Async get_return_object();
+        consteval AsyncPromise() noexcept = default;
+        __inline_always constexpr ~AsyncPromise() = default;
 
-        inline std::suspend_always initial_suspend() noexcept
+        __inline_always Async get_return_object();
+
+        __inline_always constexpr std::suspend_always initial_suspend() const noexcept
         {
             return std::suspend_always();
         }
-        inline std::suspend_never final_suspend() noexcept
+        __inline_always constexpr std::suspend_never final_suspend() const noexcept
         {
             return std::suspend_never();
         }
@@ -195,7 +207,7 @@
         {
             std::rethrow_exception(std::current_exception());
         }
-        inline void return_void() noexcept
+        __inline_always constexpr void return_void() const noexcept
         { }
     };
 
@@ -203,16 +215,18 @@
     {
         using promise_type = AsyncPromise;
 
+        __inline_always constexpr ~Async() = default;
+
         friend struct AsyncPromise;
     private:
-        inline explicit Async(std::coroutine_handle<AsyncPromise> handle)
+        __inline_always explicit Async(std::coroutine_handle<AsyncPromise> handle)
         {
             xTaskCreate([](void* pvParams)
             {
                 auto handle = std::coroutine_handle<AsyncPromise>::from_address(pvParams);
                 handle.resume();
                 vTaskDelete(nullptr);
-            }, "Async", 512, handle.address(), 1, nullptr);
+            }, "Async", Config::AsyncThreadStackSizeWords, handle.address(), Config::AsyncThreadPriority, nullptr);
         }
     };
 

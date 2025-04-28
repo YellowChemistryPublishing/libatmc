@@ -78,11 +78,11 @@
 
         inline void select()
         {
-            GPIOManager::writePin(this->csPin, GPIOPin::Low);
+            GPIOManager::digitalWrite(this->csPin, GPIOPin::Low);
         }
         inline void deselect()
         {
-            GPIOManager::writePin(this->csPin, GPIOPin::High);
+            GPIOManager::digitalWrite(this->csPin, GPIOPin::High);
         }
 
         struct AcquireGuard

@@ -14,14 +14,14 @@ set(CMAKE_CXX_STANDARD 26 REQUIRED)
 set(CMAKE_CXX_SCAN_FOR_MODULES FALSE)
 
 add_compile_options(
-    -Werror $<$<COMPILE_LANGUAGE:CXX>:-Wsuggest-override> # "-fdebug-prefix-map=${CMAKE_SOURCE_DIR}=."
+    $<$<COMPILE_LANGUAGE:CXX>:-Wsuggest-override> $<$<COMPILE_LANGUAGE:CXX>:-Wold-style-cast> -Werror # "-fdebug-prefix-map=${CMAKE_SOURCE_DIR}=."
     -fno-math-errno -funsafe-math-optimizations -fno-rounding-math -fno-signed-zeros -fno-trapping-math -fcx-limited-range -fexcess-precision=fast
     -foptimize-sibling-calls # Force symmetric transfer optimization for coroutines.
 )
 if (CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    add_compile_options(-fno-signaling-nans) # -fopt-info-optall)
+    add_compile_options(-fno-signaling-nans) # -fopt-info-optall
 elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    add_compile_options(-ffp-contract=fast $<$<COMPILE_LANGUAGE:C>:-include> $<$<COMPILE_LANGUAGE:C>:stddef.h>) # -Rpass-analysis=.*)
+    add_compile_options(-ffp-contract=fast $<$<COMPILE_LANGUAGE:C>:-include> $<$<COMPILE_LANGUAGE:C>:stddef.h>) # -Rpass-analysis=.*
 else()
     message(WARNING "Compiler set unrecognised. Some optimisations may not be available.")
 endif()
@@ -52,6 +52,10 @@ list(GET RUNTIME_LINKER_SCRIPT_QUERY 0 RUNTIME_LINKER_SCRIPT)
 
 set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -T \"${RUNTIME_LINKER_SCRIPT}\"")
 set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -T \"${RUNTIME_LINKER_SCRIPT}\"")
+if (RUNTIME_LIBRARY STREQUAL "STM32H7xx")
+    set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -T \"${CMAKE_CURRENT_LIST_DIR}/stm32/STM32H7xx_DMA.ld\"")
+    set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -T \"${CMAKE_CURRENT_LIST_DIR}/stm32/STM32H7xx_DMA.ld\"")
+endif()
 
 file(GLOB RT_HEADERS
     "stm32/Drivers/${RUNTIME_LIBRARY}_HAL_Driver/Inc/*.h"
@@ -76,13 +80,16 @@ set(RT_INCLUDE_DIRS
     "${CMAKE_SOURCE_DIR}/freertos/include"
     "${CMAKE_SOURCE_DIR}/core"
 )
-set(RT_DEFINITIONS "${MCU_ID}=1" "STM32=1")
+set(RT_DEFINITIONS "${MCU_ID}=1" "${RUNTIME_LIBRARY}=1")
+if (MCU_ID MATCHES "STM32")
+    set(RT_DEFINITIONS ${RT_DEFINITIONS} "STM32=1" "HAL_ADC_MODULE_ENABLED")
+endif()
 
 # FreeRTOS
 
 add_library(freertos_config INTERFACE)
 target_include_directories(freertos_config SYSTEM INTERFACE ${RT_INCLUDE_DIRS})
-target_compile_definitions(freertos_config INTERFACE ${RT_DEFINITIONS} configUSE_PASSIVE_IDLE_HOOK=0 projCOVERAGE_TEST=0) # configNUMBER_OF_CORES=2
+target_compile_definitions(freertos_config INTERFACE ${RT_DEFINITIONS} configUSE_PASSIVE_IDLE_HOOK=0 projCOVERAGE_TEST=0)
 
 target_compile_definitions(freertos_config INTERFACE ${definitions})
 target_compile_options(freertos_config INTERFACE ${options})

@@ -5,6 +5,7 @@
 #include <runtime_headers.h>
 
 /* import core.Concurrency; */
+#include <GPIOManager.hpp>
 #include <Task.hpp>
 /* import core.Fundamental; */
 #include <cxxutil.hpp>
@@ -12,10 +13,26 @@
 
 using namespace atmc;
 
+void* operator new (size_t sz)
+{
+    void* ret = pvPortMalloc(sz);
+    if (!ret)
+        throw std::bad_alloc();
+    else return ret;
+}
+void operator delete (void* p) noexcept
+{
+    vPortFree(p);
+}
+void operator delete (void* p, size_t) noexcept
+{
+    vPortFree(p);
+}
+
 extern "C" __weak void init()
 { }
 
-// `catch` blocks are rarely used in embedded systems, and I've never gotten them to work properly.
+// `try`-`catch` blocks are rarely used in embedded systems, and I've never gotten them to work properly.
 // If they are, they should be used to catch exceptions thrown by the `init` and `tick` functions.
 // Otherwise, sufficient error messages are printed to `stderr` anyways.
 
@@ -25,6 +42,8 @@ void __initHandler()
     try
     {
         init();
+
+        vTaskStartScheduler();
     }
     catch (const std::exception& ex)
     {
@@ -37,8 +56,6 @@ void __initHandler()
         __throw(TerminateException());
     }
     __pop_nowarn();
-
-    vTaskStartScheduler();
 }
 
 extern "C" void xPortSysTickHandler();

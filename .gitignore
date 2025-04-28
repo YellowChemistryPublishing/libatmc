@@ -15,3 +15,5 @@ _deps
 /build/
 /stm32/Core
 /stm32/Drivers
+/stm32/*.s
+/stm32/*!(_DMA).ld

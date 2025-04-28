@@ -20,7 +20,7 @@ Async entryPoint()
     GPIOPin::State pinState = GPIOPin::High;
     while (true)
     {
-        GPIOManager::writePin(ExampleConfig::BlinkyPin, pinState);
+        GPIOManager::digitalWrite(ExampleConfig::BlinkyPin, pinState);
         std::println("Blinking {}!", pinState == GPIOPin::High ? "high" : "low");
         if (pinState == GPIOPin::High)
             pinState = GPIOPin::Low;

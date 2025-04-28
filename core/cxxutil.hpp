@@ -66,6 +66,16 @@
 		else return T(value);
 	}
 
+    struct ThreadCriticalSectionISR
+    {
+        [[gnu::forceinline]] inline ThreadCriticalSectionISR() : irqStatus(taskENTER_CRITICAL_FROM_ISR())
+        { }
+        [[gnu::forceinline]] inline ~ThreadCriticalSectionISR()
+        {
+            taskEXIT_CRITICAL_FROM_ISR(this->irqStatus);
+        }
+    private: UBaseType_t irqStatus;
+    };
     struct ThreadCriticalSection
     {
         [[gnu::forceinline]] inline ThreadCriticalSection()

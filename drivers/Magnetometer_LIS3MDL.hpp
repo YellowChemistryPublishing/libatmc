@@ -724,7 +724,7 @@
         {
             HardwareStatus res = co_await this->beginCalibration();
             __fence_value_co_return(res, res != HardwareStatus::Ok);
-            if constexpr (requires { typename decltype(pred())::promise_type; })
+            if constexpr (!std::convertible_to<decltype(func()), bool>)
             {
                 do
                 {

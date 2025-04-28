@@ -24,13 +24,15 @@ Any `FencedPointer<T>` accesses that look like `&*ptr` must be accompanied by a 
 Types that act as static classes must be annotated with `/// @note Static class.`.
 The only mandatory field for production code is an `@attention Lifetime assumptions!` clause on functions, with a `cpp` block highlighting the lifetime requirements of non-trivial parameters.
 
+No C-style casts! Shortened macros for all casts are provided for convenience, please use those! (i.e. `__sc<T>(expr)` equiv. `static_cast<T>(expr)`.)
+
 Where template parameters have restricted domain or constraints, they must be specified with a `requires` clause.
 
 Where applicable and valid, `__restrict__` must apply to pointers.
 All functions, where correct to, must be annotated with `[[gnu::const]]`, or, where otherwise correct to, `[[gnu::pure]]`.
 
 Runtime domain/input validation may be achieved through contracts. Since C++ has no standard implemented contracts yet, you must use `__fence_contract_enforce(cond)`.
-Note that contract conditions are passed to `const bool __expr = cond; [[assume(__expr)]];`, so you must ensure that statement will not be ill-formed.
+Note that contract conditions are passed to `const bool __expr = cond; [[assume(__expr)]];`, so you must ensure those statements will not be ill-formed.
 
 Any error checking passed up to a caller must be administered with short-circuiting "fences".
 `__fence_value_(co_)return(val, cond)` will return `val` iff. `cond` evaluates to `true`.

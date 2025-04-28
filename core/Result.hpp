@@ -17,6 +17,9 @@
 
 /* export */ namespace atmc
 {
+    template <typename T, typename Err>
+    struct ResultAwaiter;
+
 	/// @brief A result type that can hold either a value or an error.
 	/// @tparam T The type of the value to hold.
 	/// @tparam Err The type of the error to hold.
@@ -55,6 +58,13 @@
 				__fence_contract_enforce(false && "Result with bad value ignored!");
 			}
 		}
+
+        /// @brief Awaitable, with rustlang `operator?` semantics.
+        /// @return On resumption produces `T`, or returns `Err` to the parent coroutine.
+        __inline_always ResultAwaiter<T, Err> operator co_await()
+        {
+            return ResultAwaiter<T, Err>(*this);
+        }
 
 		/// @brief Whether the result is good.
 		inline operator bool ()
@@ -138,6 +148,13 @@
 				reinterpret_cast<T*>(&this->value)->~T();
 		}
 
+        /// @brief Awaitable, with rustlang `operator?` semantics.
+        /// @return On resumption produces `T`, or returns to the parent coroutine.
+        __inline_always ResultAwaiter<T, void> operator co_await()
+        {
+            return ResultAwaiter<T, void>(*this);
+        }
+
 		/// @brief Whether the result is good.
 		inline operator bool ()
 		{
@@ -150,10 +167,37 @@
 		{
 			__fence_contract_enforce(this->ok == 1 && "Taking value for a bad result!");
 			this->ok = -1;
-			return std::move(this->value);
+			return std::move(*reinterpret_cast<T*>(this->value));
 		}
 	private:
 		alignas(T) unsigned char value[sizeof(T)];
 		char ok;
 	};
+    
+    /// @brief Awaiter to enable short-circuiting, à la rustlang `operator?`.
+	/// @tparam T The type of the value to hold.
+	/// @tparam Err The type of the error to hold.
+    template <typename T, typename Err>
+    struct ResultAwaiter
+    {
+        Result<T, Err>& res;
+
+        __inline_always constexpr bool await_ready() const noexcept
+        {
+            return res;
+        }
+        template <typename Promise>
+        __inline_always void await_suspend(std::coroutine_handle<Promise> parent)
+        {
+            if constexpr (!std::is_same<Err, void>::value)
+                parent.promise().return_value(res.takeError());
+            else parent.promise().return_void();
+            if constexpr (requires { parent.promise().continuation.resume(); })
+                parent.promise().continuation.resume();
+        }
+        __inline_always constexpr T await_resume() const noexcept(std::is_same<T, void>::value)
+        {
+            return res.takeValue();
+        }
+    };
 }

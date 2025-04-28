@@ -6,6 +6,24 @@
 
 #include <CompilerWarnings.h>
 
+#ifdef STM32H7xx
+#define __dma_rw __attribute__((section(".dma_data")))
+#else
+#define __dma_rw
+#endif
+
+/// @def __inline_always
+/// @brief Force inline a function.
+#define __inline_always [[gnu::always_inline]] inline
+/// @def __inline_never
+/// @brief Force noinline a function.
+#define __inline_never [[gnu::noinline]]
+
+#define __sc(T, expr) static_cast<T>(expr)
+#define __dync(T, expr) dynamic_cast<T>(expr)
+#define __cstc(T, expr) const_cast<T>(expr)
+#define __reic(T, expr) reinterpret_cast<T>(expr)
+
 /// @def __throw(value)
 /// @brief Logs a source location, and throws the value of the expression `value`.
 #define __throw(value) do \

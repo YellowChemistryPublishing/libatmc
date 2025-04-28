@@ -10,6 +10,12 @@ using namespace atmc;
 
 std::atomic_flag GPIOManager::pinFlag[Config::PinCountGPIO];
 
+InplaceVector<int, Config::MaxADCChannels> GPIOManager::adcChannels[Config::AnalogConverterCount];
+DMA_HandleTypeDef GPIOManager::hdmaADC[Config::AnalogConverterCount];
+ADC_HandleTypeDef GPIOManager::hadc[Config::AnalogConverterCount];
+std::atomic_flag GPIOManager::adcFlags[Config::AnalogConverterCount];
+__dma_rw volatile uint16_t GPIOManager::adcRaw[Config::AnalogConverterCount][Config::MaxADCChannels];
+
 InplaceAtomicSet<I2C_HandleTypeDef*, Config::I2CBusCount> I2CManager::txDone(nullptr);
 InplaceAtomicSet<I2C_HandleTypeDef*, Config::I2CBusCount> I2CManager::rxDone(nullptr);
 
@@ -20,21 +26,15 @@ InplaceAtomicSet<SPI_HandleTypeDef*, Config::SPIBusCount> SPIManager::txrxDone(n
 SpinLock SPIManager::busyLock;
 InplaceSet<SPI_HandleTypeDef*, Config::SPIBusCount> SPIManager::busy;
 
-template <> uint_least8_t TaskPromiseCore<void>::memAvail[Config::TaskCoroutineBlockSize];
-template <> size_t TaskPromiseCore<void>::memAvailEnd = 0;
+__weak I2C_HandleTypeDef hi2c1;
+__weak I2C_HandleTypeDef hi2c2;
+__weak I2C_HandleTypeDef hi2c3;
 
-void* operator new (size_t sz)
-{
-    void* ret = pvPortMalloc(sz);
-    if (!ret)
-        throw std::bad_alloc();
-    else return ret;
-}
-void operator delete (void* p) noexcept
-{
-    vPortFree(p);
-}
-void operator delete (void* p, size_t) noexcept
-{
-    vPortFree(p);
-}
+__weak SPI_HandleTypeDef hspi1;
+__weak SPI_HandleTypeDef hspi2;
+__weak SPI_HandleTypeDef hspi3;
+__weak SPI_HandleTypeDef hspi4;
+
+__weak UART_HandleTypeDef huart1;
+__weak UART_HandleTypeDef huart2;
+__weak UART_HandleTypeDef huart3;
