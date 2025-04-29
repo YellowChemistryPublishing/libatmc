@@ -4,7 +4,7 @@
 
 Our in-house set of embedded support libraries for the generic embedded platform!
 There's a bit of a gap in embedded systems programming. You've got you're Arduino / `stm32duino` ecosystem where "slow thing but work", and your very low-level "if you don't do any register twiddling you're fired".
-I needed a library that was efficient and realtime suitable, without sacrificing the readability and expressiveness of a proper library, which doesn't really exist right now!
+I needed a library that was safe, efficient, realtime focussed, without sacrificing the readability and expressiveness of a proper library, which doesn't really exist right now!
 So I wrote one.
 
 `libatmc` currently comprises the following set of non-experimental libraries:

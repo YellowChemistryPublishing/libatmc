@@ -34,7 +34,7 @@
 	/// @return Signed 16-bit integer.
 	constexpr int16_t s16fb2(uint8_t msb, uint8_t lsb)
 	{
-		return (int16_t(msb) << 8) | (int16_t)lsb;
+		return (int16_t(msb) << 8) | int16_t(lsb);
 	}
 	/// @brief Obtain the high byte from a signed 16-bit integer.
 	/// @param val The signed 16-bit integer.
@@ -68,9 +68,9 @@
 
     struct ThreadCriticalSectionISR
     {
-        [[gnu::forceinline]] inline ThreadCriticalSectionISR() : irqStatus(taskENTER_CRITICAL_FROM_ISR())
+        __inline_always ThreadCriticalSectionISR() : irqStatus(taskENTER_CRITICAL_FROM_ISR())
         { }
-        [[gnu::forceinline]] inline ~ThreadCriticalSectionISR()
+        __inline_always ~ThreadCriticalSectionISR()
         {
             taskEXIT_CRITICAL_FROM_ISR(this->irqStatus);
         }
@@ -78,11 +78,11 @@
     };
     struct ThreadCriticalSection
     {
-        [[gnu::forceinline]] inline ThreadCriticalSection()
+        __inline_always ThreadCriticalSection()
         {
             taskENTER_CRITICAL();
         }
-        [[gnu::forceinline]] inline ~ThreadCriticalSection()
+        __inline_always ~ThreadCriticalSection()
         {
             taskEXIT_CRITICAL();
         }

@@ -70,7 +70,7 @@
         /// @return Whether the operation was successful.
         inline HardwareStatus waitReadySync(uint32_t trials, uint32_t timeout = HAL_MAX_DELAY) override
         {
-            return (HardwareStatus)HAL_I2C_IsDeviceReady(this->internalHandle, this->devAddr << 1, trials, timeout);
+            return __sc(HardwareStatus, HAL_I2C_IsDeviceReady(this->internalHandle, this->devAddr << 1, trials, timeout));
         }
 
         /// @brief Read memory asynchronously.
@@ -87,7 +87,7 @@
         /// ```
         Task<HardwareStatus> readMemory(uint16_t memAddr, std::span<uint8_t> data) override
         {
-            HardwareStatus res = (HardwareStatus)HAL_I2C_Mem_Read_IT(this->internalHandle, this->devAddr << 1, memAddr, this->memAddrSize, data.data(), data.size_bytes());
+            HardwareStatus res = __sc(HardwareStatus, HAL_I2C_Mem_Read_IT(this->internalHandle, this->devAddr << 1, memAddr, this->memAddrSize, data.data(), data.size_bytes()));
             __fence_value_co_return(res, res != HardwareStatus::Ok);
         
             while (!I2CManager::rxDone.exchange(this->internalHandle, nullptr))
@@ -108,7 +108,7 @@
         /// ```
         Task<HardwareStatus> writeMemory(uint16_t memAddr, std::span<uint8_t> data) override
         {
-            HardwareStatus res = (HardwareStatus)HAL_I2C_Mem_Write_IT(this->internalHandle, this->devAddr << 1, memAddr, this->memAddrSize, data.data(), data.size_bytes());
+            HardwareStatus res = __sc(HardwareStatus, HAL_I2C_Mem_Write_IT(this->internalHandle, this->devAddr << 1, memAddr, this->memAddrSize, data.data(), data.size_bytes()));
             __fence_value_co_return(res, res != HardwareStatus::Ok);
         
             while (!I2CManager::txDone.exchange(this->internalHandle, nullptr))

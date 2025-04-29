@@ -5,6 +5,7 @@
 #include <coroutine>
 #include <cstdint>
 #include <cstdio>
+#include <cstring>
 #include <cxxutil.h>
 #include <entry.h>
 #include <list>
@@ -25,7 +26,14 @@
     /// @note Static class.
     class TaskAllocator
     {
-        static unsigned char stack[2048];
+        struct ChunkHeader
+        {
+            size_t prevSize;
+            size_t size;
+            bool isFree;
+        };
+
+        alignas(std::max_align_t) static unsigned char stack[2048];
         static size_t stackSize;
     public:
         TaskAllocator() = delete;

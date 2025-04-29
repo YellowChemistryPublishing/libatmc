@@ -3,6 +3,7 @@
 
 #include <atomic>
 #include <bit>
+#include <board.h>
 #include <coroutine>
 #include <cstring>
 #include <cxxutil.h>
@@ -143,6 +144,73 @@ __gpio_define_port_pins(K)
         }
     };
 
+    struct PWMPin final
+    {
+        constexpr PWMPin(int timer, int channel) : timerIndex(timer), channel([&]() -> int
+        {
+            switch (channel)
+            {
+            case 0:
+                return TIM_CHANNEL_1;
+            case 1:
+                return TIM_CHANNEL_2;
+            case 2:
+                return TIM_CHANNEL_3;
+            case 3:
+                return TIM_CHANNEL_4;
+            case 4:
+                return TIM_CHANNEL_5;
+            case 5:
+                return TIM_CHANNEL_6;
+            default:
+                return -1;
+            }
+        }())
+        { }
+
+        friend class atmc::GPIOManager;
+    private:
+        int timerIndex;
+        int channel;
+
+        inline TIM_HandleTypeDef* internalHandle()
+        {
+            switch (this->timerIndex)
+            {
+            case 0:
+                return &htim1;
+            case 1:
+                return &htim2;
+            case 2:
+                return &htim3;
+            case 3:
+                return &htim4;
+            case 4:
+                return &htim5;
+            case 5:
+                return &htim6;
+            case 6:
+                return &htim7;
+            case 7:
+                return &htim8;
+            case 11:
+                return &htim12;
+            case 12:
+                return &htim13;
+            case 13:
+                return &htim14;
+            case 14:
+                return &htim15;
+            case 15:
+                return &htim16;
+            case 16:
+                return &htim17;
+            default:
+                return nullptr;
+            }
+        }
+    };
+
     /// @brief GPIO manager.
     /// @note Static class.
     class GPIOManager final
@@ -170,13 +238,12 @@ __gpio_define_port_pins(K)
         /// @return The state of the pin.
         inline static GPIOPin::State digitalRead(GPIOPin pin)
         {
-            return HAL_GPIO_ReadPin((GPIO_TypeDef*)pin.port, pin.pin);
+            return HAL_GPIO_ReadPin(__reic(GPIO_TypeDef*, pin.port), pin.pin);
         }
         inline static Task<Result<float, HardwareStatus>> analogRead(AnalogPin pin)
         {
             ADC_HandleTypeDef* hadc = pin.internalHandle();
-            if (!hadc)
-                co_return HardwareStatus::Error;
+            __fence_value_co_return(HardwareStatus::Error, !hadc);
 
             int resolution;
             switch (ADC_GET_RESOLUTION(hadc))
@@ -204,7 +271,12 @@ __gpio_define_port_pins(K)
 
             if (!GPIOManager::adcFlags[pin.adcIndex].test_and_set())
             {
-                HAL_ADC_Start_DMA(hadc, __reic(uint32_t*, __cstc(uint16_t*, GPIOManager::adcRaw[pin.adcIndex])), hadc->Init.NbrOfConversion);
+                HardwareStatus res = __sc(HardwareStatus, HAL_ADC_Start_DMA(hadc, __reic(uint32_t*, __cstc(uint16_t*, GPIOManager::adcRaw[pin.adcIndex])), hadc->Init.NbrOfConversion));
+                if (res != HardwareStatus::Ok)
+                {
+                    GPIOManager::adcFlags[pin.adcIndex].clear();
+                    co_return res;
+                }
                 // `HAL_ADC_Stop_DMA(hadc)` called in ISR.
             }
 
@@ -222,11 +294,28 @@ __gpio_define_port_pins(K)
         /// @param state The state to set the pin to.
         inline static void digitalWrite(GPIOPin pin, GPIOPin::State state)
         {
-            HAL_GPIO_WritePin((GPIO_TypeDef*)pin.port, pin.pin, (GPIO_PinState)state);
+            HAL_GPIO_WritePin(__reic(GPIO_TypeDef*, pin.port), pin.pin, __sc(GPIO_PinState, state));
         }
-        inline static void pwmWrite()
+
+        inline static HardwareStatus pwmWrite(PWMPin pin, float duty)
         {
-            
+            __fence_value_return(HardwareStatus::Error, pin.channel == -1 || duty < 0.0f || duty > 1.0f);
+
+            TIM_HandleTypeDef* htim = pin.internalHandle();
+            __fence_value_return(HardwareStatus::Error, !htim);
+
+            htim->Instance->CCR1 = __sc(uint32_t, htim->Instance->ARR * duty + 0.5f);
+
+            return __sc(HardwareStatus, HAL_TIM_PWM_Start(htim, uint32_t(pin.channel)));
+        }
+        inline static HardwareStatus pwmClear(PWMPin pin)
+        {
+            __fence_value_return(HardwareStatus::Error, pin.channel == -1);
+
+            TIM_HandleTypeDef* htim = pin.internalHandle();
+            __fence_value_return(HardwareStatus::Error, !htim);
+
+            return __sc(HardwareStatus, HAL_TIM_PWM_Stop(htim, uint32_t(pin.channel)));
         }
 
         friend void ::HAL_GPIO_EXTI_Callback(uint16_t pin);

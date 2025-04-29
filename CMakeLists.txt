@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.30)
 
 include(cmake/stm32_gcc.cmake)
 
-project(libatmcDrivers)
+project(libatmc)
 enable_language(ASM C CXX)
 
 set(BOARD_NAME "STM32H753ZI")
@@ -14,7 +14,7 @@ set(CMAKE_CXX_STANDARD 26 REQUIRED)
 set(CMAKE_CXX_SCAN_FOR_MODULES FALSE)
 
 add_compile_options(
-    $<$<COMPILE_LANGUAGE:CXX>:-Wsuggest-override> $<$<COMPILE_LANGUAGE:CXX>:-Wold-style-cast> -Werror # "-fdebug-prefix-map=${CMAKE_SOURCE_DIR}=."
+    $<$<COMPILE_LANGUAGE:CXX>:-Wsuggest-override> $<$<COMPILE_LANGUAGE:CXX>:-Wold-style-cast> -Wunused-result -Werror # "-fdebug-prefix-map=${CMAKE_SOURCE_DIR}=."
     -fno-math-errno -funsafe-math-optimizations -fno-rounding-math -fno-signed-zeros -fno-trapping-math -fcx-limited-range -fexcess-precision=fast
     -fexceptions -fnon-call-exceptions -fasynchronous-unwind-tables -foptimize-sibling-calls # Force symmetric transfer optimization for coroutines.
 )
@@ -70,8 +70,9 @@ foreach(HEADER ${RT_HEADERS})
 endforeach()
 file(APPEND ${CMAKE_BINARY_DIR}/runtime_headers.h "\n#ifdef __cplusplus\n}\n\n#undef register\n#endif\n")
 
-set(RT_INCLUDE_DIRS 
+set(RT_INCLUDE_DIRS
     "${CMAKE_BINARY_DIR}"
+    "${CMAKE_SOURCE_DIR}/stm32"
     "${CMAKE_SOURCE_DIR}/stm32/Drivers/CMSIS/Include"
     "${CMAKE_SOURCE_DIR}/stm32/Drivers/CMSIS/Device/ST/${RUNTIME_LIBRARY}/Include"
     "${CMAKE_SOURCE_DIR}/stm32/Drivers/${RUNTIME_LIBRARY}_HAL_Driver/Inc"
@@ -110,6 +111,7 @@ file(GLOB RT_SRCS CONFIGURE_DEPENDS
     "stm32/Core/Src/*.h"
     "stm32/Core/Src/*.c"
     "stm32/*.s"
+    "stm32/board.cpp"
 )
 list(FILTER RT_SRCS EXCLUDE REGEX ".*_template.*")
 
@@ -155,7 +157,7 @@ target_link_libraries(drivers PUBLIC core)
 
 # Examples
 
-file(GLOB EXAMPLES CONFIGURE_DEPENDS "examples/*.cpp")
+file(GLOB EXAMPLES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/examples/*.cpp")
 
 foreach(EXAMPLE_FILE ${EXAMPLES})
     get_filename_component(EXAMPLE_NAME ${EXAMPLE_FILE} NAME_WE)

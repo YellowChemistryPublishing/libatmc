@@ -37,6 +37,15 @@ namespace atmc
             return this->data[index];
         }
 
+        inline T* begin()
+        {
+            return this->data;
+        }
+        inline T* end()
+        {
+            return this->data + this->_size;
+        }
+
         inline bool pushBack(T value)
         {
             if (this->_size >= Capacity)

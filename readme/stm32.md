@@ -13,7 +13,7 @@ Whilst this means that you, the humble embedded systems engineer, has a high lev
 Under `System Core -> NVIC -> Code Generation`, ensure the following are set.
 
 |                                           | `Generate IRQ handler` |
-| :---------------------------------------- | :--------------------- |
+| ----------------------------------------- | ---------------------- |
 | `Hard fault interrupt`                    | :white_large_square:   |
 | `System service call via SWI instruction` | :white_large_square:   |
 | `Pendable request for system service`     | :white_large_square:   |
@@ -22,6 +22,15 @@ Under `System Core -> NVIC -> Code Generation`, ensure the following are set.
 The hardfault interrupt is replaced with our own handler, which provides slightly improved debugging utility.
 The systick handler is also replaced so that stm32 code invokes `HAL_IncTick` and `xPortSysTickHandler`.
 `SVC_Handler` and `PendSV_Handler` are deferred to FreeRTOS.
+
+## Ready-to-Go Peripherals
+
+These peripherals need only active interrupts for `libatmc` support:
+
+ - Digital Pin IO (`PZx`) (No interrupts needed either, unless directly awaiting a pin interrupt!)
+ - Hardware Timers (`TIMx`)
+ - Serial Protocols, I2C (`I2Cx`)
+ - Serial Protocols, SPI (`SPIx`)
 
 ## ADC
 
