@@ -21,6 +21,46 @@
 
 /* export */ namespace atmc
 {
+    /// @brief
+    /// @note Static class.
+    class TaskAllocator
+    {
+        static unsigned char stack[2048];
+        static size_t stackSize;
+    public:
+        TaskAllocator() = delete;
+        
+        inline static void* stackNew(size_t sz) noexcept
+        {
+            void* alignedPtr = &stack[stackSize] + sizeof(bool) + sizeof(size_t) * 2;
+            if (stackSize + sizeof(bool) + sizeof(size_t) * 2 + sz > 2048)
+                return nullptr;
+            [[gnu::unused]] size_t alignedSize = 2048 - (stackSize + sizeof(bool) + sizeof(size_t) * 2);
+            std::align(alignof(std::max_align_t), sz, alignedPtr, alignedSize);
+            unsigned char* ret = __sc(unsigned char*, alignedPtr);
+            if (ret + sz > stack + 2048)
+                return nullptr;
+            
+            memcpy(ret - sizeof(size_t) * 2, &stackSize, sizeof(size_t));
+
+            {
+                bool _false = false;
+                memcpy(ret - sizeof(size_t) * 2 - sizeof(bool), &_false, sizeof(bool));
+            }
+
+            stackSize = ret + sz - stack;
+
+            return ret;
+        }
+        inline static void stackDelete(void* ptr) noexcept
+        {
+            unsigned char* ret = __sc(unsigned char*, ptr);
+            size_t sz = *(size_t*)(ret - sizeof(size_t));
+            size_t& stackSize = *(size_t*)(ret - sizeof(size_t) - sizeof(bool));
+            stackSize = ret - stack;
+        }
+    };
+
     template <typename T>
     struct TaskPromise;
 
@@ -44,6 +84,8 @@
         }
         __inline_always constexpr T await_resume() const noexcept(std::is_same<T, void>::value)
         {
+            if (this->handle.promise().exception) [[unlikely]]
+                std::rethrow_exception(this->handle.promise().exception);
             if constexpr (!std::is_same<T, void>::value)
                 return std::move(*reinterpret_cast<T*>(this->handle.promise().value));
         }
@@ -70,6 +112,7 @@
     struct TaskPromiseCore
     {
         std::coroutine_handle<> continuation;
+        std::exception_ptr exception = nullptr;
 
         __inline_always constexpr std::suspend_always initial_suspend() const noexcept
         {
@@ -85,9 +128,9 @@
         {
             __throw(std::bad_alloc());
         }
-        inline void unhandled_exception()
+        __inline_always void unhandled_exception()
         {
-            std::rethrow_exception(std::current_exception());
+            this->exception = std::current_exception();
         }
     };
     template <typename T>
@@ -155,13 +198,9 @@
         }
         inline static Task<void> delay(uint32_t ms) requires (std::is_same<T, void>::value)
         {
-            Task<void> ret = [](uint32_t ms) -> Task<void>
-            {
-                uint32_t from = HAL_GetTick();
-                while (HAL_GetTick() - from < ms)
-                    co_await Task<>::yield();
-            }(ms);
-            return ret;
+            uint32_t from = xTaskGetTickCount();
+            while (pdTICKS_TO_MS(xTaskGetTickCount() - from) < ms)
+                co_await Task<>::yield();
         }
         template <typename Pred>
         inline static Task<void> waitUntil(Pred&& func)

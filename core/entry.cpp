@@ -3,6 +3,7 @@
 #include <exception>
 #include <print>
 #include <runtime_headers.h>
+#include <FreeRTOS.h>
 
 /* import core.Concurrency; */
 #include <GPIOManager.hpp>
@@ -12,6 +13,26 @@
 #include <Exception.hpp>
 
 using namespace atmc;
+
+__weak I2C_HandleTypeDef hi2c1;
+__weak I2C_HandleTypeDef hi2c2;
+__weak I2C_HandleTypeDef hi2c3;
+
+__weak SPI_HandleTypeDef hspi1;
+__weak SPI_HandleTypeDef hspi2;
+__weak SPI_HandleTypeDef hspi3;
+__weak SPI_HandleTypeDef hspi4;
+
+__weak UART_HandleTypeDef huart1;
+__weak UART_HandleTypeDef huart2;
+__weak UART_HandleTypeDef huart3;
+
+__weak ADC_HandleTypeDef hadc1;
+__weak DMA_HandleTypeDef hdma_adc1;
+__weak ADC_HandleTypeDef hadc2;
+__weak DMA_HandleTypeDef hdma_adc2;
+__weak ADC_HandleTypeDef hadc3;
+__weak DMA_HandleTypeDef hdma_adc3;
 
 void* operator new (size_t sz)
 {
@@ -63,14 +84,13 @@ extern "C" void xPortSysTickHandler();
 #ifdef STM32
 extern "C" void HardFault_Handler()
 {
-    fprintf(stderr, "Hardfault!\n");
+    std::println("Hardfault!");
     while (true);
 }
-
-extern "C" void HAL_IncTick()
+extern "C" void SysTick_Handler()
 {
-    uwTick += (uint32_t)uwTickFreq;
-    if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED)
+    HAL_IncTick();
+    if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED) [[likely]]
         xPortSysTickHandler();
 }
 

@@ -33,7 +33,7 @@
 	std::println \
 	( \
 		stderr, "In function `{}` at \"{}:{}:{}\" - Throwing `{}`.", \
-		__srcLoc.function_name(), __srcLoc.file_name(), (int)__srcLoc.line(), (int)__srcLoc.column(), \
+		__srcLoc.function_name(), __srcLoc.file_name(), __sc(int, __srcLoc.line()), __sc(int, __srcLoc.column()), \
 		typeid(decltype(value)).name() \
 	); \
 	__pop_nowarn(); \

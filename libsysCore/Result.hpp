@@ -191,7 +191,7 @@
         {
             if constexpr (!std::is_same<Err, void>::value)
                 parent.promise().return_value(res.takeError());
-            else parent.promise().return_void();
+            else []<bool _false = false> { static_assert(_false, "`Result<...>::operator?` requires `typename Err` to be returnable in the current scope!"); }();
             if constexpr (requires { parent.promise().continuation.resume(); })
                 parent.promise().continuation.resume();
         }

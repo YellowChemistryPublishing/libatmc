@@ -11,6 +11,11 @@ namespace atmc
 
         // v General
         
+        constexpr static int AsyncThreadPriority = 1;
+        constexpr static int AsyncThreadStackSizeWords = 2048;
+
+        // Probably shouldn't change... v / ^ General
+
         constexpr static int PinCountGPIO = 16;
 
         constexpr static int MaxADCChannels = 20;
@@ -19,9 +24,6 @@ namespace atmc
         constexpr static int I2CBusCount = 4;
         constexpr static int SPIBusCount = 3;
 
-        constexpr static int AsyncThreadPriority = 1;
-        constexpr static int AsyncThreadStackSizeWords = 2048;
-
-        // ^ General
+        // ^ Probably shouldn't change...
     };
 }

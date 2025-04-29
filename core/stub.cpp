@@ -10,9 +10,6 @@ using namespace atmc;
 
 std::atomic_flag GPIOManager::pinFlag[Config::PinCountGPIO];
 
-InplaceVector<int, Config::MaxADCChannels> GPIOManager::adcChannels[Config::AnalogConverterCount];
-DMA_HandleTypeDef GPIOManager::hdmaADC[Config::AnalogConverterCount];
-ADC_HandleTypeDef GPIOManager::hadc[Config::AnalogConverterCount];
 std::atomic_flag GPIOManager::adcFlags[Config::AnalogConverterCount];
 __dma_rw volatile uint16_t GPIOManager::adcRaw[Config::AnalogConverterCount][Config::MaxADCChannels];
 

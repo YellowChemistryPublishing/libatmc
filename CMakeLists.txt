@@ -16,7 +16,7 @@ set(CMAKE_CXX_SCAN_FOR_MODULES FALSE)
 add_compile_options(
     $<$<COMPILE_LANGUAGE:CXX>:-Wsuggest-override> $<$<COMPILE_LANGUAGE:CXX>:-Wold-style-cast> -Werror # "-fdebug-prefix-map=${CMAKE_SOURCE_DIR}=."
     -fno-math-errno -funsafe-math-optimizations -fno-rounding-math -fno-signed-zeros -fno-trapping-math -fcx-limited-range -fexcess-precision=fast
-    -foptimize-sibling-calls # Force symmetric transfer optimization for coroutines.
+    -fexceptions -fnon-call-exceptions -fasynchronous-unwind-tables -foptimize-sibling-calls # Force symmetric transfer optimization for coroutines.
 )
 if (CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     add_compile_options(-fno-signaling-nans) # -fopt-info-optall
@@ -118,6 +118,11 @@ target_compile_definitions(rt PUBLIC ${RT_DEFINITIONS})
 target_include_directories(rt PUBLIC ${RT_INCLUDE_DIRS})
 target_link_libraries(rt PUBLIC freertos_kernel)
 
+# sysCore Library
+
+add_library(sysCore INTERFACE)
+target_include_directories(sysCore INTERFACE "libsysCore")
+
 # core Library
 
 file(GLOB_RECURSE CORE_SRCS CONFIGURE_DEPENDS
@@ -131,7 +136,7 @@ file(GLOB_RECURSE CORE_MODULES CONFIGURE_DEPENDS
 add_library(core STATIC ${CORE_SRCS})
 target_sources(core PUBLIC FILE_SET CXX_MODULES FILES ${CORE_MODULES})
 target_include_directories(core PUBLIC "core" "/")
-target_link_libraries(core PUBLIC rt freertos_kernel)
+target_link_libraries(core PUBLIC rt freertos_kernel sysCore)
 
 # drivers Library
 

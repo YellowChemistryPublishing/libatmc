@@ -8,7 +8,7 @@ namespace atmc
     {
         union
         {
-            alignas(std::max_align_t) T data[Capacity];
+            T data[Capacity];
         };
         size_t _size = 0;
     public:

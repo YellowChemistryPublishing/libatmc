@@ -3,21 +3,24 @@
 #include <cstdint>
 #include <runtime_headers.h>
 
+#include <FreeRTOS.h>
+#include <task.h>
+
 namespace atmc
 {
     class Timer
     {
-        uint32_t beg;
+        TickType_t beg;
     public:
         constexpr Timer() = default;
 
         inline void start()
         {
-            this->beg = HAL_GetTick();
+            this->beg = xTaskGetTickCount();
         }
-        inline uint32_t elapsed() const
+        inline TickType_t elapsed() const
         {
-            return HAL_GetTick() - this->beg;
+            return pdTICKS_TO_MS(xTaskGetTickCount() - this->beg);
         }
     };
 }
