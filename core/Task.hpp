@@ -26,46 +26,56 @@
     /// @note Static class.
     class TaskAllocator
     {
-        struct ChunkHeader
+               /* Lazy.               */
+        struct alignas(std::max_align_t) ChunkHeader
         {
-            size_t prevSize;
+            ChunkHeader* prevChunk;
             size_t size;
-            bool isFree;
+            bool isFree = false;
+
+            inline unsigned char* data() noexcept
+            {
+                return reinterpret_cast<unsigned char*>(this) + sizeof(ChunkHeader);
+            }
+            inline void* next() noexcept
+            {
+                return reinterpret_cast<unsigned char*>(this) + sizeof(ChunkHeader) + this->size;
+            }
         };
 
-        alignas(std::max_align_t) static unsigned char stack[2048];
-        static size_t stackSize;
+        /* Lazy.               */
+        alignas(std::max_align_t) static unsigned char stack[Config::TaskPromiseStackSize];
+        static ChunkHeader* stackTop;
     public:
         TaskAllocator() = delete;
         
-        inline static void* stackNew(size_t sz) noexcept
+        inline static void* alloc(size_t sz) noexcept
         {
-            void* alignedPtr = &stack[stackSize] + sizeof(bool) + sizeof(size_t) * 2;
-            if (stackSize + sizeof(bool) + sizeof(size_t) * 2 + sz > 2048)
+            size_t chunkSize = (sz + alignof(std::max_align_t) - 1) & -alignof(std::max_align_t);
+            if ((!TaskAllocator::stackTop ? TaskAllocator::stack : __sc(unsigned char*, TaskAllocator::stackTop->next())) + sizeof(ChunkHeader) + chunkSize >= TaskAllocator::stack + Config::TaskPromiseStackSize) [[unlikely]]
                 return nullptr;
-            [[gnu::unused]] size_t alignedSize = 2048 - (stackSize + sizeof(bool) + sizeof(size_t) * 2);
-            std::align(alignof(std::max_align_t), sz, alignedPtr, alignedSize);
-            unsigned char* ret = __sc(unsigned char*, alignedPtr);
-            if (ret + sz > stack + 2048)
-                return nullptr;
-            
-            memcpy(ret - sizeof(size_t) * 2, &stackSize, sizeof(size_t));
-
+            ChunkHeader* header = [&]
             {
-                bool _false = false;
-                memcpy(ret - sizeof(size_t) * 2 - sizeof(bool), &_false, sizeof(bool));
-            }
-
-            stackSize = ret + sz - stack;
-
-            return ret;
+                if (!TaskAllocator::stackTop)
+                    return new(TaskAllocator::stack) ChunkHeader(nullptr, chunkSize);
+                else return new(TaskAllocator::stackTop->next()) ChunkHeader(TaskAllocator::stackTop, chunkSize);
+            }();
+            TaskAllocator::stackTop = header;
+            return header->data();
         }
-        inline static void stackDelete(void* ptr) noexcept
+        inline static void free(void* ptr) noexcept
         {
-            unsigned char* ret = __sc(unsigned char*, ptr);
-            size_t sz = *(size_t*)(ret - sizeof(size_t));
-            size_t& stackSize = *(size_t*)(ret - sizeof(size_t) - sizeof(bool));
-            stackSize = ret - stack;
+            if (!ptr) [[unlikely]]
+                return;
+            
+            ChunkHeader* header = __reic(ChunkHeader*, ptr) - 1;
+            if (TaskAllocator::stackTop == header)
+            {
+                do
+                { TaskAllocator::stackTop = TaskAllocator::stackTop->prevChunk; }
+                while (TaskAllocator::stackTop && TaskAllocator::stackTop->isFree);
+            }
+            else header->isFree = true;
         }
     };
 
@@ -121,6 +131,15 @@
     {
         std::coroutine_handle<> continuation;
         std::exception_ptr exception = nullptr;
+
+        inline static void* operator new (size_t sz) noexcept
+        {
+            return TaskAllocator::alloc(sz);
+        }
+        inline static void operator delete (void* ptr) noexcept
+        {
+            TaskAllocator::free(ptr);
+        }
 
         __inline_always constexpr std::suspend_always initial_suspend() const noexcept
         {
@@ -197,7 +216,7 @@
                     taskYIELD();
                     return true;
                 }
-                __inline_always void await_suspend(std::coroutine_handle<> parent) const noexcept
+                __inline_always void await_suspend([[maybe_unused]] std::coroutine_handle<> parent) const noexcept
                 { }
                 __inline_always constexpr void await_resume() const noexcept
                 { }
@@ -224,9 +243,7 @@
         std::coroutine_handle<TaskPromise<T>> handle;
 
         __inline_always explicit Task(std::coroutine_handle<TaskPromise<T>> handle) : handle(handle)
-        {
-            handle.resume();
-        }
+        { }
     };
 
     template <typename T, bool IsAsync>
@@ -261,8 +278,6 @@
     struct Async
     {
         using promise_type = AsyncPromise;
-
-        __inline_always constexpr ~Async() = default;
 
         friend struct AsyncPromise;
     private:

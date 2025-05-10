@@ -14,6 +14,8 @@ namespace atmc
         constexpr static int AsyncThreadPriority = 1;
         constexpr static int AsyncThreadStackSizeWords = 2048;
 
+        constexpr static int TaskPromiseStackSize = 4096;
+
         // Probably shouldn't change... v / ^ General
 
         constexpr static int PinCountGPIO = 16;

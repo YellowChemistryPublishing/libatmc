@@ -7,6 +7,8 @@
 
 namespace atmc
 {
+    using ThreadID = UBaseType_t;
+
     class Thread
     {
         TaskHandle_t handle;
@@ -14,8 +16,6 @@ namespace atmc
         inline Thread(TaskHandle_t handle) : handle(handle)
         { }
     public:
-        using ThreadID = UBaseType_t;
-
         inline static Thread currentThread()
         {
             ThreadCriticalSection guard;
