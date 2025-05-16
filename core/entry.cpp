@@ -1,17 +1,15 @@
 #include <cxxutil.h>
+#include <cxxutil.h>
 #include <entry.h>
 #include <exception>
 #include <print>
 
-/* import core.Concurrency; */
-#include <GPIOManager.hpp>
-#include <Task.hpp>
-/* import core.Fundamental; */
-#include <cxxutil.hpp>
-#include <Exception.hpp>
+#include <Exception.h>
+#include <GPIOManager.h>
+#include <Task.h>
 
-using namespace sys;
 using namespace atmc;
+using namespace sys;
 
 void* operator new (size_t sz)
 {

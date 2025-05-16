@@ -1,33 +1,21 @@
-/* module; */
 #pragma once
 
-#include <cassert>
 #include <coroutine>
-#include <cstdint>
-#include <cstdio>
-#include <cstring>
 #include <cxxutil.h>
-#include <entry.h>
-#include <list>
-#include <runtime_headers.h>
 
 #include <FreeRTOS.h>
-#include <task.h>
-
-/* export module core.Concurrency; */
+#include <../../freertos/include/task.h>
 
 #include <Config.h>
-/* import core.Containers; */
-#include <InplaceQueue.hpp>
 
-/* export */ namespace sys
+namespace sys
 {
     /// @brief
     /// @note Static class.
     class TaskAllocator
     {
                /* Lazy.               */
-        struct alignas(std::max_align_t) ChunkHeader
+        struct alignas(max_align_t) ChunkHeader
         {
             ChunkHeader* prevChunk;
             size_t size;
@@ -44,7 +32,7 @@
         };
 
         /* Lazy.               */
-        alignas(std::max_align_t) static unsigned char stack[atmc::Config::TaskPromiseStackSize];
+        alignas(max_align_t) static unsigned char stack[atmc::Config::TaskPromiseStackSize];
         static ChunkHeader* stackTop;
     public:
         TaskAllocator() = delete;

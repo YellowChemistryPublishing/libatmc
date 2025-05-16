@@ -1,4 +1,3 @@
-/* module; */
 #pragma once
 
 #include <cmath>
@@ -8,7 +7,7 @@
 
 /* export module core.Math; */
 
-/* export */ namespace sys::math
+namespace sys::math
 {
 	template <typename VectorData, size_t N, typename T = float>
 	struct VectorOperators

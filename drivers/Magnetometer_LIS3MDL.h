@@ -1,4 +1,3 @@
-/* module; */
 #pragma once
 
 /// @file Magnetometer_LIS3MDL.cppm
@@ -14,25 +13,17 @@
 #include <cstdint>
 #include <cstring>
 #include <cxxutil.h>
+#include <cxxutil.hpp>
 #include <limits>
 #include <numbers>
 
 #include <Result.h>
-
-/* export module core.Drivers:LIS3MDL; */
-
-/* import core.Concurrency; */
-#include <Task.hpp>
-/* import core.Fundamental; */
-#include <cxxutil.hpp>
-/* import core.IO.SerialInterfaces; */
-#include <SerialInterfaceDevice.hpp>
-/* import core.Library; */
 #include <Result.hpp>
-/* import core.Math; */
-#include <Vector.hpp>
+#include <SerialInterfaceDevice.h>
+#include <Task.h>
+#include <Vector.h>
 
-/* export */ namespace atmc
+namespace atmc
 {
     namespace LIS3MDL
     {
@@ -413,7 +404,7 @@
         /// @param ctrl5 Control register 5.
         /// @return Whether initialization was successful.
         /// @attention Lifetime assumptions! `handle->decltype(*handle)()` < `this->begin(...)` and `this->...` <  `handle->~decltype(*handle)()`.
-        inline Task<HardwareStatus> begin(SerialInterfaceDevice* device, LIS3MDL::RegisterCtrl1 ctrl1 = LIS3MDL::RegisterCtrl1(),
+        inline sys::Task<HardwareStatus> begin(SerialInterfaceDevice* device, LIS3MDL::RegisterCtrl1 ctrl1 = LIS3MDL::RegisterCtrl1(),
                                           LIS3MDL::RegisterCtrl2 ctrl2 = LIS3MDL::RegisterCtrl2(), LIS3MDL::RegisterCtrl3 ctrl3 = LIS3MDL::RegisterCtrl3(),
                                           LIS3MDL::RegisterCtrl4 ctrl4 = LIS3MDL::RegisterCtrl4(), LIS3MDL::RegisterCtrl5 ctrl5 = LIS3MDL::RegisterCtrl5())
         {
@@ -448,16 +439,16 @@
         /// @brief Obtain the iron calibration center currently held during calibration.
         /// @return The iron center, in Gauss.
         /// @attention Lifetime assumptions! `this->beginCalibration()` < `this->hardIronOffsets()` and `this->this->hardIronOffsets()` <  `this->endCalibration()`.
-        inline math::Vector3 debugIronOffsets() const noexcept
+        inline sysm::Vector3 debugIronOffsets() const noexcept
         {
-            return math::Vector3((this->readXMax + this->readXMin) * 0.5f, (this->readYMax + this->readYMin) * 0.5f, (this->readZMax + this->readZMin) * 0.5f);
+            return sysm::Vector3((this->readXMax + this->readXMin) * 0.5f, (this->readYMax + this->readYMin) * 0.5f, (this->readZMax + this->readZMin) * 0.5f);
         }
 
         /// @brief Obtain the value of a data register.
         /// @tparam T `T is LIS3MDL::DataRegisterType`
         /// @return The value of the data register, or an error code.
         template <LIS3MDL::DataRegisterType T>
-        inline Task<Result<T, HardwareStatus>> readDataRegister()
+        inline sys::Task<sys::Result<T, HardwareStatus>> readDataRegister()
         {
             return this->device->readMemoryAs<T>(LIS3MDL::registerAddressOf<T>());
         }
@@ -465,7 +456,7 @@
         /// @tparam T `T is LIS3MDL::ConfigRegisterType`
         /// @return The value of the config register, or an error code.
         template <LIS3MDL::ConfigRegisterType T>
-        inline Task<Result<T, HardwareStatus>> readConfigRegister()
+        inline sys::Task<sys::Result<T, HardwareStatus>> readConfigRegister()
         {
             return this->device->readMemoryAs<T>(LIS3MDL::registerAddressOf<T>());
         }
@@ -474,7 +465,7 @@
         /// @param value The value to write to the config register.
         /// @return Whether the operation was successful.
         template <LIS3MDL::ConfigRegisterType T>
-        inline Task<HardwareStatus> writeConfigRegister(T value)
+        inline sys::Task<HardwareStatus> writeConfigRegister(T value)
         {
             if constexpr (std::is_same<T, LIS3MDL::RegisterCtrl2>::value)
             {
@@ -488,11 +479,11 @@
 
         /// @brief Read the device ID.
         /// @return The device ID, which should be `LIS3MDL_DEVICE_ID`, or an error code.
-        inline Task<Result<uint8_t, HardwareStatus>> deviceID()
+        inline sys::Task<sys::Result<uint8_t, HardwareStatus>> deviceID()
         {
             return this->device->readMemoryAs<uint8_t>(LIS3MDL::RegAddr::WhoAmI);
         }
-        inline Task<Result<bool, HardwareStatus>> selfTest()
+        inline sys::Task<sys::Result<bool, HardwareStatus>> selfTest()
         {
             LIS3MDL::RegisterCtrl1 oldCtrl1; __fence_result_co_return(co_await this->readConfigRegister<LIS3MDL::RegisterCtrl1>(), oldCtrl1);
             LIS3MDL::RegisterCtrl2 oldCtrl2; __fence_result_co_return(co_await this->readConfigRegister<LIS3MDL::RegisterCtrl2>(), oldCtrl2);
@@ -508,16 +499,16 @@
             res = co_await this->writeConfigRegister<LIS3MDL::RegisterCtrl2>(ctrl2);
             __fence_value_co_return(res, res != HardwareStatus::Ok);
 
-            co_await Task<>::delay(20);
+            co_await sys::Task<>::delay(20);
 
             LIS3MDL::RegisterCtrl3 ctrl3;
             reinterpret_cast<uint8_t&>(ctrl3) = 0x00;
             res = co_await this->writeConfigRegister<LIS3MDL::RegisterCtrl3>(ctrl3);
             __fence_value_co_return(res, res != HardwareStatus::Ok);
 
-            co_await Task<>::delay(20);
+            co_await sys::Task<>::delay(20);
 
-            auto readOut = [this]() -> Task<Result<math::Vector3, HardwareStatus>>
+            auto readOut = [this]() -> sys::Task<sys::Result<sysm::Vector3, HardwareStatus>>
             {
                 LIS3MDL::RegisterStatus status;
                 do
@@ -526,9 +517,9 @@
                 }
                 while (status.xyzNewDataAvail == false);
 
-                [[maybe_unused]] math::Vector3Int16 _; __fence_result_co_return(co_await this->readRaw(), _);
+                [[maybe_unused]] sysm::Vector3Int16 _; __fence_result_co_return(co_await this->readRaw(), _);
                     
-                math::Vector3 out = math::Vector3 { 0.0f, 0.0f, 0.0f };
+                sysm::Vector3 out = sysm::Vector3 { 0.0f, 0.0f, 0.0f };
 
                 for (int i = 0; i < 5; i++)
                 {
@@ -539,7 +530,7 @@
                     }
                     while (status.xyzNewDataAvail == false);
 
-                    math::Vector3 read; __fence_result_co_return(co_await this->read(), read);
+                    sysm::Vector3 read; __fence_result_co_return(co_await this->read(), read);
                     out.x += read.x;
                     out.y += read.y;
                     out.z += read.z;
@@ -552,15 +543,15 @@
                 co_return out;
             };
 
-            math::Vector3 outNoST; __fence_result_co_return(co_await readOut(), outNoST);
+            sysm::Vector3 outNoST; __fence_result_co_return(co_await readOut(), outNoST);
 
             reinterpret_cast<uint8_t&>(ctrl1) = 0x1D;
             res = co_await this->writeConfigRegister<LIS3MDL::RegisterCtrl1>(ctrl1);
             __fence_value_co_return(res, res != HardwareStatus::Ok);
 
-            co_await Task<>::delay(60);
+            co_await sys::Task<>::delay(60);
 
-            math::Vector3 outST; __fence_result_co_return(co_await readOut(), outST);
+            sysm::Vector3 outST; __fence_result_co_return(co_await readOut(), outST);
 
             bool pass =
             1.0f <= std::abs(outST.x - outNoST.x) && std::abs(outST.x - outNoST.x) <= 3.0f &&
@@ -579,28 +570,28 @@
 
         /// @brief Read the offset values of the magnetometer.
         /// @return The offset values, or an error code.
-        inline Task<Result<math::Vector3Int16, HardwareStatus>> offset()
+        inline sys::Task<sys::Result<sysm::Vector3Int16, HardwareStatus>> offset()
         {
             uint8_t data[6];
             HardwareStatus res = co_await this->device->readMemory(LIS3MDL::RegAddr::OffsetXRegLM, data);
             __fence_value_co_return(res, res != HardwareStatus::Ok);
-            co_return math::Vector3Int16(s16fb2(data[1], data[0]), s16fb2(data[3], data[2]), s16fb2(data[5], data[4]));
+            co_return sysm::Vector3Int16(sys::s16fb2(data[1], data[0]), sys::s16fb2(data[3], data[2]), sys::s16fb2(data[5], data[4]));
         }
         /// @brief Set the hard-iron offset values of the magnetometer.
         /// @param offset Offset values.
         /// @return Whether the operation was successful.
-        inline Task<HardwareStatus> setOffset(math::Vector3Int16 offset)
+        inline sys::Task<HardwareStatus> setOffset(sysm::Vector3Int16 offset)
         {
-            uint8_t data[6] { lbfs16(offset.x), hbfs16(offset.x), lbfs16(offset.y), hbfs16(offset.y), lbfs16(offset.z), hbfs16(offset.z) };
+            uint8_t data[6] { sys::lbfs16(offset.x), sys::hbfs16(offset.x), sys::lbfs16(offset.y), sys::hbfs16(offset.y), sys::lbfs16(offset.z), sys::hbfs16(offset.z) };
             co_return co_await this->device->writeMemoryChecked(LIS3MDL::RegAddr::OffsetXRegLM, data);
         }
-        inline math::Vector3 softIronScale() const noexcept
+        inline sysm::Vector3 softIronScale() const noexcept
         {
-            return math::Vector3(this->xSI, this->ySI, this->zSI);
+            return sysm::Vector3(this->xSI, this->ySI, this->zSI);
         }
         /// @brief Set the soft-iron scale factors of the magnetometer.
         /// @param si Scale factors.
-        inline void setSoftIronScale(math::Vector3 si)
+        inline void setSoftIronScale(sysm::Vector3 si)
         {
             this->xSI = si.x;
             this->ySI = si.y;
@@ -609,40 +600,40 @@
 
         /// @brief Read the raw magnetometer data.
         /// @return The magnetometer data, or an error code.
-        inline Task<Result<math::Vector3Int16, HardwareStatus>> readRaw()
+        inline sys::Task<sys::Result<sysm::Vector3Int16, HardwareStatus>> readRaw()
         {
             uint8_t data[6];
             HardwareStatus res = co_await this->device->readMemory(LIS3MDL::RegAddr::OutXL, data);
             __fence_value_co_return(res, res != HardwareStatus::Ok);
-            co_return math::Vector3Int16(s16fb2(data[1], data[0]), s16fb2(data[3], data[2]), s16fb2(data[5], data[4]));
+            co_return sysm::Vector3Int16(sys::s16fb2(data[1], data[0]), sys::s16fb2(data[3], data[2]), sys::s16fb2(data[5], data[4]));
         }
         /// @brief Read the magnetometer data.
         /// @return The magnetometer data, or an error code.
-        inline Task<Result<math::Vector3, HardwareStatus>> read()
+        inline sys::Task<sys::Result<sysm::Vector3, HardwareStatus>> read()
         {
-            math::Vector3Int16 raw; __fence_result_co_return(co_await this->readRaw(), raw);
-            co_return math::Vector3(raw.x * this->_gaussPerLSB * this->xSI, raw.y * this->_gaussPerLSB * this->ySI, raw.z * this->_gaussPerLSB * this->zSI);
+            sysm::Vector3Int16 raw; __fence_result_co_return(co_await this->readRaw(), raw);
+            co_return sysm::Vector3(raw.x * this->_gaussPerLSB * this->xSI, raw.y * this->_gaussPerLSB * this->ySI, raw.z * this->_gaussPerLSB * this->zSI);
         }
         /// @brief Read the onboard temperature data.
         /// @return The temperature data, in degC, or an error code.
-        inline Task<Result<float, HardwareStatus>> readTemperature()
+        inline sys::Task<sys::Result<float, HardwareStatus>> readTemperature()
         {
             uint8_t data[2];
             HardwareStatus res = co_await this->device->readMemory(LIS3MDL::RegAddr::TempOutL, data);
             __fence_value_co_return(res, res != HardwareStatus::Ok);
-            co_return (float)s16fb2(data[1], data[0]) / 8.0f + 25.0f;
+            co_return __sc(float, sys::s16fb2(data[1], data[0])) / 8.0f + 25.0f;
         }
 
         /// @brief Read the interrupt threshold value.
         /// @return The interrupt threshold value, or an error code.
-        inline Task<Result<uint16_t, HardwareStatus>> interruptThreshold()
+        inline sys::Task<sys::Result<uint16_t, HardwareStatus>> interruptThreshold()
         {
             return this->device->readUInt16LSBFirst(LIS3MDL::RegAddr::IntThsL);
         }
         /// @brief Set the interrupt threshold value.
         /// @param threshold Threshold value.
         /// @return Whether the operation was successful.
-        inline Task<HardwareStatus> setInterruptThreshold(uint16_t threshold)
+        inline sys::Task<HardwareStatus> setInterruptThreshold(uint16_t threshold)
         {
             threshold &= 0b0111111111111111;
             uint8_t* inputData = reinterpret_cast<uint8_t*>(&threshold);
@@ -652,9 +643,9 @@
 
         /// @brief To start calibrating the magnetometer, call this function first.
         /// @return Whether the operation was successful.
-        inline Task<HardwareStatus> beginCalibration()
+        inline sys::Task<HardwareStatus> beginCalibration()
         {
-            HardwareStatus res = co_await this->setOffset(math::Vector3Int16 { 0, 0, 0 });
+            HardwareStatus res = co_await this->setOffset(sysm::Vector3Int16 { 0, 0, 0 });
             __fence_value_co_return(res, res != HardwareStatus::Ok);
 
             this->readXMin = std::numeric_limits<float>::quiet_NaN();
@@ -671,9 +662,9 @@
         }
         /// @brief Run this function multiple times (strictly, at least once) to calibrate the magnetometer.
         /// @return Whether the operation was successful.
-        inline Task<HardwareStatus> calibrationSingleCycle()
+        inline sys::Task<HardwareStatus> calibrationSingleCycle()
         {
-            math::Vector3 readVal; __fence_result_co_return(co_await this->read(), readVal);
+            sysm::Vector3 readVal; __fence_result_co_return(co_await this->read(), readVal);
             if (std::isnan(this->readXMin) || std::isnan(this->readYMin) || std::isnan(this->readZMin) ||
                 std::isnan(this->readXMax) || std::isnan(this->readYMax) || std::isnan(this->readZMax))
             {
@@ -698,7 +689,7 @@
         }
         /// @brief To end calibrating the magnetometer, call this function when you are done.
         /// @return Whether the operation was successful.
-        inline Task<HardwareStatus> endCalibration()
+        inline sys::Task<HardwareStatus> endCalibration()
         {
             float xDiff = this->readXMax - this->readXMin;
             float yDiff = this->readYMax - this->readYMin;
@@ -707,7 +698,7 @@
             this->xSI = avgDiff / xDiff;
             this->ySI = avgDiff / yDiff;
             this->zSI = avgDiff / zDiff;
-            co_return co_await this->setOffset(math::Vector3Int16
+            co_return co_await this->setOffset(sysm::Vector3Int16
             {
                 int16_t((this->readXMax + this->readXMin) * 0.5f / this->_gaussPerLSB + 0.5f),
                 int16_t((this->readYMax + this->readYMin) * 0.5f / this->_gaussPerLSB + 0.5f),
@@ -720,11 +711,11 @@
         /// @param pred A predicate.
         /// @return Whether the operation was successful.
         template <typename Pred>
-        inline Task<HardwareStatus> calibrateUntil(Pred&& pred)
+        inline sys::Task<HardwareStatus> calibrateUntil(Pred&& pred)
         {
             HardwareStatus res = co_await this->beginCalibration();
             __fence_value_co_return(res, res != HardwareStatus::Ok);
-            if constexpr (!std::convertible_to<decltype(func()), bool>)
+            if constexpr (!std::convertible_to<decltype(pred()), bool>)
             {
                 do
                 {

@@ -1,27 +1,21 @@
-/* module; */
 #pragma once
 
 #include <atomic>
 #include <cassert>
 #include <coroutine>
 #include <cxxutil.h>
+#include <cxxutil.h>
 #include <memory>
 #include <runtime_headers.h>
 #include <span>
 
 #include <InplaceAtomicSet.h>
+#include <Result.h>
+#include <SerialInterfaceDevice.h>
 #include <SpinLock.h>
 
-/* export module core.IO.SerialInterfaces:I2C; */
 
-/* import :Generic; */
-#include <SerialInterfaceDevice.hpp>
-/* import core.Fundamental; */
-#include <cxxutil.hpp>
-/* import core.Library; */
-#include <Result.h>
-
-/* export */ namespace atmc
+namespace atmc
 {
     class I2CDevice;
 

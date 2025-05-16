@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cxxutil.hpp>
+#include <cxxutil.h>
 
 #include <FreeRTOS.h>
 #include <task.h>

@@ -1,6 +1,6 @@
-/* module; */
 #pragma once
 
+#include <coroutine>
 #include <cmath>
 #include <cstring>
 #include <cxxutil.h>
@@ -8,13 +8,9 @@
 #include <print>
 
 #include <CompilerWarnings.h>
-#include <Exception.hpp>
+#include <Exception.h>
 
-/* export module core.Library:Result; */
-
-/* import core.Fundamental; */
-
-/* export */ namespace sys
+namespace sys
 {
     template <typename T, typename Err>
     struct ResultAwaiter;
@@ -124,7 +120,7 @@
 			T value;
 			Err error;
 		};
-		char ok;
+		signed char ok;
 	};
 
 	/// @brief A result type that can hold either a value or nothing.

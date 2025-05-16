@@ -1,4 +1,3 @@
-/* module; */
 #pragma once
 
 #include <bit>
@@ -7,7 +6,7 @@
 
 /* export module core.Containers:InplaceQueue; */
 
-/* export */ namespace sys
+namespace sys
 {
     /// @brief A queue that stores elements in-place.
     /// @tparam T The type of elements to store.

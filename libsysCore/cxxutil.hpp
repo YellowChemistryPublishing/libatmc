@@ -1,24 +1,11 @@
-/* module; */
 #pragma once
 
 #include <cstdint>
-#include <cxxabi.h>
-#include <cxxutil.h>
-#include <exception>
-#include <memory>
-#include <print>
-#include <runtime_headers.h>
-#include <utility>
+#include <limits>
 
-#include <FreeRTOS.h>
-#include <task.h>
-
-#include <CompilerWarnings.h>
 #include <Result.hpp>
 
-/* export module core.Fundamental; */
-
-/* export */ namespace sys
+namespace sys
 {
 	/// @brief Obtain the two's complement signed 16-bit integer from two bytes.
 	/// @param msb The most significant byte.

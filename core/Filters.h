@@ -1,13 +1,10 @@
-/* module; */
 #pragma once
 
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
 
-/* export module core.Library:Filters; */
-
-/* export */ namespace atmc
+namespace atmc
 {
     template <size_t N, typename T = float>
     requires (N > 0)

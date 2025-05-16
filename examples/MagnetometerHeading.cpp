@@ -9,22 +9,23 @@
 #include <print>
 
 /* import core.Concurrency; */
-#include <Task.hpp>
+#include <Task.h>
 /* import core.Drivers; */
-#include <Magnetometer_LIS3MDL.hpp>
-#include <AccelGyro_LSM6DS3.hpp>
-#include <Driver_SDInterface.hpp>
+#include <Magnetometer_LIS3MDL.h>
+#include <AccelGyro_LSM6DS3.h>
+#include <Driver_SDInterface.h>
 /* import core.Fundamental; */
-#include <cxxutil.hpp>
+#include <cxxutil.h>
 /* import core.Math; */
-#include <Vector.hpp>
+#include <Vector.h>
 /* import core.IO.SerialInterfaces; */
-#include <SerialInterfaceDevice.hpp>
-#include <I2CDevice.hpp>
-#include <SPIDevice.hpp>
+#include <SerialInterfaceDevice.h>
+#include <I2CDevice.h>
+#include <SPIDevice.h>
 
 using namespace atmc;
-using namespace atmc::math;
+using namespace sys;
+using namespace sysm;
 
 // void init()
 // {
@@ -199,8 +200,8 @@ __async(void) imuTest()
                 break;
             }
         }
-        std::memmove(data, &data[lastFinalIndex + 1], (readCount - lastFinalIndex - 1) * sizeof(LSM6DS3::FIFOData));
-        readRemainder = LSM6DS3::FIFOChunkSize - (readCount - lastFinalIndex - 1);
+        std::memmove(data, &data[lastFinalIndex + 1], unsigned(__sc(int, readCount) - lastFinalIndex - 1) * sizeof(LSM6DS3::FIFOData));
+        readRemainder = LSM6DS3::FIFOChunkSize - (__sc(int, readCount) - lastFinalIndex - 1);
     }
 }
 

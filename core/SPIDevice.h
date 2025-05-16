@@ -1,28 +1,21 @@
-/* module; */
 #pragma once
 
 #include <atomic>
 #include <cassert>
 #include <coroutine>
 #include <cxxutil.h>
+#include <cxxutil.h>
 #include <memory>
 #include <runtime_headers.h>
 #include <span>
 
+#include <GPIOManager.h>
 #include <InplaceAtomicSet.h>
 #include <InplaceSet.h>
+#include <SerialInterfaceDevice.h>
 #include <SpinLock.h>
 
-/* export module core.IO.SerialInterfaces:SPI; */
-
-/* import :Generic; */
-#include <SerialInterfaceDevice.hpp>
-/* import core.Fundamental; */
-#include <cxxutil.hpp>
-/* import core.IO.Embedded; */
-#include <GPIOManager.hpp>
-
-/* export */ namespace atmc
+namespace atmc
 {
     class SPIDevice;
 

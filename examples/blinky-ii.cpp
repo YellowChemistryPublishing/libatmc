@@ -1,10 +1,7 @@
 #include <entry.h>
 
-#include <Config.h>
-#include <GPIOManager.hpp>
-#include <Result.hpp>
-#include <Task.hpp>
-#include <Thread.hpp>
+#include <module/core.IO.Embedded.hpp>
+#include <module/sys.hpp>
 
 using namespace sys;
 using namespace atmc;

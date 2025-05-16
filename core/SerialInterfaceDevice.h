@@ -1,21 +1,16 @@
-/* module; */
 #pragma once
 
 #include <coroutine>
 #include <cstdint>
 #include <cxxutil.h>
+#include <cxxutil.hpp>
+#include <entry.h>
 #include <span>
 
-/* export module core.IO.SerialInterfaces:Generic; */
+#include <Task.h>
+#include <Result.h>
 
-/* import core.Concurrency; */
-#include <Task.hpp>
-/* import core.Fundamental; */
-#include <cxxutil.hpp>
-/* import core.Library; */
-#include <Result.hpp>
-
-/* export */ namespace atmc
+namespace atmc
 {
     /// @brief A generic device communication over a serial interface.
     /// @note Pass `byref`.

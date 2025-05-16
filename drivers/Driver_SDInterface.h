@@ -1,20 +1,13 @@
-/* module; */
 #pragma once
 
 #include <coroutine>
 #include <cstdint>
 #include <cxxutil.h>
+#include <cxxutil.hpp>
 #include <span>
 
-/* export module core.Drivers:SD; */
-
-/* import core.Concurrency; */
-#include <Task.hpp>
-/* import core.Fundamental; */
-#include <cxxutil.hpp>
-/* import core.IO.SerialInterfaces; */
-#include <SPIDevice.hpp>
-/* import core.Library; */
+#include <Task.h>
+#include <SPIDevice.h>
 
 namespace atmc
 {
@@ -126,7 +119,7 @@ namespace atmc
             return crc;
         }
 
-        inline Task<HardwareStatus> waitBytesUnchecked(size_t count)
+        inline sys::Task<HardwareStatus> waitBytesUnchecked(size_t count)
         {
             uint8_t block[16];
             while (count > 16)
@@ -138,7 +131,7 @@ namespace atmc
             co_return co_await this->device->readMemoryUnchecked(std::span(block, count));
         }
 
-        inline Task<Result<SDI::Response, HardwareStatus>> sendCommandUnchecked(uint8_t cmd, uint32_t arg, bool acmd = false)
+        inline sys::Task<sys::Result<SDI::Response, HardwareStatus>> sendCommandUnchecked(uint8_t cmd, uint32_t arg, bool acmd = false)
         {
             if (acmd)
             {
@@ -175,7 +168,7 @@ namespace atmc
         /// ...
         /// (&*device)->~decltype(*&*device)();
         /// ```
-        inline Driver_SDInterface(FencedPointer<SPIDevice> device) : device(&*device /* Contract implied: `device != nullptr`. */)
+        inline Driver_SDInterface(sys::FencedPointer<SPIDevice> device) : device(&*device /* Contract implied: `device != nullptr`. */)
         {
             this->generateCRCTable();
         }
@@ -190,11 +183,11 @@ namespace atmc
         /// ...
         /// this->device->~decltype(*this->device)();
         /// ```
-        inline Task<HardwareStatus> begin()
+        inline sys::Task<HardwareStatus> begin()
         {
             // `this->device` is technically not-owned, but just to be safe...
             this->device->begin();
-            HardwareStatus res = this->device->waitReadySync(4, Task<>::MaxDelay);
+            HardwareStatus res = this->device->waitReadySync(4, sys::Task<>::MaxDelay);
             __fence_value_co_return(res, res != HardwareStatus::Ok);
 
             this->generateCRCTable();

@@ -1,11 +1,11 @@
 #include <entry.h>
 
-#include <Config.h>
-#include <GPIOManager.hpp>
-#include <Task.hpp>
-#include <Thread.hpp>
+#include <module/core.IO.Embedded.hpp>
+#include <module/sys.hpp>
+#include <module/sys.Threading.hpp>
 
 using namespace atmc;
+using namespace sys;
 
 struct ExampleConfig final
 {

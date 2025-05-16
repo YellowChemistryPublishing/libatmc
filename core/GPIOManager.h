@@ -1,4 +1,3 @@
-/* module; */
 #pragma once
 
 #include <atomic>
@@ -7,10 +6,11 @@
 #include <coroutine>
 #include <cstring>
 #include <cxxutil.h>
+#include <entry.h>
 #include <runtime_headers.h>
 
 #include <Config.h>
-#include <Exception.hpp>
+#include <Exception.h>
 #include <InplaceAtomicSet.h>
 #include <InplaceVector.h>
 #include <Result.h>
@@ -20,7 +20,7 @@
 /* export module core.IO.Embedded; */
 
 /* import core.Concurrency; */
-#include <Task.hpp>
+#include <Task.h>
 
 #define __gpio_declare_pin(port, pin) static const GPIOPin P##port##pin
 #define __gpio_declare_port_pins(port) \
@@ -83,7 +83,7 @@ __gpio_define_port_pins(I); \
 __gpio_define_port_pins(J); \
 __gpio_define_port_pins(K)
 
-/* export */ namespace atmc
+namespace atmc
 {
     using ADCChannel = int;
 

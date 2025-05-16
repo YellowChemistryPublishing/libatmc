@@ -43,4 +43,4 @@ while (false)
 #define __fence_value_co_return(val, retCond) if (retCond) co_return val;
 /// @def __fence_contract_enforce(cond)
 /// @brief Enforce a contract, throwing a `ContractViolationException` if `cond` is false.
-#define __fence_contract_enforce(cond) do { const bool __expr = cond; if (!__expr) __throw(ContractViolationException("Contract violated, condition `" #cond "` evaluated to `false`.")); [[assume(__expr)]]; } while (false);
+#define __fence_contract_enforce(cond) do { const bool __expr = cond; if (!__expr) __throw(::sys::ContractViolationException("Contract violated, condition `" #cond "` evaluated to `false`.")); [[assume(__expr)]]; } while (false);
