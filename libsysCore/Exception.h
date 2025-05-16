@@ -100,7 +100,7 @@ namespace sys
 		{
 			__push_nowarn(__clWarn_pedantic);
 			void* jmp[2] { &&ThrowNull, &&Op };
-			goto *jmp[__sc(bool, this->value)];
+			goto *jmp[bool(this->value)];
 			__pop_nowarn();
 		ThrowNull:
 			__throw(NullPointerException());
@@ -114,7 +114,7 @@ namespace sys
 		{
 			__push_nowarn(__clWarn_pedantic);
 			void* jmp[2] { &&ThrowNull, &&Op };
-			goto *jmp[__sc(bool, this->value)];
+			goto *jmp[bool(this->value)];
 			__pop_nowarn();
 		ThrowNull:
 			__throw(NullPointerException());
@@ -128,7 +128,7 @@ namespace sys
 		{
 			__push_nowarn(__clWarn_pedantic);
 			void* jmp[2] { &&ThrowNull, &&Op };
-			goto *jmp[__sc(bool, this->value)];
+			goto *jmp[bool(this->value)];
 			__pop_nowarn();
 		ThrowNull:
 			__throw(NullPointerException());
@@ -143,7 +143,7 @@ namespace sys
 		{
 			__push_nowarn(__clWarn_pedantic);
 			void* jmp[2] { &&ThrowNull, &&Op };
-			goto *jmp[__sc(bool, this->value)];
+			goto *jmp[bool(this->value)];
 			__pop_nowarn();
 		ThrowNull:
 			__throw(NullPointerException());
@@ -180,7 +180,7 @@ namespace sys
 		{
 			__push_nowarn(__clWarn_pedantic);
 			void* jmp[2] { &&ThrowNull, &&Op };
-			goto *jmp[__sc(bool, this->value)];
+			goto *jmp[bool(this->value)];
 			__pop_nowarn();
 		ThrowNull:
 			__throw(NullPointerException());
@@ -195,7 +195,7 @@ namespace sys
 		{
 			__push_nowarn(__clWarn_pedantic);
 			void* jmp[2] { &&ThrowNull, &&Op };
-			goto *jmp[__sc(bool, this->value)];
+			goto *jmp[bool(this->value)];
 			__pop_nowarn();
 		ThrowNull:
 			__throw(NullPointerException());
@@ -212,7 +212,7 @@ namespace sys
 		{
 			__push_nowarn(__clWarn_pedantic);
 			void* jmp[2] { &&ThrowNull, &&Op };
-			goto *jmp[__sc(bool, this->value)];
+			goto *jmp[bool(this->value)];
 			__pop_nowarn();
 		ThrowNull:
 			__throw(NullPointerException());

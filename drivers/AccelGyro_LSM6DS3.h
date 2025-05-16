@@ -777,7 +777,7 @@ namespace atmc
                     ctrl8._noDirectAccessEnableAccelLPF2 = false;
                     ctrl1._noDirectAccessLPF1Bandwidth = odrMultiplierBw == 1.0f / 4.0f ? FrequencySelection::QuarterOutputDataRate : FrequencySelection::HalfOutputDataRate;
                     ctrl8._noDirectAccessAccelLPF2Cutoff = 0;
-                    ctrl8._noDirectAccessInputComposite = __sc(InputPreference, 0);
+                    ctrl8._noDirectAccessInputComposite = InputPreference(0);
                 }
             }
             else // if (sel == FilterSelection::HighPass)
@@ -794,7 +794,7 @@ namespace atmc
                         ctrl8._noDirectAccessAccelLPF2Cutoff = 0b11;
                     else // if (odrMultiplierBw == 1.0f / 4.0f)
                         ctrl8._noDirectAccessAccelLPF2Cutoff = 0b00;
-                    ctrl8._noDirectAccessInputComposite = __sc(InputPreference, 0);
+                    ctrl8._noDirectAccessInputComposite = InputPreference(0);
                 }
             }
         }

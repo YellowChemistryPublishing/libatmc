@@ -621,7 +621,7 @@ namespace atmc
             uint8_t data[2];
             HardwareStatus res = co_await this->device->readMemory(LIS3MDL::RegAddr::TempOutL, data);
             __fence_value_co_return(res, res != HardwareStatus::Ok);
-            co_return __sc(float, sys::s16fb2(data[1], data[0])) / 8.0f + 25.0f;
+            co_return float(sys::s16fb2(data[1], data[0])) / 8.0f + 25.0f;
         }
 
         /// @brief Read the interrupt threshold value.

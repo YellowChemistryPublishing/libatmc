@@ -25,6 +25,7 @@ Types that act as static classes must be annotated with `/// @note Static class.
 The only mandatory field for production code is an `@attention Lifetime assumptions!` clause on functions, with a `cpp` block highlighting the lifetime requirements of non-trivial parameters.
 
 No C-style casts! Shortened macros for all casts are provided for convenience, please use those! (i.e. `__sc(T, expr)` equiv. `static_cast<T>(expr)`.)
+Alternatively, for many builtin types, prefer invoking their constructors explicitly. (i.e. `unsigned int(2.0f)`.)
 
 Where template parameters have restricted domain or constraints, they must be specified with a `requires` clause.
 

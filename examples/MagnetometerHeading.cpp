@@ -1,27 +1,16 @@
-#include <coroutine>
 #include <cxxutil.h>
+#include <cxxutil.hpp>
 #include <cstdio>
 #include <entry.h>
-#include <iostream>
-#include <list>
-#include <mutex>
-#include <thread>
 #include <print>
 
-/* import core.Concurrency; */
-#include <Task.h>
-/* import core.Drivers; */
-#include <Magnetometer_LIS3MDL.h>
 #include <AccelGyro_LSM6DS3.h>
-#include <Driver_SDInterface.h>
-/* import core.Fundamental; */
-#include <cxxutil.h>
-/* import core.Math; */
-#include <Vector.h>
-/* import core.IO.SerialInterfaces; */
-#include <SerialInterfaceDevice.h>
 #include <I2CDevice.h>
+#include <Magnetometer_LIS3MDL.h>
+#include <SerialInterfaceDevice.h>
 #include <SPIDevice.h>
+#include <Task.h>
+#include <Vector.h>
 
 using namespace atmc;
 using namespace sys;

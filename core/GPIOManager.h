@@ -3,8 +3,6 @@
 #include <atomic>
 #include <bit>
 #include <board.h>
-#include <coroutine>
-#include <cstring>
 #include <cxxutil.h>
 #include <entry.h>
 #include <runtime_headers.h>
@@ -271,7 +269,7 @@ namespace atmc
 
             if (!GPIOManager::adcFlags[pin.adcIndex].test_and_set())
             {
-                HardwareStatus res = __sc(HardwareStatus, HAL_ADC_Start_DMA(hadc, __reic(uint32_t*, __cstc(uint16_t*, GPIOManager::adcRaw[pin.adcIndex])), hadc->Init.NbrOfConversion));
+                HardwareStatus res = HardwareStatus(HAL_ADC_Start_DMA(hadc, __reic(uint32_t*, __cstc(uint16_t*, GPIOManager::adcRaw[pin.adcIndex])), hadc->Init.NbrOfConversion));
                 if (res != HardwareStatus::Ok)
                 {
                     GPIOManager::adcFlags[pin.adcIndex].clear();
@@ -286,7 +284,7 @@ namespace atmc
             });
 
             float maxVal = (1u << resolution) - 1;
-            co_return __sc(float, GPIOManager::adcRaw[pin.adcIndex][pin.rank]) / maxVal;
+            co_return float(GPIOManager::adcRaw[pin.adcIndex][pin.rank]) / maxVal;
         }
         
         /// @brief Set a pin.
@@ -294,7 +292,7 @@ namespace atmc
         /// @param state The state to set the pin to.
         inline static void digitalWrite(GPIOPin pin, GPIOPin::State state)
         {
-            HAL_GPIO_WritePin(__reic(GPIO_TypeDef*, pin.port), pin.pin, __sc(GPIO_PinState, state));
+            HAL_GPIO_WritePin(__reic(GPIO_TypeDef*, pin.port), pin.pin, GPIO_PinState(state));
         }
 
         inline static HardwareStatus pwmWrite(PWMPin pin, float duty)
@@ -304,9 +302,9 @@ namespace atmc
             TIM_HandleTypeDef* htim = pin.internalHandle();
             __fence_value_return(HardwareStatus::Error, !htim);
 
-            htim->Instance->CCR1 = __sc(uint32_t, htim->Instance->ARR * duty + 0.5f);
+            htim->Instance->CCR1 = uint32_t(htim->Instance->ARR * duty + 0.5f);
 
-            return __sc(HardwareStatus, HAL_TIM_PWM_Start(htim, uint32_t(pin.channel)));
+            return HardwareStatus(HAL_TIM_PWM_Start(htim, uint32_t(pin.channel)));
         }
         inline static HardwareStatus pwmClear(PWMPin pin)
         {
@@ -315,7 +313,7 @@ namespace atmc
             TIM_HandleTypeDef* htim = pin.internalHandle();
             __fence_value_return(HardwareStatus::Error, !htim);
 
-            return __sc(HardwareStatus, HAL_TIM_PWM_Stop(htim, uint32_t(pin.channel)));
+            return HardwareStatus(HAL_TIM_PWM_Stop(htim, uint32_t(pin.channel)));
         }
 
         friend void ::HAL_GPIO_EXTI_Callback(uint16_t pin);
