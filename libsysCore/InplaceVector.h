@@ -1,6 +1,6 @@
 #pragma once
 
-namespace atmc
+namespace sys
 {
     template <typename T, size_t Capacity>
     requires (Capacity > 0)

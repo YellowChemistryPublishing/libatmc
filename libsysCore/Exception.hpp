@@ -4,7 +4,7 @@
 #include <memory>
 #include <utility>
 
-namespace atmc
+namespace sys
 {
 	/// @brief Base type for all managed exceptions.
 	/// @note

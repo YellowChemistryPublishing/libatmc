@@ -3,7 +3,7 @@
 #include <atomic>
 #include <mutex>
 
-namespace atmc
+namespace sys
 {
     struct LockGuard;
 

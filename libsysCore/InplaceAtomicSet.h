@@ -2,7 +2,7 @@
 
 #include <atomic>
 
-namespace atmc
+namespace sys
 {
     /// @brief An in-place set of atomic values that can be exchanged.
     /// @tparam T Type of value to store.

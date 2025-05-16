@@ -8,7 +8,7 @@
 
 /* export module core.Math; */
 
-/* export */ namespace atmc::math
+/* export */ namespace sys::math
 {
 	template <typename VectorData, size_t N, typename T = float>
 	struct VectorOperators
@@ -258,3 +258,5 @@
 		constexpr bool operator==(const Matrix3x3UInt8& rhs) const noexcept = default;
 	};
 }
+
+namespace sysm = sys::math;

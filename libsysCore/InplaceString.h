@@ -2,7 +2,7 @@
 
 #include <string_view>
 
-namespace atmc
+namespace sys
 {
     template <size_t Capacity, typename CharType = char>
     class InplaceString

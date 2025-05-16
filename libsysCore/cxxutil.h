@@ -6,12 +6,6 @@
 
 #include <CompilerWarnings.h>
 
-#ifdef STM32H7xx
-#define __dma_rw __attribute__((section(".dma_data")))
-#else
-#define __dma_rw
-#endif
-
 /// @def __inline_always
 /// @brief Force inline a function.
 #define __inline_always [[gnu::always_inline]] inline
@@ -50,5 +44,3 @@ while (false)
 /// @def __fence_contract_enforce(cond)
 /// @brief Enforce a contract, throwing a `ContractViolationException` if `cond` is false.
 #define __fence_contract_enforce(cond) do { const bool __expr = cond; if (!__expr) __throw(ContractViolationException("Contract violated, condition `" #cond "` evaluated to `false`.")); [[assume(__expr)]]; } while (false);
-
-#define __async(void) ::atmc::Async

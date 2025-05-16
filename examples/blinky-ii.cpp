@@ -6,6 +6,7 @@
 #include <Task.hpp>
 #include <Thread.hpp>
 
+using namespace sys;
 using namespace atmc;
 
 struct ExampleConfig final

@@ -20,7 +20,7 @@
 /* import core.Containers; */
 #include <InplaceQueue.hpp>
 
-/* export */ namespace atmc
+/* export */ namespace sys
 {
     /// @brief
     /// @note Static class.
@@ -44,7 +44,7 @@
         };
 
         /* Lazy.               */
-        alignas(std::max_align_t) static unsigned char stack[Config::TaskPromiseStackSize];
+        alignas(std::max_align_t) static unsigned char stack[atmc::Config::TaskPromiseStackSize];
         static ChunkHeader* stackTop;
     public:
         TaskAllocator() = delete;
@@ -52,7 +52,7 @@
         inline static void* alloc(size_t sz) noexcept
         {
             size_t chunkSize = (sz + alignof(std::max_align_t) - 1) & -alignof(std::max_align_t);
-            if ((!TaskAllocator::stackTop ? TaskAllocator::stack : __sc(unsigned char*, TaskAllocator::stackTop->next())) + sizeof(ChunkHeader) + chunkSize >= TaskAllocator::stack + Config::TaskPromiseStackSize) [[unlikely]]
+            if ((!TaskAllocator::stackTop ? TaskAllocator::stack : __sc(unsigned char*, TaskAllocator::stackTop->next())) + sizeof(ChunkHeader) + chunkSize >= TaskAllocator::stack + atmc::Config::TaskPromiseStackSize) [[unlikely]]
                 return nullptr;
             ChunkHeader* header = [&]
             {
@@ -117,7 +117,7 @@
         {
             return false;
         }
-        __inline_never std::coroutine_handle<> await_suspend(std::coroutine_handle<> handle) noexcept
+        __inline_never std::coroutine_handle<> await_suspend(std::coroutine_handle<>) noexcept
         {
             taskYIELD();
             return this->handle.promise().continuation;
@@ -238,7 +238,7 @@
                 co_await Task<>::yield();
         }
 
-        friend struct atmc::TaskPromiseCore<T>;
+        friend struct sys::TaskPromiseCore<T>;
     private:
         std::coroutine_handle<TaskPromise<T>> handle;
 
@@ -288,7 +288,7 @@
                 auto handle = std::coroutine_handle<AsyncPromise>::from_address(pvParams);
                 handle.resume();
                 vTaskDelete(nullptr);
-            }, "Async", Config::AsyncThreadStackSizeWords, handle.address(), Config::AsyncThreadPriority, nullptr);
+            }, "Async", atmc::Config::AsyncThreadStackSizeWords, handle.address(), atmc::Config::AsyncThreadPriority, nullptr);
         }
     };
 
@@ -297,3 +297,5 @@
         return Async(std::coroutine_handle<AsyncPromise>::from_promise(*this));
     }
 }
+
+#define __async(void) ::sys::Async

@@ -224,12 +224,12 @@ __gpio_define_port_pins(K)
         
         /// @brief Await a pin interrupt, as preconfigured.
         /// @param pin The pin number to await.
-        inline static Task<> pinInterrupt(uint16_t pin)
+        inline static sys::Task<> pinInterrupt(uint16_t pin)
         {
             int pinIndex = std::bit_width(pin) - 1;
             GPIOManager::pinFlag[pinIndex].test_and_set();
             while (GPIOManager::pinFlag[pinIndex].test())
-                co_await Task<>::yield();
+                co_await sys::Task<>::yield();
             co_return;
         }
 
@@ -240,7 +240,7 @@ __gpio_define_port_pins(K)
         {
             return HAL_GPIO_ReadPin(__reic(GPIO_TypeDef*, pin.port), pin.pin);
         }
-        inline static Task<Result<float, HardwareStatus>> analogRead(AnalogPin pin)
+        inline static sys::Task<sys::Result<float, HardwareStatus>> analogRead(AnalogPin pin)
         {
             ADC_HandleTypeDef* hadc = pin.internalHandle();
             __fence_value_co_return(HardwareStatus::Error, !hadc);
@@ -280,7 +280,7 @@ __gpio_define_port_pins(K)
                 // `HAL_ADC_Stop_DMA(hadc)` called in ISR.
             }
 
-            co_await Task<>::waitUntil([&]
+            co_await sys::Task<>::waitUntil([&]
             {
                 return !GPIOManager::adcFlags[pin.adcIndex].test();
             });

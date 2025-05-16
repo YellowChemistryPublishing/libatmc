@@ -122,8 +122,14 @@ target_link_libraries(rt PUBLIC freertos_kernel)
 
 # sysCore Library
 
-add_library(sysCore INTERFACE)
-target_include_directories(sysCore INTERFACE "libsysCore")
+file(GLOB SYSCORE_SRCS CONFIGURE_DEPENDS
+    "libsysCore/*.h"
+    "libsysCore/*.cpp"
+)
+
+add_library(sysCore STATIC ${SYSCORE_SRCS})
+target_include_directories(sysCore PUBLIC "/" "core" "libsysCore")
+target_link_libraries(sysCore PUBLIC rt freertos_kernel)
 
 # core Library
 
@@ -137,7 +143,7 @@ file(GLOB_RECURSE CORE_MODULES CONFIGURE_DEPENDS
 
 add_library(core STATIC ${CORE_SRCS})
 target_sources(core PUBLIC FILE_SET CXX_MODULES FILES ${CORE_MODULES})
-target_include_directories(core PUBLIC "core" "/")
+target_include_directories(core PUBLIC "/" "core")
 target_link_libraries(core PUBLIC rt freertos_kernel sysCore)
 
 # drivers Library

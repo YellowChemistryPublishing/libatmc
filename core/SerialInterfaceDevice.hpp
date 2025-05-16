@@ -26,23 +26,23 @@
         /// @param trials Number of trials.
         /// @param timeout Timeout.
         /// @return Whether the operation was successful.
-        virtual HardwareStatus waitReadySync(uint32_t trials, uint32_t timeout = Task<>::MaxDelay) = 0;
+        virtual HardwareStatus waitReadySync(uint32_t trials, uint32_t timeout = sys::Task<>::MaxDelay) = 0;
     
         /// @brief Read data to a register.
         /// @param memAddr Register address.
         /// @param data Data to read.
         /// @return Whether the operation was successful.
-        virtual Task<HardwareStatus> readMemory(uint16_t memAddr, std::span<uint8_t> data) = 0;
+        virtual sys::Task<HardwareStatus> readMemory(uint16_t memAddr, std::span<uint8_t> data) = 0;
         /// @brief Write data from a register.
         /// @param memAddr Register address.
         /// @param data write to read.
         /// @return Whether the operation was successful.
-        virtual Task<HardwareStatus> writeMemory(uint16_t memAddr, std::span<uint8_t> data) = 0;
+        virtual sys::Task<HardwareStatus> writeMemory(uint16_t memAddr, std::span<uint8_t> data) = 0;
 
         /// @brief Read a 16-bit unsigned integer from a register.
         /// @param memAddr Register address.
         /// @return The value read.
-        inline Task<Result<uint16_t, HardwareStatus>> readUInt16LSBFirst(uint16_t memAddr)
+        inline sys::Task<sys::Result<uint16_t, HardwareStatus>> readUInt16LSBFirst(uint16_t memAddr)
         {
             uint8_t data[2];
             HardwareStatus res = co_await this->readMemory(memAddr, std::span(data, 2));
@@ -52,12 +52,12 @@
         /// @brief Read a 16-bit signed integer from a register.
         /// @param memAddr Register address.
         /// @return The value read.
-        inline Task<Result<int16_t, HardwareStatus>> readInt16LSBFirst(uint16_t memAddr)
+        inline sys::Task<sys::Result<int16_t, HardwareStatus>> readInt16LSBFirst(uint16_t memAddr)
         {
             uint8_t data[2];
             HardwareStatus res = co_await this->readMemory(memAddr, std::span(data, 2));
             __fence_value_co_return(res, res != HardwareStatus::Ok);
-            co_return s16fb2(data[1], data[0]);
+            co_return sys::s16fb2(data[1], data[0]);
         }
 
         /// @brief Read contiguous data from a register as a specific type.
@@ -67,7 +67,7 @@
         /// @return The value read.
         template <typename T>
         requires (std::is_default_constructible<T>::value && std::is_trivially_copyable<T>::value)
-        inline Task<Result<T, HardwareStatus>> readMemoryAs(uint16_t memAddr, uint16_t dataSize = sizeof(T))
+        inline sys::Task<sys::Result<T, HardwareStatus>> readMemoryAs(uint16_t memAddr, uint16_t dataSize = sizeof(T))
         {
             T ret;
             HardwareStatus res = co_await this->readMemory(memAddr, std::span(reinterpret_cast<uint8_t*>(&ret), dataSize));
@@ -82,7 +82,7 @@
         /// @return Whether the operation was successful.
         template <typename DataType>
         requires (std::is_default_constructible<DataType>::value)
-        inline Task<HardwareStatus> writeMemoryChecked(uint16_t memAddr, DataType data, uint16_t dataSize = sizeof(DataType))
+        inline sys::Task<HardwareStatus> writeMemoryChecked(uint16_t memAddr, DataType data, uint16_t dataSize = sizeof(DataType))
         {
             HardwareStatus res = co_await this->writeMemory(memAddr, std::span(reinterpret_cast<uint8_t*>(&data), dataSize));
             __fence_value_co_return(res, res != HardwareStatus::Ok);
@@ -102,7 +102,7 @@
         /// @return Whether the operation was successful.
         template <typename DataType, size_t N>
         requires (std::is_default_constructible<DataType>::value)
-        inline Task<HardwareStatus> writeMemoryChecked(uint16_t memAddr, DataType (&data)[N])
+        inline sys::Task<HardwareStatus> writeMemoryChecked(uint16_t memAddr, DataType (&data)[N])
         {
             HardwareStatus res = co_await this->writeMemory(memAddr, std::span(reinterpret_cast<uint8_t*>(&data), sizeof(DataType) * N));
             __fence_value_co_return(res, res != HardwareStatus::Ok);

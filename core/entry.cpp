@@ -10,6 +10,7 @@
 #include <cxxutil.hpp>
 #include <Exception.hpp>
 
+using namespace sys;
 using namespace atmc;
 
 void* operator new (size_t sz)

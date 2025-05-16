@@ -7,7 +7,7 @@
 
 /* export module core.Containers:InplaceQueue; */
 
-/* export */ namespace atmc
+/* export */ namespace sys
 {
     /// @brief A queue that stores elements in-place.
     /// @tparam T The type of elements to store.

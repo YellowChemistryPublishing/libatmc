@@ -6,7 +6,7 @@
 #include <FreeRTOS.h>
 #include <task.h>
 
-namespace atmc
+namespace sys
 {
     class Timer
     {

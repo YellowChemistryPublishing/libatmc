@@ -14,20 +14,12 @@
 #include <task.h>
 
 #include <CompilerWarnings.h>
+#include <Result.hpp>
 
 /* export module core.Fundamental; */
 
-/* export */ namespace atmc
+/* export */ namespace sys
 {
-	/// @brief The status of a hardware operation.
-	enum class HardwareStatus : uint_least8_t
-	{
-		Ok = HAL_OK,
-		Error = HAL_ERROR,
-		Busy = HAL_BUSY,
-		Timeout = HAL_TIMEOUT
-	};
-
 	/// @brief Obtain the two's complement signed 16-bit integer from two bytes.
 	/// @param msb The most significant byte.
 	/// @param lsb The least significant byte.
@@ -57,34 +49,10 @@
 	/// @param value The value to convert.
 	/// @return The bounded integral value.
 	template <std::integral T, std::floating_point ValueType = float>
-	constexpr T boundedCast(ValueType value)
+	constexpr Result<T> boundedCast(ValueType value)
 	{
-		if (value > std::numeric_limits<T>::max())
-			return std::numeric_limits<T>::max();
-		else if (value < std::numeric_limits<T>::lowest())
-			return std::numeric_limits<T>::lowest();
-		else return T(value);
+		if (std::numeric_limits<T>::lowest() <= value && value <= std::numeric_limits<T>::max()) [[likely]]
+            return T(value);
+        else return nullptr;
 	}
-
-    struct ThreadCriticalSectionISR
-    {
-        __inline_always ThreadCriticalSectionISR() : irqStatus(taskENTER_CRITICAL_FROM_ISR())
-        { }
-        __inline_always ~ThreadCriticalSectionISR()
-        {
-            taskEXIT_CRITICAL_FROM_ISR(this->irqStatus);
-        }
-    private: UBaseType_t irqStatus;
-    };
-    struct ThreadCriticalSection
-    {
-        __inline_always ThreadCriticalSection()
-        {
-            taskENTER_CRITICAL();
-        }
-        __inline_always ~ThreadCriticalSection()
-        {
-            taskEXIT_CRITICAL();
-        }
-    };
 }
