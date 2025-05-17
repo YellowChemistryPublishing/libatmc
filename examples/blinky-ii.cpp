@@ -1,6 +1,7 @@
-#include <entry.h>
+#include <print>
 
 #include <module/core.IO.Embedded.hpp>
+#include <module/core.hpp>
 #include <module/sys.hpp>
 
 using namespace sys;
@@ -9,12 +10,12 @@ using namespace atmc;
 struct ExampleConfig final
 {
     ExampleConfig() = delete;
-    
+
     constexpr static AnalogPin potPin = AnalogPin(0, 0);
     constexpr static PWMPin ledPin = PWMPin(0, 0);
 };
 
-Async entryPoint()
+__async(void) entryPoint()
 {
     while (true)
     {

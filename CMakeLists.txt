@@ -7,24 +7,49 @@ enable_language(ASM C CXX)
 
 set(BOARD_NAME "STM32H753ZI")
 
+# Helpers.
+
+find_program(RUN_CPPCHECK cppcheck PATHS "C:/Program Files/Cppcheck" "/usr/bin")
+if (NOT RUN_CPPCHECK)
+    message(FATAL_ERROR "Cppcheck not found. Required for static analysis.")
+endif()
+set(LINT_CPPCHECK ${RUN_CPPCHECK} --suppress=preprocessorErrorDirective --enable=all --inconclusive --inline-suppr --force --max-configs=64 -DconfigUSE_16_BIT_TICKS)
+
+# Give up for now, very inconvenient setup for arm-none-eabi-gcc.
+# find_program(RUN_CLANG_TIDY clang-tidy PATHS "C:/Program Files/LLVM/bin" "/usr/bin")
+# if (NOT RUN_CLANG_TIDY)
+#     message(FATAL_ERROR "clang-tidy not found. Required for static analysis.")
+# endif()
+# set(LINT_CLANG_TIDY ${RUN_CLANG_TIDY} -checks=*)
+
+find_program(RUN_STM32_PROGRAMMER_CLI STM32_Programmer_CLI PATHS "C:/Program Files/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin" "/usr/bin")
+if (NOT RUN_STM32_PROGRAMMER_CLI)
+    message(WARNING "STM32_Programmer_CLI not found. Flashing will be disabled.")
+else()
+    function(create_stm32_programmer_target EXAMPLE_NAME)
+        add_custom_target(${EXAMPLE_NAME}-upload
+            COMMAND ${RUN_STM32_PROGRAMMER_CLI} --connect port=swd --download "$<TARGET_FILE:${EXAMPLE_NAME}>" -hardRst || exit 0 # Ignore error if no device is connected.
+            DEPENDS ${EXAMPLE_NAME}
+        )
+    endfunction()
+endif()
+
 # Compiler settings.
 
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_CXX_STANDARD 26 REQUIRED)
 set(CMAKE_CXX_SCAN_FOR_MODULES FALSE)
 
-add_compile_options(
-    $<$<COMPILE_LANGUAGE:CXX>:-Wsuggest-override> $<$<COMPILE_LANGUAGE:CXX>:-Wold-style-cast> -Wunused-result -Werror # "-fdebug-prefix-map=${CMAKE_SOURCE_DIR}=."
-    -fno-math-errno -funsafe-math-optimizations -fno-rounding-math -fno-signed-zeros -fno-trapping-math -fcx-limited-range -fexcess-precision=fast
-    -fexceptions -fnon-call-exceptions -fasynchronous-unwind-tables -foptimize-sibling-calls # Force symmetric transfer optimization for coroutines.
-)
-if (CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    add_compile_options(-fno-signaling-nans) # -fopt-info-optall
-elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    add_compile_options(-ffp-contract=fast $<$<COMPILE_LANGUAGE:C>:-include> $<$<COMPILE_LANGUAGE:C>:stddef.h>) # -Rpass-analysis=.*
-else()
-    message(WARNING "Compiler set unrecognised. Some optimisations may not be available.")
+if (NOT (CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
+    message(WARNING "Compiler set is not gcc, expect errors.")
 endif()
+
+add_compile_options(
+    $<$<COMPILE_LANGUAGE:CXX>:-Wsuggest-override> $<$<COMPILE_LANGUAGE:CXX>:-Wold-style-cast> -Wunused-result -Werror -fdebug-prefix-map=${CMAKE_SOURCE_DIR}=./
+    -fno-math-errno -funsafe-math-optimizations -fno-rounding-math -fno-signed-zeros -fno-trapping-math -fexcess-precision=fast
+    -fno-signaling-nans -fcx-limited-range
+    -fexceptions -fnon-call-exceptions -fasynchronous-unwind-tables
+)
 
 # Target Specific
 
@@ -130,6 +155,12 @@ file(GLOB SYSCORE_SRCS CONFIGURE_DEPENDS
 add_library(sysCore STATIC ${SYSCORE_SRCS})
 target_include_directories(sysCore PUBLIC "/" "core" "libsysCore")
 target_link_libraries(sysCore PUBLIC rt freertos_kernel)
+set_target_properties(sysCore PROPERTIES
+    C_CPPCHECK ${LINT_CPPCHECK}
+    CXX_CPPCHECK ${LINT_CPPCHECK}
+    C_CLANG_TIDY ${LINT_CLANG_TIDY}
+    CXX_CLANG_TIDY ${LINT_CLANG_TIDY}
+)
 
 # core Library
 
@@ -145,6 +176,12 @@ add_library(core STATIC ${CORE_SRCS})
 target_sources(core PUBLIC FILE_SET CXX_MODULES FILES ${CORE_MODULES})
 target_include_directories(core PUBLIC "/" "core")
 target_link_libraries(core PUBLIC rt freertos_kernel sysCore)
+set_target_properties(core PROPERTIES
+    C_CPPCHECK ${LINT_CPPCHECK}
+    CXX_CPPCHECK ${LINT_CPPCHECK}
+    C_CLANG_TIDY ${LINT_CLANG_TIDY}
+    CXX_CLANG_TIDY ${LINT_CLANG_TIDY}
+)
 
 # drivers Library
 
@@ -160,6 +197,12 @@ add_library(drivers STATIC ${DRIVERS_SRCS})
 target_sources(drivers PUBLIC FILE_SET CXX_MODULES FILES ${DRIVERS_MODULES})
 target_include_directories(drivers PUBLIC "drivers")
 target_link_libraries(drivers PUBLIC core)
+set_target_properties(drivers PROPERTIES
+    C_CPPCHECK ${LINT_CPPCHECK}
+    CXX_CPPCHECK ${LINT_CPPCHECK}
+    C_CLANG_TIDY ${LINT_CLANG_TIDY}
+    CXX_CLANG_TIDY ${LINT_CLANG_TIDY}
+)
 
 # Examples
 
@@ -170,9 +213,14 @@ foreach(EXAMPLE_FILE ${EXAMPLES})
 
     add_executable(${EXAMPLE_NAME} ${EXAMPLE_FILE})
     target_link_libraries(${EXAMPLE_NAME} PUBLIC drivers)
-
-    add_custom_target(${EXAMPLE_NAME}-upload
-        COMMAND STM32_Programmer_CLI --connect port=swd --download "$<TARGET_FILE:${EXAMPLE_NAME}>" -hardRst || exit 0 # Ignore error if no device is connected.
-        DEPENDS ${EXAMPLE_NAME}
+    set_target_properties(${EXAMPLE_NAME} PROPERTIES
+        C_CPPCHECK ${LINT_CPPCHECK}
+        CXX_CPPCHECK ${LINT_CPPCHECK}
+        C_CLANG_TIDY ${LINT_CLANG_TIDY}
+        CXX_CLANG_TIDY ${LINT_CLANG_TIDY}
     )
+
+    if (RUN_STM32_PROGRAMMER_CLI)
+        create_stm32_programmer_target(${EXAMPLE_NAME})
+    endif()
 endforeach()

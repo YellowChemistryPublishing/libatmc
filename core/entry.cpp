@@ -11,18 +11,19 @@
 using namespace atmc;
 using namespace sys;
 
-void* operator new (size_t sz)
+void* operator new(size_t sz)
 {
     void* ret = pvPortMalloc(sz);
     if (!ret)
         __throw(std::bad_alloc());
-    else return ret;
+    else
+        return ret;
 }
-void operator delete (void* p) noexcept
+void operator delete(void* p) noexcept
 {
     vPortFree(p);
 }
-void operator delete (void* p, size_t) noexcept
+void operator delete(void* p, size_t) noexcept
 {
     vPortFree(p);
 }

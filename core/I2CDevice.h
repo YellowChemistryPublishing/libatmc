@@ -3,7 +3,6 @@
 #include <atomic>
 #include <cassert>
 #include <cxxutil.h>
-#include <cxxutil.h>
 #include <runtime_headers.h>
 #include <span>
 
@@ -11,7 +10,6 @@
 #include <Result.h>
 #include <SerialInterfaceDevice.h>
 #include <SpinLock.h>
-
 
 namespace atmc
 {
@@ -30,7 +28,7 @@ namespace atmc
 
         friend class atmc::I2CDevice;
     };
-    
+
     /// @brief I2C device.
     /// @note Pass `byref`.
     class I2CDevice final : public SerialInterfaceDevice
@@ -53,7 +51,8 @@ namespace atmc
         /// ...
         /// (&*hi2c)->~decltype(*&*hi2c)();
         /// ```
-        inline I2CDevice(sys::FencedPointer<I2C_HandleTypeDef> hi2c, uint16_t devAddr, uint16_t memAddrSize) : internalHandle(&*hi2c /* Contract implied: `hi2c != nullptr`. */), devAddr(devAddr), memAddrSize(memAddrSize)
+        inline I2CDevice(sys::FencedPointer<I2C_HandleTypeDef> hi2c, uint16_t devAddr, uint16_t memAddrSize) :
+            internalHandle(&*hi2c /* Contract implied: `hi2c != nullptr`. */), devAddr(devAddr), memAddrSize(memAddrSize)
         { }
 
         /// @brief Wait for the device to be ready synchronously.
@@ -81,10 +80,9 @@ namespace atmc
         {
             HardwareStatus res = HardwareStatus(HAL_I2C_Mem_Read_IT(this->internalHandle, this->devAddr << 1, memAddr, this->memAddrSize, data.data(), data.size_bytes()));
             __fence_value_co_return(res, res != HardwareStatus::Ok);
-        
-            while (!I2CManager::rxDone.exchange(this->internalHandle, nullptr))
-                co_await sys::Task<>::yield();
-        
+
+            while (!I2CManager::rxDone.exchange(this->internalHandle, nullptr)) co_await sys::Task<>::yield();
+
             co_return HardwareStatus::Ok;
         }
         /// @brief Write memory asynchronously.
@@ -102,13 +100,12 @@ namespace atmc
         {
             HardwareStatus res = HardwareStatus(HAL_I2C_Mem_Write_IT(this->internalHandle, this->devAddr << 1, memAddr, this->memAddrSize, data.data(), data.size_bytes()));
             __fence_value_co_return(res, res != HardwareStatus::Ok);
-        
-            while (!I2CManager::txDone.exchange(this->internalHandle, nullptr))
-                co_await sys::Task<>::yield();
-        
+
+            while (!I2CManager::txDone.exchange(this->internalHandle, nullptr)) co_await sys::Task<>::yield();
+
             co_return HardwareStatus::Ok;
         }
 
         friend class atmc::I2CManager;
     };
-}
+} // namespace atmc

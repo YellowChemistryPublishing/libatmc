@@ -18,14 +18,8 @@ extern "C" void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
     HAL_ADC_Stop_DMA(hadc);
     switch (__reic(uintptr_t, hadc->Instance))
     {
-    case ADC1_BASE:
-        GPIOManager::adcFlags[0].clear();
-        break;
-    case ADC2_BASE:
-        GPIOManager::adcFlags[1].clear();
-        break;
-    case ADC3_BASE:
-        GPIOManager::adcFlags[2].clear();
-        break;
+    case ADC1_BASE: GPIOManager::adcFlags[0].clear(); break;
+    case ADC2_BASE: GPIOManager::adcFlags[1].clear(); break;
+    case ADC3_BASE: GPIOManager::adcFlags[2].clear(); break;
     }
 }

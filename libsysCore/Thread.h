@@ -50,4 +50,4 @@ namespace sys
             return uxTaskGetTaskNumber(this->handle);
         }
     };
-}
+} // namespace sys

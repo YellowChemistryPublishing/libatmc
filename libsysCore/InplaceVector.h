@@ -27,7 +27,7 @@ namespace sys
         {
             return Capacity;
         }
-        
+
         inline T& operator[](size_t index)
         {
             return this->data[index];
@@ -50,7 +50,7 @@ namespace sys
         {
             if (this->_size >= Capacity)
                 return false;
-            new (&this->data[this->_size++]) T(std::move(value));
+            new(&this->data[this->_size++]) T(std::move(value));
             return true;
         }
         inline void popBack()
@@ -60,8 +60,7 @@ namespace sys
         }
         inline void clear()
         {
-            for (size_t i = 0; i < this->_size; ++i)
-                this->data[i].~T();
+            for (size_t i = 0; i < this->_size; ++i) this->data[i].~T();
             this->_size = 0;
         }
 
@@ -75,4 +74,4 @@ namespace sys
             return nullptr;
         }
     };
-}
+} // namespace sys

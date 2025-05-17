@@ -1,6 +1,5 @@
 #pragma once
 
-#include <bit>
 #include <cstddef>
 #include <iterator>
 
@@ -46,7 +45,7 @@ namespace sys
             {
                 return &this->queue.data[this->i];
             }
-            
+
             /// @brief Compares two iterators for equality.
             /// @param lhs The first iterator.
             /// @param rhs The second iterator.
@@ -86,7 +85,7 @@ namespace sys
                 this->i = (this->i + Capacity - 1) % Capacity;
                 return ret;
             }
-            
+
             friend inline Iterator operator+(const Iterator& a, difference_type b)
             {
                 return Iterator(a.queue, (a.i + b) % Capacity);
@@ -131,7 +130,8 @@ namespace sys
                 return Capacity;
             else if (this->_end >= this->_begin)
                 return this->_end - this->_begin;
-            else return Capacity - this->_begin + this->_end;
+            else
+                return Capacity - this->_begin + this->_end;
         }
         consteval static size_t capacity() noexcept
         {
@@ -164,7 +164,7 @@ namespace sys
         {
             if (!full && this->_begin == this->_end) [[unlikely]]
                 return false;
-            
+
             size_t retIdx = this->_begin;
             this->_begin = (this->_begin + 1) % Capacity;
             this->full = false;
@@ -174,4 +174,4 @@ namespace sys
             return true;
         }
     };
-}
+} // namespace sys

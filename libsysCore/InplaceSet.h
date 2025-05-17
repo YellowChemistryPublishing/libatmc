@@ -19,12 +19,12 @@ namespace sys
         {
             return Capacity;
         }
-        
+
         inline bool tryInsert(T value)
         {
             if (this->_size == Capacity) [[unlikely]]
                 return false;
-            
+
             this->data[this->_size++] = std::move(value);
             return true;
         }
@@ -50,4 +50,4 @@ namespace sys
             return false;
         }
     };
-}
+} // namespace sys

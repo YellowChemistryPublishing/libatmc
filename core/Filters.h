@@ -71,11 +71,12 @@ namespace atmc
         {
             if (std::isnan(this->value)) [[unlikely]]
                 this->value = newValue;
-            else this->value = Alpha * newValue + (1 - Alpha) * this->value;
+            else
+                this->value = Alpha * newValue + (1 - Alpha) * this->value;
         }
         inline T average() const noexcept
         {
             return this->value;
         }
     };
-}
+} // namespace atmc

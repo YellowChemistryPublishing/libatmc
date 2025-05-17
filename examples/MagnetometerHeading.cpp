@@ -1,16 +1,18 @@
+#include <cstdio>
 #include <cxxutil.h>
 #include <cxxutil.hpp>
-#include <cstdio>
 #include <entry.h>
 #include <print>
+
 
 #include <AccelGyro_LSM6DS3.h>
 #include <I2CDevice.h>
 #include <Magnetometer_LIS3MDL.h>
-#include <SerialInterfaceDevice.h>
 #include <SPIDevice.h>
+#include <SerialInterfaceDevice.h>
 #include <Task.h>
 #include <Vector.h>
+
 
 using namespace atmc;
 using namespace sys;
@@ -48,9 +50,10 @@ __async(void) imuTest()
 {
     try
     {
-        __fence_contract_enforce(1 ==0);
+        __fence_contract_enforce(1 == 0);
     }
-    catch (...) { }
+    catch (...)
+    { }
     printf("beans\n");
     std::println("started");
     __fence_contract_enforce(co_await imu.begin(&imuIF) == HardwareStatus::Ok);
@@ -105,18 +108,11 @@ __async(void) imuTest()
     fifoCtrl5.mode = LSM6DS3::FIFOMode::Continuous;
     __fence_contract_enforce(co_await imu.writeConfigRegister(fifoCtrl5) == HardwareStatus::Ok);
 
-    constexpr LSM6DS3::FIFOPatternWordType pattern[]
-    {
-        LSM6DS3::FIFOPatternWordType::GyroX,
-        LSM6DS3::FIFOPatternWordType::GyroY,
-        LSM6DS3::FIFOPatternWordType::GyroZ,
-        LSM6DS3::FIFOPatternWordType::AccelX,
-        LSM6DS3::FIFOPatternWordType::AccelY,
-        LSM6DS3::FIFOPatternWordType::AccelZ,
-        LSM6DS3::FIFOPatternWordType::TimestampHigh,
-        LSM6DS3::FIFOPatternWordType::TimestampLow,
-        LSM6DS3::FIFOPatternWordType::StepCounter
-    };
+    constexpr LSM6DS3::FIFOPatternWordType pattern[] { LSM6DS3::FIFOPatternWordType::GyroX,         LSM6DS3::FIFOPatternWordType::GyroY,
+                                                       LSM6DS3::FIFOPatternWordType::GyroZ,         LSM6DS3::FIFOPatternWordType::AccelX,
+                                                       LSM6DS3::FIFOPatternWordType::AccelY,        LSM6DS3::FIFOPatternWordType::AccelZ,
+                                                       LSM6DS3::FIFOPatternWordType::TimestampHigh, LSM6DS3::FIFOPatternWordType::TimestampLow,
+                                                       LSM6DS3::FIFOPatternWordType::StepCounter };
 
     uint16_t readRemainder = LSM6DS3::FIFOChunkSize;
     LSM6DS3::FIFOData data[LSM6DS3::FIFOChunkSize];
@@ -215,7 +211,7 @@ void tick()
 //     printf("nested\n");
 //     co_return;
 // }
-// 
+//
 // Task<> test()
 // {
 //     printf("test\n");
@@ -225,7 +221,7 @@ void tick()
 //     printf("done\n");
 //     co_return;
 // }
-// 
+//
 // Task<int> mainLoop()
 // {
 //     while (true)
@@ -238,8 +234,8 @@ void tick()
 //             {
 //                 auto[x, y, z] = mag.debugIronOffsets();
 //                 printf("%f %f %f\n", x, y, z);
-//                 //printf("%f %f %f\n", mag.offsetSync().takeValue().x * mag.gaussPerLSB, mag.offsetSync().takeValue().y * mag.gaussPerLSB, mag.offsetSync().takeValue().z * mag.gaussPerLSB);
-//                 return HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_RESET;
+//                 //printf("%f %f %f\n", mag.offsetSync().takeValue().x * mag.gaussPerLSB, mag.offsetSync().takeValue().y * mag.gaussPerLSB, mag.offsetSync().takeValue().z *
+//                 mag.gaussPerLSB); return HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_RESET;
 //             });
 //         }
 //         else
@@ -251,7 +247,8 @@ void tick()
 //                 Vector3 readVal = readRes.takeValue();
 //                 float temp = tempRes.takeValue();
 //                 printf("%.4f\t%.4f\t%.4f\t%.4f\n", readVal.x, readVal.y, readVal.z, temp);
-//                 printf("heading: %.4f, offx: %f, offy: %f, offz: %f\n", atan2f((readVal.y), (readVal.x)) * 180.0f / float(std::numbers::pi), mag.softIronScale().x, mag.softIronScale().y, mag.softIronScale().z);
+//                 printf("heading: %.4f, offx: %f, offy: %f, offz: %f\n", atan2f((readVal.y), (readVal.x)) * 180.0f / float(std::numbers::pi), mag.softIronScale().x,
+//                 mag.softIronScale().y, mag.softIronScale().z);
 //             }
 //             else
 //             {
@@ -259,12 +256,12 @@ void tick()
 //                 tempRes.takeError();
 //             }
 //         }
-// 
+//
 //         co_await Task<>::delay(100);
 //     }
 //     co_return 0;
 // }
-// 
+//
 // void init()
 // {
 //     printf("begin setup\n");
@@ -273,11 +270,11 @@ void tick()
 //         assert(co_await mag.begin(&hi2c2) == HardwareStatus::Ok && "Failed to start / detect magnetometer!");
 //         auto stRes = co_await mag.selfTest();
 //         assert(stRes && stRes.takeValue() && "Failed self-test!");
-//         co_await mag.setOffset(Vector3Int16 { int16_t(-0.133255f / mag.gaussPerLSB() + 0.5f), int16_t(-0.101987 / mag.gaussPerLSB() + 0.5f), int16_t(-0.468147 / mag.gaussPerLSB() + 0.5f) });
-//         co_await mainLoop();
+//         co_await mag.setOffset(Vector3Int16 { int16_t(-0.133255f / mag.gaussPerLSB() + 0.5f), int16_t(-0.101987 / mag.gaussPerLSB() + 0.5f), int16_t(-0.468147 /
+//         mag.gaussPerLSB() + 0.5f) }); co_await mainLoop();
 //     }();
 //     printf("end setup\n");
 // }
-// 
+//
 // void tick()
 // { }

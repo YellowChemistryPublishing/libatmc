@@ -3,8 +3,10 @@
 #include <coroutine>
 #include <cxxutil.h>
 
+// clang-format off
 #include <FreeRTOS.h>
 #include <../../freertos/include/task.h>
+// clang-format on
 
 #include <Config.h>
 
@@ -14,7 +16,7 @@ namespace sys
     /// @note Static class.
     class TaskAllocator
     {
-               /* Lazy.               */
+        //     v Lazy.
         struct alignas(max_align_t) ChunkHeader
         {
             ChunkHeader* prevChunk;
@@ -36,17 +38,19 @@ namespace sys
         static ChunkHeader* stackTop;
     public:
         TaskAllocator() = delete;
-        
+
         inline static void* alloc(size_t sz) noexcept
         {
             size_t chunkSize = (sz + alignof(std::max_align_t) - 1) & -alignof(std::max_align_t);
-            if ((!TaskAllocator::stackTop ? TaskAllocator::stack : __sc(unsigned char*, TaskAllocator::stackTop->next())) + sizeof(ChunkHeader) + chunkSize >= TaskAllocator::stack + atmc::Config::TaskPromiseStackSize) [[unlikely]]
+            if ((!TaskAllocator::stackTop ? TaskAllocator::stack : __sc(unsigned char*, TaskAllocator::stackTop->next())) + sizeof(ChunkHeader) + chunkSize >=
+                TaskAllocator::stack + atmc::Config::TaskPromiseStackSize) [[unlikely]]
                 return nullptr;
             ChunkHeader* header = [&]
             {
                 if (!TaskAllocator::stackTop)
                     return new(TaskAllocator::stack) ChunkHeader(nullptr, chunkSize);
-                else return new(TaskAllocator::stackTop->next()) ChunkHeader(TaskAllocator::stackTop, chunkSize);
+                else
+                    return new(TaskAllocator::stackTop->next()) ChunkHeader(TaskAllocator::stackTop, chunkSize);
             }();
             TaskAllocator::stackTop = header;
             return header->data();
@@ -55,15 +59,15 @@ namespace sys
         {
             if (!ptr) [[unlikely]]
                 return;
-            
+
             ChunkHeader* header = __reic(ChunkHeader*, ptr) - 1;
             if (TaskAllocator::stackTop == header)
             {
-                do
-                { TaskAllocator::stackTop = TaskAllocator::stackTop->prevChunk; }
+                do TaskAllocator::stackTop = TaskAllocator::stackTop->prevChunk;
                 while (TaskAllocator::stackTop && TaskAllocator::stackTop->isFree);
             }
-            else header->isFree = true;
+            else
+                header->isFree = true;
         }
     };
 
@@ -120,11 +124,11 @@ namespace sys
         std::coroutine_handle<> continuation;
         std::exception_ptr exception = nullptr;
 
-        inline static void* operator new (size_t sz) noexcept
+        inline static void* operator new(size_t sz) noexcept
         {
             return TaskAllocator::alloc(sz);
         }
-        inline static void operator delete (void* ptr) noexcept
+        inline static void operator delete(void* ptr) noexcept
         {
             TaskAllocator::free(ptr);
         }
@@ -133,7 +137,7 @@ namespace sys
         {
             return std::suspend_always();
         }
-        
+
         __inline_always Task<T> get_return_object()
         {
             return Task<T>(std::coroutine_handle<TaskPromise<T>>::from_promise(*static_cast<TaskPromise<T>*>(this)));
@@ -195,7 +199,8 @@ namespace sys
             return TaskAwaiter<T>(this->handle);
         }
 
-        inline static auto yield() requires (std::is_same<T, void>::value)
+        inline static auto yield()
+        requires (std::is_same<T, void>::value)
         {
             struct
             {
@@ -204,26 +209,26 @@ namespace sys
                     taskYIELD();
                     return true;
                 }
-                __inline_always void await_suspend([[maybe_unused]] std::coroutine_handle<> parent) const noexcept
+                __inline_always void await_suspend(std::coroutine_handle<>) const noexcept
                 { }
                 __inline_always constexpr void await_resume() const noexcept
                 { }
             } ret;
             return ret;
         }
-        inline static Task<void> delay(uint32_t ms) requires (std::is_same<T, void>::value)
+        inline static Task<void> delay(uint32_t ms)
+        requires (std::is_same<T, void>::value)
         {
             uint32_t from = xTaskGetTickCount();
-            while (pdTICKS_TO_MS(xTaskGetTickCount() - from) < ms)
-                co_await Task<>::yield();
+            while (pdTICKS_TO_MS(xTaskGetTickCount() - from) < ms) co_await Task<>::yield();
         }
         template <typename Pred>
         inline static Task<void> waitUntil(Pred&& func)
         {
             if constexpr (!std::convertible_to<decltype(func()), bool>)
                 while (!co_await func());
-            else while (!func())
-                co_await Task<>::yield();
+            else
+                while (!func()) co_await Task<>::yield();
         }
 
         friend struct sys::TaskPromiseCore<T>;
@@ -233,9 +238,6 @@ namespace sys
         __inline_always explicit Task(std::coroutine_handle<TaskPromise<T>> handle) : handle(handle)
         { }
     };
-
-    template <typename T, bool IsAsync>
-    using TaskIfAsync = std::conditional<IsAsync, Task<T>, T>::type;
 
     struct Async;
 
@@ -271,12 +273,14 @@ namespace sys
     private:
         __inline_always explicit Async(std::coroutine_handle<AsyncPromise> handle)
         {
-            xTaskCreate([](void* pvParams)
-            {
-                auto handle = std::coroutine_handle<AsyncPromise>::from_address(pvParams);
-                handle.resume();
-                vTaskDelete(nullptr);
-            }, "Async", atmc::Config::AsyncThreadStackSizeWords, handle.address(), atmc::Config::AsyncThreadPriority, nullptr);
+            xTaskCreate(
+                [](void* pvParams)
+                {
+                    auto handle = std::coroutine_handle<AsyncPromise>::from_address(pvParams);
+                    handle.resume();
+                    vTaskDelete(nullptr);
+                },
+                "Async", atmc::Config::AsyncThreadStackSizeWords, handle.address(), atmc::Config::AsyncThreadPriority, nullptr);
         }
     };
 
@@ -284,6 +288,6 @@ namespace sys
     {
         return Async(std::coroutine_handle<AsyncPromise>::from_promise(*this));
     }
-}
+} // namespace sys
 
 #define __async(void) ::sys::Async

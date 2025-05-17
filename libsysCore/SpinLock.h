@@ -1,7 +1,6 @@
 #pragma once
 
 #include <atomic>
-#include <mutex>
 
 namespace sys
 {
@@ -45,4 +44,4 @@ namespace sys
     {
         return LockGuard(*this);
     }
-}
+} // namespace sys

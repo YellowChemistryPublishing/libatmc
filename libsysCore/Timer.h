@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstdint>
 #include <runtime_headers.h>
 
 #include <FreeRTOS.h>
@@ -23,4 +22,4 @@ namespace sys
             return pdTICKS_TO_MS(xTaskGetTickCount() - this->beg);
         }
     };
-}
+} // namespace sys

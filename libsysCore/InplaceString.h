@@ -7,7 +7,7 @@ namespace sys
     template <size_t Capacity, typename CharType = char>
     class InplaceString
     {
-        CharType buffer[Capacity + 1] { };
+        CharType buffer[Capacity + 1] {};
         size_t _size;
     public:
         constexpr InlineString() : size(0)
@@ -22,7 +22,7 @@ namespace sys
                 this->buffer[0] = 0;
                 return;
             }
-            
+
             memcpy(this->buffer, cstr, len + 1);
         }
 
@@ -35,4 +35,4 @@ namespace sys
             return this->buffer + this->_size;
         }
     };
-}
+} // namespace sys

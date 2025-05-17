@@ -1,14 +1,13 @@
 #pragma once
 
-#include <coroutine>
 #include <cstdint>
 #include <cxxutil.h>
 #include <cxxutil.hpp>
 #include <entry.h>
 #include <span>
 
-#include <Task.h>
 #include <Result.h>
+#include <Task.h>
 
 namespace atmc
 {
@@ -22,7 +21,7 @@ namespace atmc
         /// @param timeout Timeout.
         /// @return Whether the operation was successful.
         virtual HardwareStatus waitReadySync(uint32_t trials, uint32_t timeout = sys::Task<>::MaxDelay) = 0;
-    
+
         /// @brief Read data to a register.
         /// @param memAddr Register address.
         /// @param data Data to read.
@@ -105,10 +104,9 @@ namespace atmc
             DataType checkData[N];
             res = co_await this->readMemory(memAddr, std::span(reinterpret_cast<uint8_t*>(&checkData), sizeof(DataType) * N));
             __fence_value_co_return(res, res != HardwareStatus::Ok);
-            for (size_t i = 0; i < N; i++)
-                __fence_value_co_return(HardwareStatus::Error, data[i] != checkData[i]);
+            for (size_t i = 0; i < N; i++) __fence_value_co_return(HardwareStatus::Error, data[i] != checkData[i]);
 
             co_return HardwareStatus::Ok;
         }
     };
-}
+} // namespace atmc

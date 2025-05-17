@@ -27,8 +27,8 @@ set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 set(TARGET_FLAGS "-mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TARGET_FLAGS}")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wformat=2 -Wsign-conversion -Wtrampolines -Wimplicit-fallthrough -Wbidi-chars=any")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror=format-security -fdata-sections -ffunction-sections")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wno-psabi -Wformat=2 -Wsign-conversion -Wimplicit-fallthrough")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror=format-security -fdata-sections -ffunction-sections -foptimize-sibling-calls") # Force symmetric transfer optimization for coroutines.
 if(CMAKE_BUILD_TYPE MATCHES Debug)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Og -ggdb")
 endif()

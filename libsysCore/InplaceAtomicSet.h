@@ -19,10 +19,9 @@ namespace sys
         /// @param init Value to set.
         inline InplaceAtomicSet(T init)
         {
-            for (size_t i = 0; i < Capacity; i++)
-                this->data[i].store(init);
+            for (size_t i = 0; i < Capacity; i++) this->data[i].store(init);
         }
-        
+
         /// @brief Exchange the value of the first element that matches the expected value.
         /// @param from Value to exchange with.
         /// @param to Value to exchange to.
@@ -52,4 +51,4 @@ namespace sys
             return false;
         }
     };
-}
+} // namespace sys
