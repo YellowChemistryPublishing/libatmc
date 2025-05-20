@@ -51,13 +51,13 @@ namespace sys
         {
             other.ok = -1;
 
-            __push_nowarn(__clWarn_bad_offsetof);
+            _push_nowarn(_clWarn_bad_offsetof);
             static_assert(offsetof(Result, value) == offsetof(Result, error), "Result value/error union must start at the same byte.");
-            __pop_nowarn();
+            _pop_nowarn();
 
-            __push_nowarn(__clWarn_nontrivial_memcpy);
+            _push_nowarn(_clWarn_nontrivial_memcpy);
             std::memcpy(&this->value, &other.value, std::max(sizeof(T), sizeof(Err)));
-            __pop_nowarn();
+            _pop_nowarn();
         }
         inline ~Result() noexcept(false)
         {
@@ -66,7 +66,7 @@ namespace sys
             else if (this->ok == 0)
             {
                 this->error.~Err();
-                __fence_contract_enforce(false && "Result with bad value ignored!");
+                _fence_contract_enforce(false && "Result with bad value ignored!");
             }
         }
 
@@ -87,7 +87,7 @@ namespace sys
         /// @return The value held by the result.
         inline T takeValue()
         {
-            __fence_contract_enforce(this->ok == 1 && "Taking value for a bad or empty result!");
+            _fence_contract_enforce(this->ok == 1 && "Taking value for a bad or empty result!");
             this->ok = -1;
             return std::move(this->value);
         }
@@ -119,15 +119,15 @@ namespace sys
             if (this->ok == 1) [[likely]]
                 return this->takeValue();
             else if (this->ok == 0)
-                __throw(std::move(this->takeError()));
+                _throw(std::move(this->takeError()));
             else
-                __throw(nullptr);
+                _throw(nullptr);
         }
         /// @brief Takes the error if the result is bad.
         /// @return The error held by the result.
         inline Err takeError()
         {
-            __fence_contract_enforce(this->ok == 0 && "Taking error for a good or empty result!");
+            _fence_contract_enforce(this->ok == 0 && "Taking error for a good or empty result!");
             this->ok = -1;
             return std::move(this->error);
         }
@@ -177,13 +177,13 @@ namespace sys
         /// @return The value held by the result.
         inline T takeValue()
         {
-            __fence_contract_enforce(this->ok == 1 && "Taking value for a bad result!");
+            _fence_contract_enforce(this->ok == 1 && "Taking value for a bad result!");
             this->ok = -1;
             return std::move(*reinterpret_cast<T*>(this->value));
         }
     private:
         alignas(T) unsigned char value[sizeof(T)];
-        char ok;
+        signed char ok;
     };
 
     /// @brief Awaiter to enable short-circuiting, à la rustlang `operator?`.

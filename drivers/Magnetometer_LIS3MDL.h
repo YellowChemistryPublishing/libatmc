@@ -411,21 +411,21 @@ namespace atmc
             this->device = device;
 
             HardwareStatus res = this->device->waitReadySync(4, LIS3MDL::TimeoutDuration);
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             uint8_t id; __fence_result_co_return(co_await this->deviceID(), id);
-            __fence_value_co_return(HardwareStatus::Error, id != LIS3MDL::DeviceID); // Probably faulty.
+            _fence_value_co_return(HardwareStatus::Error, id != LIS3MDL::DeviceID); // Probably faulty.
 
             res = co_await this->writeConfigRegister<LIS3MDL::RegisterCtrl1>(ctrl1);
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
             res = co_await this->writeConfigRegister<LIS3MDL::RegisterCtrl2>(ctrl2);
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
             res = co_await this->writeConfigRegister<LIS3MDL::RegisterCtrl3>(ctrl3);
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
             res = co_await this->writeConfigRegister<LIS3MDL::RegisterCtrl4>(ctrl4);
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
             res = co_await this->writeConfigRegister<LIS3MDL::RegisterCtrl5>(ctrl5);
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             co_return HardwareStatus::Ok;
         }
@@ -470,7 +470,7 @@ namespace atmc
             if constexpr (std::is_same<T, LIS3MDL::RegisterCtrl2>::value)
             {
                 HardwareStatus res = co_await this->device->writeMemoryChecked<T>(LIS3MDL::registerAddressOf<T>(), value);
-                __fence_value_co_return(res, res != HardwareStatus::Ok);
+                _fence_value_co_return(res, res != HardwareStatus::Ok);
                 this->_gaussPerLSB = LIS3MDL::RegisterCtrl2::fullScaleConfigToGaussPerLSB(value.fullScaleConfig);
                 co_return HardwareStatus::Ok;
             }
@@ -492,19 +492,19 @@ namespace atmc
             LIS3MDL::RegisterCtrl1 ctrl1;
             reinterpret_cast<uint8_t&>(ctrl1) = 0x1C;
             HardwareStatus res = co_await this->writeConfigRegister<LIS3MDL::RegisterCtrl1>(ctrl1);
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             LIS3MDL::RegisterCtrl2 ctrl2;
             reinterpret_cast<uint8_t&>(ctrl2) = 0x40;
             res = co_await this->writeConfigRegister<LIS3MDL::RegisterCtrl2>(ctrl2);
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             co_await sys::Task<>::delay(20);
 
             LIS3MDL::RegisterCtrl3 ctrl3;
             reinterpret_cast<uint8_t&>(ctrl3) = 0x00;
             res = co_await this->writeConfigRegister<LIS3MDL::RegisterCtrl3>(ctrl3);
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             co_await sys::Task<>::delay(20);
 
@@ -547,7 +547,7 @@ namespace atmc
 
             reinterpret_cast<uint8_t&>(ctrl1) = 0x1D;
             res = co_await this->writeConfigRegister<LIS3MDL::RegisterCtrl1>(ctrl1);
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             co_await sys::Task<>::delay(60);
 
@@ -559,11 +559,11 @@ namespace atmc
             0.1f <= std::abs(outST.z - outNoST.z) && std::abs(outST.z - outNoST.z) <= 1.0f;
 
             res = co_await this->writeConfigRegister<LIS3MDL::RegisterCtrl1>(oldCtrl1);
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
             res = co_await this->writeConfigRegister<LIS3MDL::RegisterCtrl2>(oldCtrl2);
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
             res = co_await this->writeConfigRegister<LIS3MDL::RegisterCtrl3>(oldCtrl3);
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             co_return pass;
         }
@@ -574,7 +574,7 @@ namespace atmc
         {
             uint8_t data[6];
             HardwareStatus res = co_await this->device->readMemory(LIS3MDL::RegAddr::OffsetXRegLM, data);
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
             co_return sysm::Vector3Int16(sys::s16fb2(data[1], data[0]), sys::s16fb2(data[3], data[2]), sys::s16fb2(data[5], data[4]));
         }
         /// @brief Set the hard-iron offset values of the magnetometer.
@@ -604,7 +604,7 @@ namespace atmc
         {
             uint8_t data[6];
             HardwareStatus res = co_await this->device->readMemory(LIS3MDL::RegAddr::OutXL, data);
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
             co_return sysm::Vector3Int16(sys::s16fb2(data[1], data[0]), sys::s16fb2(data[3], data[2]), sys::s16fb2(data[5], data[4]));
         }
         /// @brief Read the magnetometer data.
@@ -620,7 +620,7 @@ namespace atmc
         {
             uint8_t data[2];
             HardwareStatus res = co_await this->device->readMemory(LIS3MDL::RegAddr::TempOutL, data);
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
             co_return float(sys::s16fb2(data[1], data[0])) / 8.0f + 25.0f;
         }
 
@@ -646,7 +646,7 @@ namespace atmc
         inline sys::Task<HardwareStatus> beginCalibration()
         {
             HardwareStatus res = co_await this->setOffset(sysm::Vector3Int16 { 0, 0, 0 });
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             this->readXMin = std::numeric_limits<float>::quiet_NaN();
             this->readYMin = std::numeric_limits<float>::quiet_NaN();
@@ -714,13 +714,13 @@ namespace atmc
         inline sys::Task<HardwareStatus> calibrateUntil(Pred&& pred)
         {
             HardwareStatus res = co_await this->beginCalibration();
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
             if constexpr (!std::convertible_to<decltype(pred()), bool>)
             {
                 do
                 {
                     HardwareStatus res = co_await this->calibrationSingleCycle();
-                    __fence_value_co_return(res, res != HardwareStatus::Ok);
+                    _fence_value_co_return(res, res != HardwareStatus::Ok);
                 }
                 while (!co_await pred());
             }
@@ -729,7 +729,7 @@ namespace atmc
                 do
                 {
                     HardwareStatus res = co_await this->calibrationSingleCycle();
-                    __fence_value_co_return(res, res != HardwareStatus::Ok);
+                    _fence_value_co_return(res, res != HardwareStatus::Ok);
                 }
                 while (!pred());
             }

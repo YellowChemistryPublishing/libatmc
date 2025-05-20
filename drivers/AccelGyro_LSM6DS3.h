@@ -1484,84 +1484,84 @@ namespace atmc
             this->device = device;
 
             HardwareStatus res = this->device->waitReadySync(4, LSM6DS3::TimeoutDuration);
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             uint8_t id; __fence_result_co_return(co_await this->deviceID(), id);
-            __fence_value_co_return(HardwareStatus::Error, id != LSM6DS3::DeviceID); // Probably faulty.
+            _fence_value_co_return(HardwareStatus::Error, id != LSM6DS3::DeviceID); // Probably faulty.
 
             // res = co_await this->writeConfigRegister(conf.featureConfig);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->setSensorSyncTimeFrame(conf.sensorSyncTimeFrame);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->setSensorSyncResRatioTwoTo(conf.sensorSyncResRatioTwoTo);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.fifoCtrl1);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.fifoCtrl2);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.fifoCtrl3);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.fifoCtrl4);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.fifoCtrl5);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.dataReadyPulseConfigGyro);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.int1Ctrl);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.int2Ctrl);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.ctrl1);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.ctrl2);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.ctrl3);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.ctrl4);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.ctrl5);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.ctrl6);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.ctrl7);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.ctrl8);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.ctrl9);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.ctrl10);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.masterConfig);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.tapConfig);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.tapThreshold);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.tapRecognitionConfig);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.wakeupThreshold);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.wakeupDuration);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.freeFall);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.int1Config);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.int2Config);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.slave0Addr);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.slave0Config);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.slave1Config);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // // This register doesn't work for some reason.
             // // res = co_await this->writeConfigRegister(conf.stepCounterMinThreshold);
-            // // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.stepCounterDebounce);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
             // res = co_await this->writeConfigRegister(conf.wristTiltMask);
-            // __fence_value_co_return(res, res != HardwareStatus::Ok);
+            // _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             co_return HardwareStatus::Ok;
         }
@@ -1604,28 +1604,28 @@ namespace atmc
             if constexpr (std::is_same<T, LSM6DS3::RegisterCtrl1Accel>::value)
             {
                 HardwareStatus res = co_await this->device->writeMemoryChecked(LSM6DS3::registerAddressOf<T>(), value);
-                __fence_value_co_return(res, res != HardwareStatus::Ok);
+                _fence_value_co_return(res, res != HardwareStatus::Ok);
                 this->_geePerLSB = LSM6DS3::RegisterCtrl1Accel::fullScaleConfigToGeePerLSB(value.fullScaleConfig);
                 co_return HardwareStatus::Ok;
             }
             else if constexpr (std::is_same<T, LSM6DS3::RegisterCtrl2Gyro>::value)
             {
                 HardwareStatus res = co_await this->device->writeMemoryChecked(LSM6DS3::registerAddressOf<T>(), value);
-                __fence_value_co_return(res, res != HardwareStatus::Ok);
+                _fence_value_co_return(res, res != HardwareStatus::Ok);
                 this->_dpsPerLSB = LSM6DS3::RegisterCtrl2Gyro::fullScaleConfigToDPSPerLSB(value.fullScaleConfig);
                 co_return HardwareStatus::Ok;
             }
             else if constexpr (std::is_same<T, LSM6DS3::RegisterCtrl6>::value)
             {
                 HardwareStatus res = co_await this->device->writeMemoryChecked(LSM6DS3::registerAddressOf<T>(), value);
-                __fence_value_co_return(res, res != HardwareStatus::Ok);
+                _fence_value_co_return(res, res != HardwareStatus::Ok);
                 this->_accelOffsetWeight = LSM6DS3::RegisterCtrl6::accelOffsetBitToWeight(value.accelOffsetWeight);
                 co_return HardwareStatus::Ok;
             }
             else if constexpr (std::is_same<T, LSM6DS3::RegisterWakeupDuration>::value)
             {
                 HardwareStatus res = co_await this->device->writeMemoryChecked(LSM6DS3::registerAddressOf<T>(), value);
-                __fence_value_co_return(res, res != HardwareStatus::Ok);
+                _fence_value_co_return(res, res != HardwareStatus::Ok);
                 this->_durSecPerLSB = LSM6DS3::RegisterWakeupDuration::timestampBitToSecPerLSB(value.timestampResolution);
                 co_return HardwareStatus::Ok;
             }
@@ -1647,7 +1647,7 @@ namespace atmc
         }
         inline sys::Task<HardwareStatus> setSensorSyncResRatioTwoTo(int consequent)
         {
-            __fence_contract_enforce(consequent >= 11 && consequent <= 14 && "Invalid sync resolution ratio.");
+            _fence_contract_enforce(consequent >= 11 && consequent <= 14 && "Invalid sync resolution ratio.");
             return this->device->writeMemoryChecked(LSM6DS3::RegAddr::SensorSyncResRatio, uint8_t(consequent - 11));
         }
 
@@ -1660,21 +1660,21 @@ namespace atmc
         {
             uint8_t data[6];
             HardwareStatus res = co_await this->device->readMemory(LSM6DS3::RegAddr::OutXLGyro, data);
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
             co_return sysm::Vector3(sys::s16fb2(data[1], data[0]) * this->_dpsPerLSB, sys::s16fb2(data[3], data[2]) * this->_dpsPerLSB, sys::s16fb2(data[5], data[4]) * this->_dpsPerLSB);
         }
         inline sys::Task<sys::Result<sysm::Vector3, HardwareStatus>> readAccel()
         {
             uint8_t data[6];
             HardwareStatus res = co_await this->device->readMemory(LSM6DS3::RegAddr::OutXLAccel, data);
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
             co_return sysm::Vector3(sys::s16fb2(data[1], data[0]) * this->_geePerLSB, sys::s16fb2(data[3], data[2]) * this->_geePerLSB, sys::s16fb2(data[5], data[4]) * this->_geePerLSB);
         }
         inline sys::Task<sys::Result<sysm::Vector3Int16, HardwareStatus>> readExternalMagnetometer()
         {
             uint8_t data[6];
             HardwareStatus res = co_await this->device->readMemory(LSM6DS3::RegAddr::OutMagRawXL, data);
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
             co_return sysm::Vector3Int16(sys::s16fb2(data[1], data[0]), sys::s16fb2(data[3], data[2]), sys::s16fb2(data[5], data[4]));
         }
 
@@ -1712,7 +1712,7 @@ namespace atmc
         {
             uint8_t data[2];
             HardwareStatus res = co_await this->device->readMemory(LSM6DS3::RegAddr::FIFOStatus1, data);
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
             data[1] &= 0b00000111;
             co_return (uint16_t(data[1]) << 8) | data[0];
         }
@@ -1733,11 +1733,11 @@ namespace atmc
 
             uint16_t pattern; __fence_result_co_return(co_await this->fifoRecursivePatternAtNextRead(), pattern);
             uint16_t readCount = std::min(uint16_t(LSM6DS3::FIFOChunkSize), unreadCount);
-            __fence_value_co_return(0u, readCount == 0);
+            _fence_value_co_return(0u, readCount == 0);
 
             uint8_t data[LSM6DS3::FIFOChunkSize * 2];
             HardwareStatus res = co_await this->device->readMemory(LSM6DS3::RegAddr::FIFODataOutL, std::span(data, readCount * 2));
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             uint16_t outNext = 0;
             for (uint16_t i = 0; i < readCount && outNext < outSize; i++)
@@ -1826,7 +1826,7 @@ namespace atmc
         {
             uint8_t data[3];
             HardwareStatus res = co_await this->device->readMemory(LSM6DS3::RegAddr::Timestamp0Reg, data);
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
             co_return ((uint32_t(data[2]) << 16) | (uint32_t(data[1]) << 8) | data[0]) * this->_durSecPerLSB;
         }
         inline sys::Task<sys::Result<float, HardwareStatus>> readStepTimestamp()
@@ -1867,7 +1867,7 @@ namespace atmc
         {
             uint8_t data[6];
             HardwareStatus res = co_await this->device->readMemory(LSM6DS3::RegAddr::MagOffXL, data);
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
             co_return sysm::Vector3Int16(sys::s16fb2(data[1], data[0]), sys::s16fb2(data[3], data[2]), sys::s16fb2(data[5], data[4]));
         }
 

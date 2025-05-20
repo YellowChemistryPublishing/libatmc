@@ -24,7 +24,7 @@ using namespace sysm;
 //     {
 //         try
 //         {
-//             __fence_contract_enforce(0 == 1);
+//             _fence_contract_enforce(0 == 1);
 //         }
 //         catch (const std::exception& ex)
 //         {
@@ -50,42 +50,42 @@ __async(void) imuTest()
 {
     try
     {
-        __fence_contract_enforce(1 == 0);
+        _fence_contract_enforce(1 == 0);
     }
     catch (...)
     { }
     printf("beans\n");
     std::println("started");
-    __fence_contract_enforce(co_await imu.begin(&imuIF) == HardwareStatus::Ok);
+    _fence_contract_enforce(co_await imu.begin(&imuIF) == HardwareStatus::Ok);
     std::println("IMU detected");
-    __fence_contract_enforce(co_await mag.begin(&magIF) == HardwareStatus::Ok);
+    _fence_contract_enforce(co_await mag.begin(&magIF) == HardwareStatus::Ok);
 
     std::println("IMU and mag detected");
 
     LSM6DS3::RegisterFIFOCtrl5 fifoCtrl5;
     fifoCtrl5.outputDataRate = LSM6DS3::outputDataRateFrequencyToBits(6660.0f);
-    __fence_contract_enforce(co_await imu.writeConfigRegister(fifoCtrl5) == HardwareStatus::Ok);
+    _fence_contract_enforce(co_await imu.writeConfigRegister(fifoCtrl5) == HardwareStatus::Ok);
 
     LSM6DS3::RegisterMasterConfig masterConfig;
     masterConfig.fifoValidSignal = LSM6DS3::DataReadySource::AccelGyroOrStepCounter;
     LSM6DS3::RegisterFIFOCtrl2 fifoCtrl2;
     fifoCtrl2.writeMode = LSM6DS3::FIFOWriteMode::OnDataReady;
     fifoCtrl2.fifoTimerStepCounterEnabled = true;
-    __fence_contract_enforce(co_await imu.writeConfigRegister(masterConfig) == HardwareStatus::Ok);
-    __fence_contract_enforce(co_await imu.writeConfigRegister(fifoCtrl2) == HardwareStatus::Ok);
+    _fence_contract_enforce(co_await imu.writeConfigRegister(masterConfig) == HardwareStatus::Ok);
+    _fence_contract_enforce(co_await imu.writeConfigRegister(fifoCtrl2) == HardwareStatus::Ok);
 
     LSM6DS3::RegisterCtrl1Accel ctrl1;
     ctrl1.outputDataRate = LSM6DS3::outputDataRateFrequencyToBits(104.0f);
-    __fence_contract_enforce(co_await imu.writeConfigRegister(ctrl1) == HardwareStatus::Ok);
+    _fence_contract_enforce(co_await imu.writeConfigRegister(ctrl1) == HardwareStatus::Ok);
 
     LSM6DS3::RegisterCtrl2Gyro ctrl2;
     ctrl2.outputDataRate = LSM6DS3::outputDataRateFrequencyToBits(104.0f);
-    __fence_contract_enforce(co_await imu.writeConfigRegister(ctrl2) == HardwareStatus::Ok);
+    _fence_contract_enforce(co_await imu.writeConfigRegister(ctrl2) == HardwareStatus::Ok);
 
     LSM6DS3::RegisterFIFOCtrl3 fifoCtrl3;
     fifoCtrl3.accelDecimation = LSM6DS3::decimationFactorToBits(0);
     fifoCtrl3.gyroDecimation = LSM6DS3::decimationFactorToBits(0);
-    __fence_contract_enforce(co_await imu.writeConfigRegister(fifoCtrl3) == HardwareStatus::Ok);
+    _fence_contract_enforce(co_await imu.writeConfigRegister(fifoCtrl3) == HardwareStatus::Ok);
 
     LSM6DS3::RegisterFIFOCtrl4 fifoCtrl4;
     fifoCtrl4.data3Decimation = LSM6DS3::decimationBitsForNoSensor;
@@ -95,18 +95,18 @@ __async(void) imuTest()
     ctrl10.enableEmbeddedFeatures = true;
     ctrl10.enableTimestamp = true;
     ctrl10.enableStepCounter = true;
-    __fence_contract_enforce(co_await imu.writeConfigRegister(ctrl10) == HardwareStatus::Ok);
+    _fence_contract_enforce(co_await imu.writeConfigRegister(ctrl10) == HardwareStatus::Ok);
 
-    __fence_contract_enforce(co_await imu.writeConfigRegister(fifoCtrl4) == HardwareStatus::Ok);
-    __fence_contract_enforce(co_await imu.writeConfigRegister(fifoCtrl2) == HardwareStatus::Ok);
-    __fence_contract_enforce(co_await imu.writeConfigRegister(fifoCtrl5) == HardwareStatus::Ok);
+    _fence_contract_enforce(co_await imu.writeConfigRegister(fifoCtrl4) == HardwareStatus::Ok);
+    _fence_contract_enforce(co_await imu.writeConfigRegister(fifoCtrl2) == HardwareStatus::Ok);
+    _fence_contract_enforce(co_await imu.writeConfigRegister(fifoCtrl5) == HardwareStatus::Ok);
 
     auto wakeupDur = (co_await imu.readConfigRegister<LSM6DS3::RegisterWakeupDuration>()).valueOrThrow();
     wakeupDur.wakeupDuration = LSM6DS3::RegisterWakeupDuration::timestampResolutionToBit(0.025f);
-    __fence_contract_enforce(co_await imu.writeConfigRegister(wakeupDur) == HardwareStatus::Ok);
+    _fence_contract_enforce(co_await imu.writeConfigRegister(wakeupDur) == HardwareStatus::Ok);
 
     fifoCtrl5.mode = LSM6DS3::FIFOMode::Continuous;
-    __fence_contract_enforce(co_await imu.writeConfigRegister(fifoCtrl5) == HardwareStatus::Ok);
+    _fence_contract_enforce(co_await imu.writeConfigRegister(fifoCtrl5) == HardwareStatus::Ok);
 
     constexpr LSM6DS3::FIFOPatternWordType pattern[] { LSM6DS3::FIFOPatternWordType::GyroX,         LSM6DS3::FIFOPatternWordType::GyroY,
                                                        LSM6DS3::FIFOPatternWordType::GyroZ,         LSM6DS3::FIFOPatternWordType::AccelX,

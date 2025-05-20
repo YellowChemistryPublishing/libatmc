@@ -39,7 +39,7 @@ namespace atmc
         {
             uint8_t data[2];
             HardwareStatus res = co_await this->readMemory(memAddr, std::span(data, 2));
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
             co_return (uint16_t(data[1]) << 8) | data[0];
         }
         /// @brief Read a 16-bit signed integer from a register.
@@ -49,7 +49,7 @@ namespace atmc
         {
             uint8_t data[2];
             HardwareStatus res = co_await this->readMemory(memAddr, std::span(data, 2));
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
             co_return sys::s16fb2(data[1], data[0]);
         }
 
@@ -64,7 +64,7 @@ namespace atmc
         {
             T ret;
             HardwareStatus res = co_await this->readMemory(memAddr, std::span(reinterpret_cast<uint8_t*>(&ret), dataSize));
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
             co_return ret;
         }
         /// @brief Write data to a register, then read it back to check.
@@ -78,12 +78,12 @@ namespace atmc
         inline sys::Task<HardwareStatus> writeMemoryChecked(uint16_t memAddr, DataType data, uint16_t dataSize = sizeof(DataType))
         {
             HardwareStatus res = co_await this->writeMemory(memAddr, std::span(reinterpret_cast<uint8_t*>(&data), dataSize));
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             DataType checkData;
             res = co_await this->readMemory(memAddr, std::span(reinterpret_cast<uint8_t*>(&checkData), dataSize));
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
-            __fence_value_co_return(HardwareStatus::Error, data != checkData);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(HardwareStatus::Error, data != checkData);
 
             co_return HardwareStatus::Ok;
         }
@@ -98,12 +98,12 @@ namespace atmc
         inline sys::Task<HardwareStatus> writeMemoryChecked(uint16_t memAddr, DataType (&data)[N])
         {
             HardwareStatus res = co_await this->writeMemory(memAddr, std::span(reinterpret_cast<uint8_t*>(&data), sizeof(DataType) * N));
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             DataType checkData[N];
             res = co_await this->readMemory(memAddr, std::span(reinterpret_cast<uint8_t*>(&checkData), sizeof(DataType) * N));
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
-            for (size_t i = 0; i < N; i++) __fence_value_co_return(HardwareStatus::Error, data[i] != checkData[i]);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
+            for (size_t i = 0; i < N; i++) _fence_value_co_return(HardwareStatus::Error, data[i] != checkData[i]);
 
             co_return HardwareStatus::Ok;
         }

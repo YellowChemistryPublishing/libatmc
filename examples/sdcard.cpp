@@ -1,4 +1,5 @@
 #include <cxxsup.h>
+#include <initializer_list>
 #include <vector>
 
 #include <StringEx.h>
@@ -13,9 +14,6 @@ struct ExampleConfig final
 
 Async entryPoint()
 {
-    std::vector<string> ss;
-    [[maybe_unused]] String s = string::concat(ss);
-
     co_return;
 }
 

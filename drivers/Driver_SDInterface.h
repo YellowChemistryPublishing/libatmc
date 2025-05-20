@@ -125,7 +125,7 @@ namespace atmc
             while (count > 16)
             {
                 HardwareStatus res = co_await this->device->readMemoryUnchecked(block);
-                __fence_value_co_return(res, res != HardwareStatus::Ok);
+                _fence_value_co_return(res, res != HardwareStatus::Ok);
                 count -= 16;
             }
             co_return co_await this->device->readMemoryUnchecked(std::span(block, count));
@@ -138,7 +138,7 @@ namespace atmc
                 uint8_t preData[6] = { 0b01000000 | SDI::Cmd::AppCmd, 0, 0, 0, 0, 0 };
                 preData[5] = (this->crcOf(preData, 5) << 1) | 1;
                 HardwareStatus res = co_await this->device->writeMemoryUnchecked(preData);
-                __fence_value_co_return(res, res != HardwareStatus::Ok);
+                _fence_value_co_return(res, res != HardwareStatus::Ok);
             }
 
             uint8_t _cmd = 0b01000000 | (cmd & 0b00111111);
@@ -151,7 +151,7 @@ namespace atmc
             data[5] = (this->crcOf(data, 5) << 1) | 1;
 
             HardwareStatus res = co_await this->device->writeMemoryUnchecked(data);
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
             
             co_return co_await this->waitBytesUnchecked(1);
         }
@@ -188,7 +188,7 @@ namespace atmc
             // `this->device` is technically not-owned, but just to be safe...
             this->device->begin();
             HardwareStatus res = this->device->waitReadySync(4, sys::Task<>::MaxDelay);
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             this->generateCRCTable();
             

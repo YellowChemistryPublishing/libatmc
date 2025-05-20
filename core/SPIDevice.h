@@ -154,7 +154,7 @@ namespace atmc
         sys::Task<HardwareStatus> readMemoryUnchecked(std::span<uint8_t> data)
         {
             HardwareStatus res = HardwareStatus(HAL_SPI_Receive_IT(this->internalHandle, data.data(), data.size_bytes()));
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             while (!SPIManager::rxDone.exchange(this->internalHandle, nullptr)) co_await sys::Task<>::yield();
 
@@ -167,7 +167,7 @@ namespace atmc
         sys::Task<HardwareStatus> writeMemoryUnchecked(std::span<const uint8_t> data)
         {
             HardwareStatus res = HardwareStatus(HAL_SPI_Transmit_IT(this->internalHandle, data.data(), data.size_bytes()));
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             while (!SPIManager::txDone.exchange(this->internalHandle, nullptr)) co_await sys::Task<>::yield();
 
@@ -182,7 +182,7 @@ namespace atmc
         sys::Task<HardwareStatus> exchangeMemoryUnchecked(uint8_t dataRx[], uint8_t dataTx[], size_t dataSize)
         {
             HardwareStatus res = HardwareStatus(HAL_SPI_TransmitReceive_IT(this->internalHandle, dataRx, dataTx, dataSize));
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             while (!SPIManager::txrxDone.exchange(this->internalHandle, nullptr)) co_await sys::Task<>::yield();
 

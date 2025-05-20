@@ -78,7 +78,7 @@ namespace atmc
         sys::Task<HardwareStatus> readMemory(uint16_t memAddr, std::span<uint8_t> data) override
         {
             HardwareStatus res = HardwareStatus(HAL_I2C_Mem_Read_IT(this->internalHandle, this->devAddr << 1, memAddr, this->memAddrSize, data.data(), data.size_bytes()));
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             while (!I2CManager::rxDone.exchange(this->internalHandle, nullptr)) co_await sys::Task<>::yield();
 
@@ -98,7 +98,7 @@ namespace atmc
         sys::Task<HardwareStatus> writeMemory(uint16_t memAddr, std::span<uint8_t> data) override
         {
             HardwareStatus res = HardwareStatus(HAL_I2C_Mem_Write_IT(this->internalHandle, this->devAddr << 1, memAddr, this->memAddrSize, data.data(), data.size_bytes()));
-            __fence_value_co_return(res, res != HardwareStatus::Ok);
+            _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             while (!I2CManager::txDone.exchange(this->internalHandle, nullptr)) co_await sys::Task<>::yield();
 

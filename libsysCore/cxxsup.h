@@ -1,31 +1,31 @@
 #pragma once
 
-#include <concepts>
-#include <cstdint>
-#include <type_traits>
+#include <limits>
+#include <utility>
 
+#include <LanguageSupport.h>
 #include <Result.h>
 
 namespace sys
 {
-    template <typename T, typename U = void>
-    concept IEnumerable = std::is_array_v<T> || requires(T range) {
-        range.begin();
-        range.end();
-
-        range.begin() != range.end();
-        ++range.begin();
-
-        requires ((std::same_as<U, void> && requires { *range.begin(); }) || std::convertible_to<decltype(*range.begin()), U&>);
-    } || requires(T range) {
-        begin(range);
-        end(range);
-
-        begin(range) != end(range);
-        ++begin(range);
-
-        requires ((std::same_as<U, void> && requires { *begin(range); }) || std::convertible_to<decltype(*begin(range)), U&>);
-    };
+    template <INumber T, INumber ValueType>
+    constexpr T numeric_cast(ValueType value, unsafe_tag)
+    {
+        if (std::cmp_less_equal(std::numeric_limits<T>::lowest(), value) && std::cmp_less_equal(value, std::numeric_limits<T>::max())) [[likely]]
+            return T(value);
+        else if (std::cmp_less(value, std::numeric_limits<T>::lowest()))
+            return std::numeric_limits<T>::lowest();
+        else // if (std::cmp_greater(value, std::numeric_limits<T>::max()))
+            return std::numeric_limits<T>::max();
+    }
+    template <INumber T, INumber ValueType>
+    constexpr Result<T> numeric_cast(ValueType value)
+    {
+        if (std::cmp_less_equal(std::numeric_limits<T>::lowest(), value) && std::cmp_less_equal(value, std::numeric_limits<T>::max())) [[likely]]
+            return T(value);
+        else
+            return nullptr;
+    }
 
     constexpr i32 nr2i32(i32 v)
     {
@@ -72,19 +72,5 @@ namespace sys
     constexpr uint8_t lbfs16(int16_t val)
     {
         return uint8_t(val);
-    }
-
-    /// @brief Convert a floating-point value to an integral value, bounded by the integral type's limits.
-    /// @tparam T The integral type to convert to.
-    /// @tparam ValueType The floating-point type to convert from.
-    /// @param value The value to convert.
-    /// @return The bounded integral value.
-    template <std::integral T, std::floating_point ValueType>
-    constexpr Result<T> boundedCast(ValueType value)
-    {
-        if (std::numeric_limits<T>::lowest() <= value && value <= std::numeric_limits<T>::max()) [[likely]]
-            return T(value);
-        else
-            return nullptr;
     }
 } // namespace sys

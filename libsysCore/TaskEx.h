@@ -145,7 +145,7 @@ namespace sys
 
         [[noreturn]] inline static Task<T> get_return_object_on_allocation_failure()
         {
-            __throw(std::bad_alloc());
+            _throw(std::bad_alloc());
         }
         _inline_always void unhandled_exception()
         {

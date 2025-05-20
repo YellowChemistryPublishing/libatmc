@@ -135,7 +135,7 @@ namespace sys::math
     template <typename T = float>
     struct Vector2T : public VectorOperators<Vector2T<T>, 2, T>
     {
-        __push_nowarn(__clWarn_pedantic);
+        _push_nowarn(_clWarn_pedantic);
         union
         {
             T elements[2];
@@ -144,7 +144,7 @@ namespace sys::math
                 T x, y;
             };
         };
-        __pop_nowarn();
+        _pop_nowarn();
 
         using VectorOperators<Vector2T<T>, 2, T>::VectorOperators;
 
@@ -154,7 +154,7 @@ namespace sys::math
     template <typename T = float>
     struct Vector3T : public VectorOperators<Vector3T<T>, 3, T>
     {
-        __push_nowarn(__clWarn_pedantic);
+        _push_nowarn(_clWarn_pedantic);
         union
         {
             T elements[3];
@@ -163,7 +163,7 @@ namespace sys::math
                 T x, y, z;
             };
         };
-        __pop_nowarn();
+        _pop_nowarn();
 
         using VectorOperators<Vector3T<T>, 3, T>::VectorOperators;
 
@@ -173,7 +173,7 @@ namespace sys::math
     template <typename T = float>
     struct Vector4T : public VectorOperators<Vector4T<T>, 4, T>
     {
-        __push_nowarn(__clWarn_pedantic);
+        _push_nowarn(_clWarn_pedantic);
         union
         {
             T elements[4];
@@ -182,7 +182,7 @@ namespace sys::math
                 T x, y, z, w;
             };
         };
-        __pop_nowarn();
+        _pop_nowarn();
 
         using VectorOperators<Vector4T<T>, 4, T>::VectorOperators;
 
@@ -193,7 +193,7 @@ namespace sys::math
     requires (N > 4)
     struct VectorT : public VectorOperators<VectorT<N, T>, N, T>
     {
-        __push_nowarn(__clWarn_pedantic);
+        _push_nowarn(_clWarn_pedantic);
         union
         {
             T elements[N];
@@ -202,7 +202,7 @@ namespace sys::math
                 T x, y, z, w;
             };
         };
-        __pop_nowarn();
+        _pop_nowarn();
 
         using VectorOperators<VectorT<N, T>, N, T>::VectorOperators;
 

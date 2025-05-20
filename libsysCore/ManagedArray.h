@@ -72,7 +72,7 @@ namespace sys
             this->_length = 0;
             delete[] this->data;
             this->data = nullptr;
-            std::swap(*this, other);
+            swap(*this, other);
             return *this;
         }
 
@@ -86,11 +86,15 @@ namespace sys
         }
         _const inline Result<T&> operator[](ssz index)
         {
-            return this->data[index];
+            if (ssz(0) <= index && index < this->_length) [[likely]]
+                return (*this)[index, unsafe];
+            else return nullptr;
         }
         _const inline Result<const T&> operator[](ssz index) const
         {
-            return this->data[index];
+            if (ssz(0) <= index && index < this->_length) [[likely]]
+                return (*this)[index, unsafe];
+            else return nullptr;
         }
 
         _const inline const T* cbegin() const noexcept

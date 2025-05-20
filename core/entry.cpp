@@ -14,7 +14,7 @@ void* operator new(size_t sz)
 {
     void* ret = pvPortMalloc(sz);
     if (!ret)
-        __throw(std::bad_alloc());
+        _throw(std::bad_alloc());
     else
         return ret;
 }
@@ -36,7 +36,7 @@ extern "C" __weak void init()
 
 void __initHandler()
 {
-    __push_nowarn(__clWarn_use_after_free);
+    _push_nowarn(_clWarn_use_after_free);
     try
     {
         init();
@@ -46,12 +46,12 @@ void __initHandler()
     catch (const std::exception& ex)
     {
         std::println(stderr, "Exception thrown during call to `extern \"C\" void init()`: {}", ex.what());
-        __throw(TerminateException());
+        _throw(TerminateException());
     }
     catch (...)
     {
         std::println(stderr, "Unmanaged exception of type `{}` thrown during call to `extern \"C\" void init()`.", exceptionTypeName(std::current_exception()).get());
-        __throw(TerminateException());
+        _throw(TerminateException());
     }
-    __pop_nowarn();
+    _pop_nowarn();
 }

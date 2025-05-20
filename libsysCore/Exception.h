@@ -102,12 +102,12 @@ namespace sys
         /// @return Reference to `*this`.
         inline FencedPointer& operator++() noexcept
         {
-            __push_nowarn(__clWarn_pedantic);
+            _push_nowarn(_clWarn_pedantic);
             void* jmp[2] { &&ThrowNull, &&Op };
             goto* jmp[bool(this->value)];
-            __pop_nowarn();
+            _pop_nowarn();
         ThrowNull:
-            __throw(NullPointerException());
+            _throw(NullPointerException());
         Op:
             ++this->value;
             return *this;
@@ -116,12 +116,12 @@ namespace sys
         /// @return Reference to `*this`.
         inline FencedPointer& operator--() noexcept
         {
-            __push_nowarn(__clWarn_pedantic);
+            _push_nowarn(_clWarn_pedantic);
             void* jmp[2] { &&ThrowNull, &&Op };
             goto* jmp[bool(this->value)];
-            __pop_nowarn();
+            _pop_nowarn();
         ThrowNull:
-            __throw(NullPointerException());
+            _throw(NullPointerException());
         Op:
             --this->value;
             return *this;
@@ -130,12 +130,12 @@ namespace sys
         /// @return The value before incrementing.
         inline FencedPointer operator++(int) noexcept
         {
-            __push_nowarn(__clWarn_pedantic);
+            _push_nowarn(_clWarn_pedantic);
             void* jmp[2] { &&ThrowNull, &&Op };
             goto* jmp[bool(this->value)];
-            __pop_nowarn();
+            _pop_nowarn();
         ThrowNull:
-            __throw(NullPointerException());
+            _throw(NullPointerException());
         Op:
             FencedPointer ret = *this;
             ++this->value;
@@ -145,12 +145,12 @@ namespace sys
         /// @return The value before decrementing.
         inline FencedPointer operator--(int) noexcept
         {
-            __push_nowarn(__clWarn_pedantic);
+            _push_nowarn(_clWarn_pedantic);
             void* jmp[2] { &&ThrowNull, &&Op };
             goto* jmp[bool(this->value)];
-            __pop_nowarn();
+            _pop_nowarn();
         ThrowNull:
-            __throw(NullPointerException());
+            _throw(NullPointerException());
         Op:
             FencedPointer ret = *this;
             --this->value;
@@ -182,12 +182,12 @@ namespace sys
         /// @return Reference to `*this`.
         inline FencedPointer& operator+=(ptrdiff_t offset) noexcept
         {
-            __push_nowarn(__clWarn_pedantic);
+            _push_nowarn(_clWarn_pedantic);
             void* jmp[2] { &&ThrowNull, &&Op };
             goto* jmp[bool(this->value)];
-            __pop_nowarn();
+            _pop_nowarn();
         ThrowNull:
-            __throw(NullPointerException());
+            _throw(NullPointerException());
         Op:
             this->value += offset;
             return *this;
@@ -197,12 +197,12 @@ namespace sys
         /// @return Reference to `*this`.
         inline FencedPointer& operator-=(ptrdiff_t offset) noexcept
         {
-            __push_nowarn(__clWarn_pedantic);
+            _push_nowarn(_clWarn_pedantic);
             void* jmp[2] { &&ThrowNull, &&Op };
             goto* jmp[bool(this->value)];
-            __pop_nowarn();
+            _pop_nowarn();
         ThrowNull:
-            __throw(NullPointerException());
+            _throw(NullPointerException());
         Op:
             this->value -= offset;
             return *this;
@@ -214,12 +214,12 @@ namespace sys
         /// @return The underlying pointer value.
         [[nodiscard]] inline T* obtainOrThrow() const
         {
-            __push_nowarn(__clWarn_pedantic);
+            _push_nowarn(_clWarn_pedantic);
             void* jmp[2] { &&ThrowNull, &&Op };
             goto* jmp[bool(this->value)];
-            __pop_nowarn();
+            _pop_nowarn();
         ThrowNull:
-            __throw(NullPointerException());
+            _throw(NullPointerException());
         Op:
             return this->value;
         }
@@ -257,7 +257,7 @@ namespace sys
     };
     /// @brief Thrown when a contract is violated.
     /// @note
-    /// Please do not throw this exception directly, use the `__fence_contract_enforce` macro instead. Don't catch this exception either.
+    /// Please do not throw this exception directly, use the `_fence_contract_enforce` macro instead. Don't catch this exception either.
     /// Pass `byref`.
     struct ContractViolationException : public ManagedException
     {

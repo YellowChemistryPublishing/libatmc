@@ -16,7 +16,7 @@ namespace sys
     struct String
     {
         template <IEnumerable<String> Container>
-        static String concat(Container&& container)
+        static Result<String> concat(Container&& container)
         {
             ssz totalLength = 0;
             for (auto& str : container) totalLength += str.length();
@@ -24,11 +24,7 @@ namespace sys
             String ret;
             auto to = ret.alloc(nr2i64(totalLength + 1));
             if (!to)
-            {
-                ret.dataStatic[0] = 0;
-                ret._length = 0;
-                return ret;
-            }
+                return nullptr;
 
             for (auto& str : container)
             {
@@ -95,19 +91,33 @@ namespace sys
             return std::lexicographical_compare_three_way(a.begin(), a.end(), b.begin(), b.end());
         }
 
-        inline CharType& operator[](ssz i)
+        inline CharType& operator[](ssz i, unsafe_tag) noexcept
         {
             if (this->isDynamic)
                 return this->dataDynamic.buf[i];
             else
                 return this->dataStatic[i];
         }
-        inline CharType operator[](ssz i) const
+        inline CharType operator[](ssz i, unsafe_tag) const noexcept
         {
             if (this->isDynamic)
                 return this->dataDynamic.buf[i];
             else
                 return this->dataStatic[i];
+        }
+        inline Result<CharType&> operator[](ssz i)
+        {
+            if (ssz(0) <= i && i < this->_length)
+                return (*this)[i, unsafe];
+            else
+                return nullptr;
+        }
+        inline Result<CharType> operator[](ssz i) const
+        {
+            if (ssz(0) <= i && i < this->_length)
+                return (*this)[i, unsafe];
+            else
+                return nullptr;
         }
 
         inline const CharType* cbegin() const noexcept
@@ -157,7 +167,7 @@ namespace sys
         }
         inline size_t size() const
         {
-            return this->length();
+            return _asi(size_t, this->length());
         }
 
         friend inline void swap(sys::String<CharType, DynamicExtent, StaticCapacity>& a, sys::String<CharType, DynamicExtent, StaticCapacity>& b) noexcept

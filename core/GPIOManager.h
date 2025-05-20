@@ -209,7 +209,7 @@ namespace atmc
         inline static sys::Task<sys::Result<float, HardwareStatus>> analogRead(AnalogPin pin)
         {
             ADC_HandleTypeDef* hadc = pin.internalHandle();
-            __fence_value_co_return(HardwareStatus::Error, !hadc);
+            _fence_value_co_return(HardwareStatus::Error, !hadc);
 
             int resolution;
             switch (ADC_GET_RESOLUTION(hadc))
@@ -251,10 +251,10 @@ namespace atmc
 
         inline static HardwareStatus pwmWrite(PWMPin pin, float duty)
         {
-            __fence_value_return(HardwareStatus::Error, pin.channel == -1 || duty < 0.0f || duty > 1.0f);
+            _fence_value_return(HardwareStatus::Error, pin.channel == -1 || duty < 0.0f || duty > 1.0f);
 
             TIM_HandleTypeDef* htim = pin.internalHandle();
-            __fence_value_return(HardwareStatus::Error, !htim);
+            _fence_value_return(HardwareStatus::Error, !htim);
 
             htim->Instance->CCR1 = uint32_t(htim->Instance->ARR * duty + 0.5f);
 
@@ -262,10 +262,10 @@ namespace atmc
         }
         inline static HardwareStatus pwmClear(PWMPin pin)
         {
-            __fence_value_return(HardwareStatus::Error, pin.channel == -1);
+            _fence_value_return(HardwareStatus::Error, pin.channel == -1);
 
             TIM_HandleTypeDef* htim = pin.internalHandle();
-            __fence_value_return(HardwareStatus::Error, !htim);
+            _fence_value_return(HardwareStatus::Error, !htim);
 
             return HardwareStatus(HAL_TIM_PWM_Stop(htim, uint32_t(pin.channel)));
         }
