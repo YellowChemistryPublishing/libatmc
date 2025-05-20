@@ -19,6 +19,7 @@ BraceWrapping:
     BeforeWhile: true
     IndentBraces: false
     SplitEmptyFunction: false
+    SplitEmptyRecord: false
 
 # Space Insertion
 SpaceBeforeParens: Custom
@@ -39,6 +40,7 @@ ColumnLimit: 180
 IndentWidth: 4
 SpaceInEmptyBlock: true # Won't work for initializer lists, implement when feature is available.
 PointerAlignment: Left
+LambdaBodyIndentation: OuterScope
 IndentPPDirectives: BeforeHash
 NamespaceIndentation: All
 ContinuationIndentWidth: 4

@@ -3,7 +3,6 @@
 #include <atomic>
 #include <bit>
 #include <board.h>
-#include <cxxutil.h>
 #include <entry.h>
 #include <runtime_headers.h>
 
@@ -12,9 +11,8 @@
 #include <InplaceAtomicSet.h>
 #include <InplaceVector.h>
 #include <Result.h>
-#include <Result.hpp>
 #include <SpinLock.h>
-#include <Task.h>
+#include <TaskEx.h>
 
 #define __gpio_declare_pin(port, pin) static const GPIOPin P##port##pin
 #define __gpio_declare_port_pins(port) \
@@ -136,22 +134,20 @@ namespace atmc
 
     struct PWMPin final
     {
-        // clang-format off
         constexpr PWMPin(int timer, int channel) :
             timerIndex(timer), channel([&]() -> int
+        {
+            switch (channel)
             {
-                switch (channel)
-                {
-                case 0: return TIM_CHANNEL_1;
-                case 1: return TIM_CHANNEL_2;
-                case 2: return TIM_CHANNEL_3;
-                case 3: return TIM_CHANNEL_4;
-                case 4: return TIM_CHANNEL_5;
-                case 5: return TIM_CHANNEL_6;
-                default: return -1;
-                }
-            }())
-        // clang-format on
+            case 0: return TIM_CHANNEL_1;
+            case 1: return TIM_CHANNEL_2;
+            case 2: return TIM_CHANNEL_3;
+            case 3: return TIM_CHANNEL_4;
+            case 4: return TIM_CHANNEL_5;
+            case 5: return TIM_CHANNEL_6;
+            default: return -1;
+            }
+        }())
         { }
 
         friend class atmc::GPIOManager;
@@ -208,7 +204,7 @@ namespace atmc
         /// @return The state of the pin.
         inline static GPIOPin::State digitalRead(GPIOPin pin)
         {
-            return HAL_GPIO_ReadPin(__reic(GPIO_TypeDef*, pin.port), pin.pin);
+            return HAL_GPIO_ReadPin(_asr(GPIO_TypeDef*, pin.port), pin.pin);
         }
         inline static sys::Task<sys::Result<float, HardwareStatus>> analogRead(AnalogPin pin)
         {
@@ -230,7 +226,7 @@ namespace atmc
 
             if (!GPIOManager::adcFlags[pin.adcIndex].test_and_set())
             {
-                HardwareStatus res = HardwareStatus(HAL_ADC_Start_DMA(hadc, __reic(uint32_t*, __cstc(uint16_t*, GPIOManager::adcRaw[pin.adcIndex])), hadc->Init.NbrOfConversion));
+                HardwareStatus res = HardwareStatus(HAL_ADC_Start_DMA(hadc, _asr(uint32_t*, _asc(uint16_t*, GPIOManager::adcRaw[pin.adcIndex])), hadc->Init.NbrOfConversion));
                 if (res != HardwareStatus::Ok)
                 {
                     GPIOManager::adcFlags[pin.adcIndex].clear();
@@ -250,7 +246,7 @@ namespace atmc
         /// @param state The state to set the pin to.
         inline static void digitalWrite(GPIOPin pin, GPIOPin::State state)
         {
-            HAL_GPIO_WritePin(__reic(GPIO_TypeDef*, pin.port), pin.pin, GPIO_PinState(state));
+            HAL_GPIO_WritePin(_asr(GPIO_TypeDef*, pin.port), pin.pin, GPIO_PinState(state));
         }
 
         inline static HardwareStatus pwmWrite(PWMPin pin, float duty)

@@ -2,7 +2,6 @@
 
 #include <atomic>
 #include <cassert>
-#include <cxxutil.h>
 #include <runtime_headers.h>
 #include <span>
 

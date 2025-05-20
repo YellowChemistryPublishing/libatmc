@@ -16,7 +16,7 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t pin)
 extern "C" void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
     HAL_ADC_Stop_DMA(hadc);
-    switch (__reic(uintptr_t, hadc->Instance))
+    switch (_asr(uintptr_t, hadc->Instance))
     {
     case ADC1_BASE: GPIOManager::adcFlags[0].clear(); break;
     case ADC2_BASE: GPIOManager::adcFlags[1].clear(); break;

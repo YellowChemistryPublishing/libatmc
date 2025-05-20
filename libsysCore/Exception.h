@@ -6,6 +6,7 @@
 #include <utility>
 
 #include <CompilerWarnings.h>
+#include <LanguageSupport.h>
 
 namespace sys
 {

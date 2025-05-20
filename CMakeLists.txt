@@ -45,10 +45,11 @@ if (NOT (CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_ID STREQUAL "
 endif()
 
 add_compile_options(
-    $<$<COMPILE_LANGUAGE:CXX>:-Wsuggest-override> $<$<COMPILE_LANGUAGE:CXX>:-Wold-style-cast> -Wunused-result -Werror -fdebug-prefix-map=${CMAKE_SOURCE_DIR}=./
+    $<$<COMPILE_LANGUAGE:CXX>:-Wsuggest-override> $<$<COMPILE_LANGUAGE:CXX>:-Wold-style-cast> -Wunused-result -Werror
+    -fdebug-prefix-map=${CMAKE_SOURCE_DIR}=./ $<$<COMPILE_LANGUAGE:CXX>:-fconcepts-diagnostics-depth=4>
     -fno-math-errno -funsafe-math-optimizations -fno-rounding-math -fno-signed-zeros -fno-trapping-math -fexcess-precision=fast
     -fno-signaling-nans -fcx-limited-range
-    -fexceptions -fnon-call-exceptions -fasynchronous-unwind-tables
+    -fexceptions -fnon-call-exceptions -fasynchronous-unwind-tables -foptimize-sibling-calls # Force symmetric transfer optimization for coroutines.
 )
 
 # Target Specific
