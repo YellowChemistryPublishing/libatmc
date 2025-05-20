@@ -4,17 +4,14 @@
 /// @brief Accelerometer and gyroscope driver for the LSM6DS3.
 
 #include <concepts>
-#include <coroutine>
-#include <cxxutil.h>
-#include <cxxutil.hpp>
 #include <limits>
 #include <print>
 #include <span>
 
-#include <Task.h>
+#include <LanguageSupport.h>
+#include <TaskEx.h>
 #include <SerialInterfaceDevice.h>
 #include <Result.h>
-#include <Result.hpp>
 #include <Vector.h>
 
 namespace atmc

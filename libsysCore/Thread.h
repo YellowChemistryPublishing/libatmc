@@ -1,17 +1,17 @@
 #pragma once
 
-#include <cxxutil.h>
-
 #include <FreeRTOS.h>
 #include <task.h>
+
+#include <LanguageSupport.h>
 
 namespace sys
 {
     struct ThreadCriticalSectionISR
     {
-        __inline_always ThreadCriticalSectionISR() : irqStatus(taskENTER_CRITICAL_FROM_ISR())
+        _inline_always ThreadCriticalSectionISR() : irqStatus(taskENTER_CRITICAL_FROM_ISR())
         { }
-        __inline_always ~ThreadCriticalSectionISR()
+        _inline_always ~ThreadCriticalSectionISR()
         {
             taskEXIT_CRITICAL_FROM_ISR(this->irqStatus);
         }
@@ -20,11 +20,11 @@ namespace sys
     };
     struct ThreadCriticalSection
     {
-        __inline_always ThreadCriticalSection()
+        _inline_always ThreadCriticalSection()
         {
             taskENTER_CRITICAL();
         }
-        __inline_always ~ThreadCriticalSection()
+        _inline_always ~ThreadCriticalSection()
         {
             taskEXIT_CRITICAL();
         }

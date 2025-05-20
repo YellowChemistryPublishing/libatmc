@@ -1,6 +1,4 @@
 #include <cxxsup.h>
-#include <initializer_list>
-#include <vector>
 
 #include <StringEx.h>
 #include <TaskEx.h>

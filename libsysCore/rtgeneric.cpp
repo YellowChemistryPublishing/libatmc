@@ -1,4 +1,4 @@
-#include "cxxsysint.h"
+#include "rt.h"
 
 void* __buf_new(size_t size)
 {

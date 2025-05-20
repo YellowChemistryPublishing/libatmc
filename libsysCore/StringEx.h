@@ -8,6 +8,7 @@
 
 #include <LanguageSupport.h>
 #include <ManagedArray.h>
+#include <string_view>
 
 namespace sys
 {
@@ -16,7 +17,7 @@ namespace sys
     struct String
     {
         template <IEnumerable<String> Container>
-        static Result<String> concat(Container&& container)
+        _const static Result<String> concat(Container&& container)
         {
             ssz totalLength = 0;
             for (auto& str : container) totalLength += str.length();
@@ -56,26 +57,34 @@ namespace sys
             this->forEachAssign(len, [&](CharType* buf, ssz i) { buf[i] = str[i]; }, [&, this] { return this->alloc(nr2i64(len + 1)); });
         }
         template <bool OtherDynamicExtent, ssz OtherStaticCapacity>
-        inline String(const String<CharType, OtherDynamicExtent, OtherStaticCapacity>& other)
+        inline String(const String<CharType, OtherDynamicExtent, OtherStaticCapacity>&)
         {
-            if (other.isDynamic)
+            _assert_ctor_can_fail();
+        }
+        template <bool OtherDynamicExtent, ssz OtherStaticCapacity>
+        inline static Result<String<CharType, DynamicExtent, StaticCapacity>> ctor(const String<CharType, OtherDynamicExtent, OtherStaticCapacity>& other)
+        {
+            if (other.isDynamic())
             {
-                this->forEachAssign(other._length, [&](CharType* buf, ssz i) { buf[i] = other.dataDynamic.buf[i]; }, [&, this]
+                String<CharType, DynamicExtent, StaticCapacity> ret;
+                ret->forEachAssign(other._length, [&](CharType* buf, ssz i) { buf[i] = other.dataDynamic.buf[i]; }, [&]
                 {
-                    this->dataDynamic.buf = ManagedArray<CharType>(other.dataDynamic.capacity);
-                    this->dataDynamic.capacity = other.dataDynamic.capacity;
-                    this->isDynamic = true;
-                    return this->dataDynamic.buf.begin();
+                    ret->dataDynamic.buf = ManagedArray<CharType>(other.dataDynamic.capacity);
+                    ret->dataDynamic.capacity = other.dataDynamic.capacity;
+                    ret->_isDynamic = true;
+                    return ret->dataDynamic.buf.begin();
                 });
             }
-            else
+            else if (other._length < StaticCapacity)
             {
-                this->forEachAssign(other._length, [&](CharType* buf, ssz i) { buf[i] = other.dataStatic[i]; }, [&, this]
+                String<CharType, DynamicExtent, StaticCapacity> ret;
+                ret.forEachAssign(other._length, [&](CharType* buf, ssz i) { buf[i] = other.dataStatic[i]; }, [&]
                 {
-                    this->isDynamic = false;
-                    return this->dataStatic;
+                    ret._isDynamic = false;
+                    return ret.dataStatic;
                 });
             }
+            else return nullptr;
         }
         inline String(String<CharType, DynamicExtent, StaticCapacity>&& other)
         {
@@ -86,6 +95,14 @@ namespace sys
             this->dealloc();
         }
 
+        inline operator std::basic_string_view<CharType>() const noexcept
+        {
+            if (this->isDynamic())
+                return std::basic_string_view<CharType>(this->dataDynamic.buf.begin(), this->_length);
+            else
+                return std::basic_string_view<CharType>(this->dataStatic, this->_length);
+        }
+
         friend inline auto operator<=>(const String& a, const String& b)
         {
             return std::lexicographical_compare_three_way(a.begin(), a.end(), b.begin(), b.end());
@@ -93,14 +110,14 @@ namespace sys
 
         inline CharType& operator[](ssz i, unsafe_tag) noexcept
         {
-            if (this->isDynamic)
+            if (this->isDynamic())
                 return this->dataDynamic.buf[i];
             else
                 return this->dataStatic[i];
         }
         inline CharType operator[](ssz i, unsafe_tag) const noexcept
         {
-            if (this->isDynamic)
+            if (this->isDynamic())
                 return this->dataDynamic.buf[i];
             else
                 return this->dataStatic[i];
@@ -122,14 +139,14 @@ namespace sys
 
         inline const CharType* cbegin() const noexcept
         {
-            if (this->isDynamic)
+            if (this->isDynamic())
                 return this->dataDynamic.buf.begin();
             else
                 return this->dataStatic;
         }
         inline const CharType* cend() const noexcept
         {
-            if (this->isDynamic)
+            if (this->isDynamic())
                 return this->dataDynamic.buf.end();
             else
                 return this->dataStatic + this->_length;
@@ -144,19 +161,26 @@ namespace sys
         }
         inline CharType* begin() noexcept
         {
-            if (this->isDynamic)
+            if (this->isDynamic())
                 return this->dataDynamic.buf.begin();
             else
                 return this->dataStatic;
         }
         inline CharType* end() noexcept
         {
-            if (this->isDynamic)
+            if (this->isDynamic())
                 return this->dataDynamic.buf.end();
             else
                 return this->dataStatic + this->_length;
         }
 
+        constexpr bool isDynamic() const noexcept
+        {
+            if constexpr (DynamicExtent)
+                return this->_isDynamic;
+            else
+                return false;
+        }
         inline bool isEmpty() const
         {
             return this->_length == 0;
@@ -169,7 +193,49 @@ namespace sys
         {
             return _asi(size_t, this->length());
         }
+        inline ssz capacity() const
+        {
+            if (this->isDynamic())
+                return this->dataDynamic.capacity;
+            else
+                return StaticCapacity;
+        }
 
+        inline bool contains(CharType c) const
+        {
+            for (auto it = this->cbegin(); it != this->cend(); ++it)
+            {
+                if (*it == c)
+                    return true;
+            }
+            return false;
+        }
+        inline bool contains(const std::basic_string_view<CharType> str) const
+        {
+            for (auto it = this->cbegin(); it != this->cend() - str.length() + 1; ++it)
+            {
+                if (std::equal(it, it + str.length(), str.begin()))
+                    return true;
+            }
+            return false;
+        }
+        inline bool startsWith(const std::basic_string_view<CharType> str) const
+        {
+            if (this->length() < str.length())
+                return false;
+            return std::equal(this->cbegin(), this->cbegin() + str.length(), str.begin());
+        }
+        inline bool endsWith(const std::basic_string_view<CharType> str) const
+        {
+            if (this->length() < str.length())
+                return false;
+            return std::equal(this->cend() - str.length(), this->cend(), str.begin());
+        }
+
+        inline sz hashCode()
+        {
+            return std::hash(_as(std::basic_string_view<CharType>, *this))();
+        }
         friend inline void swap(sys::String<CharType, DynamicExtent, StaticCapacity>& a, sys::String<CharType, DynamicExtent, StaticCapacity>& b) noexcept
         {
             if (&a != &b) [[likely]]
@@ -185,7 +251,7 @@ namespace sys
             } dataDynamic;
             CharType dataStatic[sz(StaticCapacity)];
         };
-        bool isDynamic = false;
+        bool _isDynamic = false;
         ssz _length = 0;
 
         inline String(unsafe_tag)
@@ -199,12 +265,12 @@ namespace sys
                 {
                     this->dataDynamic.buf = ManagedArray<CharType>(capacity);
                     this->dataDynamic.capacity = capacity;
-                    this->isDynamic = true;
+                    this->_isDynamic = true;
                     return this->dataDynamic.buf.begin();
                 }
                 else
                 {
-                    this->isDynamic = false;
+                    this->_isDynamic = false;
                     return this->dataStatic;
                 }
             }
@@ -216,11 +282,8 @@ namespace sys
         }
         inline void dealloc()
         {
-            if constexpr (DynamicExtent)
-            {
-                if (this->isDynamic)
-                    this->dataDynamic.buf.~ManagedArray();
-            }
+            if (this->isDynamic())
+                this->dataDynamic.buf.~ManagedArray();
         }
         inline bool forEachAssign(ssz len, auto&& withIndex, auto&& createFetchBuffer)
         {

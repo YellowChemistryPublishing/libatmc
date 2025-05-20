@@ -6,6 +6,8 @@
 #include <LanguageSupport.h>
 #include <Result.h>
 
+#define _assert_ctor_can_fail() static_assert(false, "This constructor may fail, use `ctor` instead.")
+
 namespace sys
 {
     template <INumber T, INumber ValueType>

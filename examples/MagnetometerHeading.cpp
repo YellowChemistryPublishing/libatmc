@@ -1,12 +1,11 @@
 #include <cstdio>
-#include <cxxutil.h>
-#include <cxxutil.hpp>
 #include <entry.h>
 #include <print>
 
 
 #include <AccelGyro_LSM6DS3.h>
 #include <I2CDevice.h>
+#include <LanguageSupport.h>
 #include <Magnetometer_LIS3MDL.h>
 #include <SPIDevice.h>
 #include <SerialInterfaceDevice.h>
@@ -185,8 +184,8 @@ __async(void) imuTest()
                 break;
             }
         }
-        std::memmove(data, &data[lastFinalIndex + 1], unsigned(__sc(int, readCount) - lastFinalIndex - 1) * sizeof(LSM6DS3::FIFOData));
-        readRemainder = LSM6DS3::FIFOChunkSize - (__sc(int, readCount) - lastFinalIndex - 1);
+        std::memmove(data, &data[lastFinalIndex + 1], unsigned(_as(int, readCount) - lastFinalIndex - 1) * sizeof(LSM6DS3::FIFOData));
+        readRemainder = LSM6DS3::FIFOChunkSize - (_as(int, readCount) - lastFinalIndex - 1);
     }
 }
 

@@ -15,22 +15,33 @@ namespace sys
     template <typename T>
     struct ManagedArray
     {
-        inline ManagedArray(ssz len)
+        inline ManagedArray(ssz)
         {
-            if (std::cmp_less(len, 0) || std::cmp_greater(len, std::numeric_limits<size_t>::max()))
-                return;
-
-            this->data = new T[len];
-            this->_length = len;
+            _assert_ctor_can_fail();
         }
-        inline ManagedArray(ssz len, T init)
+        _const inline static Result<ManagedArray<T>> ctor(ssz len)
         {
             if (std::cmp_less(len, 0) || std::cmp_greater(len, std::numeric_limits<size_t>::max()))
-                return;
+                return nullptr;
 
+            ManagedArray<T> ret;
+            ret.data = new T[len];
+            ret._length = len;
+        }
+        inline ManagedArray(ssz, T)
+        {
+            _assert_ctor_can_fail();
+        }
+        _const inline static Result<ManagedArray<T>> ctor(ssz len, T init)
+        {
+            if (std::cmp_less(len, 0) || std::cmp_greater(len, std::numeric_limits<size_t>::max()))
+                return nullptr;
+
+            ManagedArray<T> ret;
             sc_ptr<T[]> incomplete = new T[len];
-            this->forEachAssign(len, [&](ssz i) { incomplete[i] = init; });
-            this->data = incomplete.move();
+            ret.forEachAssign(len, [&](ssz i) { incomplete[i] = init; });
+            ret.data = incomplete.move();
+            return ret;
         }
         inline ManagedArray(std::initializer_list<T> init)
         {
@@ -58,7 +69,7 @@ namespace sys
             delete[] this->data;
         }
 
-        inline ManagedArray& operator=(const ManagedArray& other)
+        _const inline ManagedArray& operator=(const ManagedArray& other)
         {
             sc_ptr<T[]> incomplete = new T[other._length];
             this->forEachAssign(other._length, [&](ssz i) { incomplete[i] = other.data[i]; });
@@ -67,7 +78,7 @@ namespace sys
             this->_length = other._length;
             return *this;
         }
-        inline ManagedArray& operator=(ManagedArray&& other)
+        _const inline ManagedArray& operator=(ManagedArray&& other) noexcept
         {
             this->_length = 0;
             delete[] this->data;
@@ -122,15 +133,23 @@ namespace sys
             return this->data + this->_length;
         }
 
-        _const inline ssz length()
+        _const inline bool isEmpty() const noexcept
+        {
+            return this->_length == 0;
+        }
+        _const inline ssz length() const noexcept
         {
             return this->_length;
         }
-        inline size_t size() const
+        _const inline size_t size() const noexcept
         {
             return this->length();
         }
-        inline void clear() noexcept
+        _const inline ssz capacity() const noexcept
+        {
+            return this->_length;
+        }
+        inline void clear()
         {
             delete[] this->data;
             this->data = nullptr;
@@ -148,9 +167,8 @@ namespace sys
 
         inline void forEachAssign(T* assign, ssz len, auto&& withIndex)
         {
-            sc_ptr<T[]> incomplete = assign;
-            for (ssz i = 0; i < len; i++) std::invoke(withIndex, &*incomplete, i);
-            this->data = incomplete.move();
+            for (ssz i = 0; i < len; i++) std::invoke(withIndex, assign, i);
+            this->data = assign;
             this->_length = len;
         }
     };

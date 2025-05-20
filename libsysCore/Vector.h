@@ -2,7 +2,6 @@
 
 #include <cmath>
 #include <cstdint>
-#include <cxxutil.h>
 #include <initializer_list>
 
 /* export module core.Math; */

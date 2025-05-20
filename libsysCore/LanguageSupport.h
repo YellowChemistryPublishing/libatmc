@@ -63,16 +63,25 @@ constexpr unsafe_tag unsafe {};
 #define _asr(T, expr) reinterpret_cast<T>(expr)
 #define _asi(T, expr) ::sys::numeric_cast<T>(expr, unsafe)
 
+#define _ct(T, ...)                                       \
+    [&]                                                   \
+    {                                                     \
+        if constexpr (requires { T::ctor(__VA_ARGS__); }) \
+            return T::ctor(__VA_ARGS__);                  \
+        else                                              \
+            return T(__VA_ARGS__)                         \
+    }()
+
 /// @def _throw(value)
 /// @brief Logs a source location, and throws the value of the expression `value`.
-#define _throw(value)                                                                                                                                                          \
+#define _throw(value)                                                                                                                                                           \
     do                                                                                                                                                                          \
     {                                                                                                                                                                           \
         std::source_location __srcLoc = std::source_location::current();                                                                                                        \
-        _push_nowarn(_clWarn_use_after_free);                                                                                                                                 \
+        _push_nowarn(_clWarn_use_after_free);                                                                                                                                   \
         std::println(stderr, "In function `{}` at \"{}:{}:{}\" - Throwing `{}`.", __srcLoc.function_name(), __srcLoc.file_name(), int(__srcLoc.line()), int(__srcLoc.column()), \
                      typeid(decltype(value)).name());                                                                                                                           \
-        _pop_nowarn();                                                                                                                                                         \
+        _pop_nowarn();                                                                                                                                                          \
         throw(value);                                                                                                                                                           \
     }                                                                                                                                                                           \
     while (false)
@@ -80,23 +89,23 @@ constexpr unsafe_tag unsafe {};
 /// @def _fence_value_return(val, retCond)
 /// @brief Return `val` if `retCond` is true.
 #define _fence_value_return(val, retCond) \
-    if (retCond)                           \
+    if (retCond)                          \
         return val;
 /// @def _fence_value_co_return(val, retCond)
 /// @brief Coroutine-return `val` if `retCond` is true.
 #define _fence_value_co_return(val, retCond) \
-    if (retCond)                              \
+    if (retCond)                             \
         co_return val;
 /// @def _fence_contract_enforce(cond)
 /// @brief Enforce a contract, throwing a `ContractViolationException` if `cond` is false.
 #define _fence_contract_enforce(cond)                                                                                    \
-    do                                                                                                                    \
-    {                                                                                                                     \
-        const bool __expr = cond;                                                                                         \
-        if (!__expr)                                                                                                      \
+    do                                                                                                                   \
+    {                                                                                                                    \
+        const bool __expr = cond;                                                                                        \
+        if (!__expr)                                                                                                     \
             _throw(::sys::ContractViolationException("Contract violated, condition `" #cond "` evaluated to `false`.")); \
-        [[assume(__expr)]];                                                                                               \
-    }                                                                                                                     \
+        [[assume(__expr)]];                                                                                              \
+    }                                                                                                                    \
     while (false)
 
 namespace sys

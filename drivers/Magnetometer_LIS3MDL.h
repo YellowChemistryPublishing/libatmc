@@ -9,16 +9,10 @@
 
 #include <algorithm>
 #include <cmath>
-#include <coroutine>
 #include <cstdint>
-#include <cstring>
-#include <cxxutil.h>
-#include <cxxutil.hpp>
 #include <limits>
-#include <numbers>
 
 #include <Result.h>
-#include <Result.hpp>
 #include <SerialInterfaceDevice.h>
 #include <Task.h>
 #include <Vector.h>
