@@ -52,23 +52,31 @@ public:
     }
 };
 
-#define __task_yield_to_sched()                                                   \
-    struct                                                                        \
-    {                                                                             \
-        _inline_always constexpr bool await_ready() const noexcept                \
-        {                                                                         \
-            taskYIELD();                                                          \
-            return true;                                                          \
-        }                                                                         \
-        _inline_always void await_suspend(std::coroutine_handle<>) const noexcept \
-        { }                                                                       \
-        _inline_always constexpr void await_resume() const noexcept               \
-        { }                                                                       \
-    } ret;                                                                        \
-    return ret
-#define __task_wait_while_sched()                                                    \
-    uint32_t from = xTaskGetTickCount();                                             \
-    while (pdTICKS_TO_MS(xTaskGetTickCount() - from) < ms) co_await Task<>::yield()
+#define __task_yield()                                                                \
+    inline static auto yield()                                                        \
+    requires (std::is_same<T, void>::value)                                           \
+    {                                                                                 \
+        struct                                                                        \
+        {                                                                             \
+            _inline_always constexpr bool await_ready() const noexcept                \
+            {                                                                         \
+                taskYIELD();                                                          \
+                return true;                                                          \
+            }                                                                         \
+            _inline_always void await_suspend(std::coroutine_handle<>) const noexcept \
+            { }                                                                       \
+            _inline_always constexpr void await_resume() const noexcept               \
+            { }                                                                       \
+        } ret;                                                                        \
+        return ret;                                                                   \
+    }
+#define __task_delay()                                                                   \
+    inline static Task<void> delay(uint32_t ms)                                          \
+    requires (std::is_same<T, void>::value)                                              \
+    {                                                                                    \
+        uint32_t from = xTaskGetTickCount();                                             \
+        while (pdTICKS_TO_MS(xTaskGetTickCount() - from) < ms) co_await Task<>::yield(); \
+    }
 #define __task_yield_and_resume() \
     taskYIELD();                  \
     return this->handle
