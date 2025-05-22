@@ -1,3 +1,6 @@
 [submodule "freertos"]
 	path = freertos
 	url = https://github.com/FreeRTOS/FreeRTOS-Kernel.git
+[submodule "libcxxext"]
+	path = libcxxext
+	url = https://github.com/YellowChemistryPublishing/libcxxext.git
