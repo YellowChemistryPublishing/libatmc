@@ -1,6 +1,9 @@
 #pragma once
 
+#include <limits>
+
 #include <FreeRTOS.h>
+#include <stm32h7xx_hal_def.h>
 #include <task.h>
 
 #include <LanguageSupport.h>
@@ -63,9 +66,14 @@ public:
         { }                                                                       \
     } ret;                                                                        \
     return ret
+#define __task_wait_while_sched()                                                    \
+    uint32_t from = xTaskGetTickCount();                                             \
+    while (pdTICKS_TO_MS(xTaskGetTickCount() - from) < ms) co_await Task<>::yield()
 #define __task_yield_and_resume() \
     taskYIELD();                  \
     return this->handle
 #define __task_yield_and_continue()             \
     taskYIELD();                                \
     return this->handle.promise().continuation;
+
+constexpr u32 __task_max_delay = HAL_MAX_DELAY;
