@@ -47,6 +47,7 @@ Where applicable and valid, `_restrict` must apply to pointers.
 Overriden virtual member functions must be annotated with the `override` specifier.
 
 All functions, where correct to, must be annotated with `_const` (`[[gnu::const]]`), or, where otherwise correct to, `_pure` (`[[gnu::pure]]`).
+Don't forget `[[nodiscard]]` too!
 
 Where template parameters have restricted domain or constraints, they must be specified with a `requires` clause.
 
@@ -54,8 +55,10 @@ Where template parameters have restricted domain or constraints, they must be sp
 
 If you check all these boxes, you're code is probably sufficiently well thought out.
 
- - Functions and variables `noexcept`, `const`, `_pure`, `_const`, `_restrict` where applicable.
+ - Functions and variables marked with `noexcept`, `const`, `_pure`, `_const`, `_restrict`, `[[nodiscard]]` where applicable.
+ - `constexpr` anything that moves.
  - You are using `Result<...>` for error handling.
  - An exception thrown at any point in my code would not cause a memory leak (or, it is sufficiently justified that one must not occur).
  - For custom types, a function named `swap` is implemented in the same scope, and used in the type's move constructor.
+    - (Please do the `friend constexpr void swap(T& a, T& b) { using std::swap; ... }` trick please.)
  - When applicable, a type has a member function with declaration `sz hashCode()` is provided.

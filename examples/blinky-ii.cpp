@@ -19,7 +19,7 @@ __async(void) entryPoint()
 {
     while (true)
     {
-        float dc = (co_await GPIOManager::analogRead(ExampleConfig::potPin)).valueOrThrow();
+        float dc = (co_await GPIOManager::analogRead(ExampleConfig::potPin)).expect();
         std::println("LED Brightness: {}.", dc);
 
         if (dc < 0.04f)

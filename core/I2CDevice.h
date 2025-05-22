@@ -1,10 +1,10 @@
 #pragma once
 
-#include <atomic>
 #include <cassert>
 #include <runtime_headers.h>
 #include <span>
 
+#include <Config.h>
 #include <InplaceAtomicSet.h>
 #include <Result.h>
 #include <SerialInterfaceDevice.h>

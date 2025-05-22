@@ -8,5 +8,4 @@
 #include <Pointer.h>
 #include <Result.h>
 #include <StringEx.h>
-#include <Timer.h>
 #include <Vector.h>

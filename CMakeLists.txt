@@ -46,7 +46,7 @@ endif()
 
 add_compile_options(
     $<$<COMPILE_LANGUAGE:CXX>:-Wsuggest-override> $<$<COMPILE_LANGUAGE:CXX>:-Wold-style-cast> -Wunused-result -Werror
-    -fdebug-prefix-map=${CMAKE_SOURCE_DIR}=./ $<$<COMPILE_LANGUAGE:CXX>:-fconcepts-diagnostics-depth=4>
+    $<$<COMPILE_LANGUAGE:CXX>:-fconcepts-diagnostics-depth=4> # -fdebug-prefix-map=${CMAKE_SOURCE_DIR}=.
     -fno-math-errno -funsafe-math-optimizations -fno-rounding-math -fno-signed-zeros -fno-trapping-math -fexcess-precision=fast
     -fno-signaling-nans -fcx-limited-range
     -fexceptions -fnon-call-exceptions -fasynchronous-unwind-tables -foptimize-sibling-calls # Force symmetric transfer optimization for coroutines.
@@ -146,17 +146,14 @@ target_compile_definitions(rt PUBLIC ${RT_DEFINITIONS})
 target_include_directories(rt PUBLIC ${RT_INCLUDE_DIRS})
 target_link_libraries(rt PUBLIC freertos_kernel)
 
-# sysCore Library
+# libcxxext
 
-file(GLOB SYSCORE_SRCS CONFIGURE_DEPENDS
-    "libsysCore/*.h"
-    "libsysCore/*.cpp"
-)
-
-add_library(sysCore STATIC ${SYSCORE_SRCS})
-target_include_directories(sysCore PUBLIC "/" "core" "libsysCore")
-target_link_libraries(sysCore PUBLIC rt freertos_kernel)
-set_target_properties(sysCore PROPERTIES
+set(PLATFORM_SUPPORT_RUNTIME_HEADER "${CMAKE_SOURCE_DIR}/core/rt_required.h")
+set(PLATFORM_SUPPORT_RUNTIME_LIBRARY "${CMAKE_SOURCE_DIR}/core/rt_embedded.cpp")
+add_subdirectory(libcxxext)
+target_include_directories(sys PUBLIC "/")
+target_link_libraries(sys PUBLIC rt freertos_kernel)
+set_target_properties(sys PROPERTIES
     C_CPPCHECK ${LINT_CPPCHECK}
     CXX_CPPCHECK ${LINT_CPPCHECK}
     C_CLANG_TIDY ${LINT_CLANG_TIDY}
@@ -169,6 +166,7 @@ file(GLOB_RECURSE CORE_SRCS CONFIGURE_DEPENDS
     "core/*.h"
     "core/*.cpp"
 )
+list(FILTER CORE_SRCS EXCLUDE REGEX "${CMAKE_SOURCE_DIR}/core/rt_embedded.cpp")
 file(GLOB_RECURSE CORE_MODULES CONFIGURE_DEPENDS
     "core/*.cppm"
 )
@@ -176,7 +174,7 @@ file(GLOB_RECURSE CORE_MODULES CONFIGURE_DEPENDS
 add_library(core STATIC ${CORE_SRCS})
 target_sources(core PUBLIC FILE_SET CXX_MODULES FILES ${CORE_MODULES})
 target_include_directories(core PUBLIC "/" "core")
-target_link_libraries(core PUBLIC rt freertos_kernel sysCore)
+target_link_libraries(core PUBLIC rt freertos_kernel sys)
 set_target_properties(core PROPERTIES
     C_CPPCHECK ${LINT_CPPCHECK}
     CXX_CPPCHECK ${LINT_CPPCHECK}

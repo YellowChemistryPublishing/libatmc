@@ -4,13 +4,15 @@
 #include <type_traits>
 #include <utility>
 
+#include <LanguageSupport.h>
+
 namespace sys
 {
     template <typename T>
     struct sc_ptr_b
     {
         constexpr sc_ptr_b() noexcept = default;
-        constexpr sc_ptr_b(void* ptr) noexcept : _ptr(ptr)
+        constexpr sc_ptr_b(T* ptr) noexcept : _ptr(ptr)
         { }
         constexpr sc_ptr_b(const sc_ptr_b&) = delete;
         constexpr sc_ptr_b(sc_ptr_b&& other) noexcept : _ptr(other._ptr)
@@ -30,6 +32,10 @@ namespace sys
         {
             return this->_ptr;
         }
+        inline T& operator[](ssz index) const noexcept
+        {
+            return *(this->_ptr + index);
+        }
 
         inline T* move() noexcept
         {
@@ -40,9 +46,10 @@ namespace sys
 
         friend inline void swap(sc_ptr_b& a, sc_ptr_b& b) noexcept
         {
-            std::swap(a._ptr, b._ptr);
+            using std::swap;
+            swap(a._ptr, b._ptr);
         }
-    private:
+    protected:
         T* _ptr = nullptr;
     };
 
@@ -56,7 +63,7 @@ namespace sys
         }
     };
     template <typename T>
-    struct sc_ptr<T[]> : sc_ptr_b<T[]>
+    struct sc_ptr<T[]> : sc_ptr_b<T>
     {
         using sc_ptr_b<T>::sc_ptr_b;
         inline ~sc_ptr()
@@ -88,8 +95,10 @@ namespace sys
 
         friend inline void swap(sc_act& a, sc_act& b) noexcept(std::is_nothrow_swappable_v<sc_act>)
         {
-            std::swap(a.func, b.func);
-            std::swap(a.released, b.released);
+            using std::swap;
+
+            swap(a.func, b.func);
+            swap(a.released, b.released);
         }
     private:
         [[no_unique_address]] Func func;

@@ -84,7 +84,8 @@ namespace sys
                     return ret.dataStatic;
                 });
             }
-            else return nullptr;
+            else
+                return nullptr;
         }
         inline String(String<CharType, DynamicExtent, StaticCapacity>&& other)
         {
@@ -203,21 +204,11 @@ namespace sys
 
         inline bool contains(CharType c) const
         {
-            for (auto it = this->cbegin(); it != this->cend(); ++it)
-            {
-                if (*it == c)
-                    return true;
-            }
-            return false;
+            return this->find(c);
         }
         inline bool contains(const std::basic_string_view<CharType> str) const
         {
-            for (auto it = this->cbegin(); it != this->cend() - str.length() + 1; ++it)
-            {
-                if (std::equal(it, it + str.length(), str.begin()))
-                    return true;
-            }
-            return false;
+            return this->find(str);
         }
         inline bool startsWith(const std::basic_string_view<CharType> str) const
         {
@@ -231,6 +222,33 @@ namespace sys
                 return false;
             return std::equal(this->cend() - str.length(), this->cend(), str.begin());
         }
+        inline const CharType* find(CharType c) const
+        {
+            for (auto it = this->cbegin(); it != this->cend(); ++it)
+            {
+                if (*it == c)
+                    return it;
+            }
+            return nullptr;
+        }
+        inline const CharType* find(const std::basic_string_view<CharType> str) const
+        {
+            for (auto it = this->cbegin(); it != this->cend() - str.length() + 1; ++it)
+            {
+                if (std::equal(it, it + str.length(), str.begin()))
+                    return it;
+            }
+            return nullptr;
+        }
+        inline CharType* find(CharType c)
+        {
+            for (auto it = this->begin(); it != this->end(); ++it)
+            {
+                if (*it == c)
+                    return it;
+            }
+            return nullptr;
+        }
 
         inline sz hashCode()
         {
@@ -238,6 +256,8 @@ namespace sys
         }
         friend inline void swap(sys::String<CharType, DynamicExtent, StaticCapacity>& a, sys::String<CharType, DynamicExtent, StaticCapacity>& b) noexcept
         {
+            using std::swap;
+
             if (&a != &b) [[likely]]
                 std::swap_ranges(_asr(byte*, &a), _asr(byte*, &a) + sizeof(a), _asr(byte*, &b));
         }

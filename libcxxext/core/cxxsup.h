@@ -1,12 +1,15 @@
 #pragma once
 
 #include <limits>
+#include <type_traits>
 #include <utility>
 
 #include <LanguageSupport.h>
 #include <Result.h>
 
 #define _assert_ctor_can_fail() static_assert(false, "This constructor may fail, use `ctor` instead.")
+#define _invoke_const_member_overload(memberFunction, cast)                                                                                                          \
+    cast(std::remove_const_t<decltype(_as(std::add_const_t<decltype(*this)>, *this).memberFunction)>, _as(std::add_const_t<decltype(*this)>, *this).memberFunction);
 
 namespace sys
 {

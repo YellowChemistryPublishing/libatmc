@@ -47,6 +47,9 @@ constexpr unsafe_tag unsafe {};
 /// @def _inline_never
 /// @brief Force noinline a function.
 #define _inline_never [[gnu::noinline]]
+/// @def _weak
+/// @brief Mark a function as weak.
+#define _weak [[gnu::weak]]
 /// @def _pure
 /// @brief Mark a function as pure.
 #define _pure [[gnu::pure]]
@@ -57,20 +60,11 @@ constexpr unsafe_tag unsafe {};
 /// @brief Mark a parameter (or this) as restrict.
 #define _restrict __restrict__
 
-#define _as(T, expr) static_cast<T>(expr)
-#define _asd(T, expr) dynamic_cast<T>(expr)
-#define _asc(T, expr) const_cast<T>(expr)
-#define _asr(T, expr) reinterpret_cast<T>(expr)
-#define _asi(T, expr) ::sys::numeric_cast<T>(expr, unsafe)
-
-#define _ct(T, ...)                                       \
-    [&]                                                   \
-    {                                                     \
-        if constexpr (requires { T::ctor(__VA_ARGS__); }) \
-            return T::ctor(__VA_ARGS__);                  \
-        else                                              \
-            return T(__VA_ARGS__)                         \
-    }()
+#define _as(T, ...) static_cast<T>(__VA_ARGS__)
+#define _asd(T, ...) dynamic_cast<T>(__VA_ARGS__)
+#define _asc(T, ...) const_cast<T>(__VA_ARGS__)
+#define _asr(T, ...) reinterpret_cast<T>(__VA_ARGS__)
+#define _asi(T, ...) ::sys::numeric_cast<T>(__VA_ARGS__, unsafe)
 
 /// @def _throw(value)
 /// @brief Logs a source location, and throws the value of the expression `value`.
@@ -131,4 +125,14 @@ namespace sys
 
         requires ((std::same_as<U, void> && requires { *begin(range); }) || std::convertible_to<decltype(*begin(range)), std::add_lvalue_reference_t<std::add_const_t<U>>>);
     };
+
+    template <typename T, typename From>
+    using TypeWithQualRefFrom =
+        std::conditional_t<std::is_reference_v<From>,
+                           std::conditional_t<std::is_const_v<From>,
+                                              std::conditional_t<std::is_volatile_v<From>, std::add_const_t<std::add_volatile_t<std::add_lvalue_reference_t<T>>>,
+                                                                 std::add_const_t<std::add_lvalue_reference_t<T>>>,
+                                              std::conditional_t<std::is_volatile_v<From>, std::add_volatile_t<std::add_lvalue_reference_t<T>>, std::add_lvalue_reference_t<T>>>,
+                           std::conditional_t<std::is_const_v<From>, std::conditional_t<std::is_volatile_v<From>, std::add_const_t<std::add_volatile_t<T>>, std::add_const_t<T>>,
+                                              std::conditional_t<std::is_volatile_v<From>, std::add_volatile_t<T>, T>>>;
 } // namespace sys

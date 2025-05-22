@@ -19,7 +19,7 @@ namespace sys
         {
             _assert_ctor_can_fail();
         }
-        _const inline static Result<ManagedArray<T>> ctor(ssz len)
+        [[nodiscard]] _const inline static Result<ManagedArray<T>> ctor(ssz len)
         {
             if (std::cmp_less(len, 0) || std::cmp_greater(len, std::numeric_limits<size_t>::max()))
                 return nullptr;
@@ -27,38 +27,39 @@ namespace sys
             ManagedArray<T> ret;
             ret.data = new T[len];
             ret._length = len;
+            return ret;
         }
         inline ManagedArray(ssz, T)
         {
             _assert_ctor_can_fail();
         }
-        _const inline static Result<ManagedArray<T>> ctor(ssz len, T init)
+        [[nodiscard]] _const inline static Result<ManagedArray<T>> ctor(ssz len, T init)
         {
             if (std::cmp_less(len, 0) || std::cmp_greater(len, std::numeric_limits<size_t>::max()))
                 return nullptr;
 
             ManagedArray<T> ret;
             sc_ptr<T[]> incomplete = new T[len];
-            ret.forEachAssign(len, [&](ssz i) { incomplete[i] = init; });
+            for (auto it = &*incomplete; it != &*incomplete + len; ++it) *it = init;
             ret.data = incomplete.move();
+            ret._length = len;
             return ret;
         }
         inline ManagedArray(std::initializer_list<T> init)
         {
             sc_ptr<T[]> incomplete = new T[init.size()];
-            auto it = init.begin();
-            this->forEachAssign(init.size(), [&](ssz i)
-            {
-                incomplete[i] = *it;
-                ++it;
-            });
+            for (auto it1 = &*incomplete, it2 = init.begin(); it1 != &*incomplete + init.size(); ++it1, ++it2)
+                *it1 = *it2;
             this->data = incomplete.move();
+            this->_length = init.size();
         }
         inline ManagedArray(const ManagedArray& other)
         {
             sc_ptr<T[]> incomplete = new T[other._length];
-            this->forEachAssign(other._length, [&](ssz i) { incomplete[i] = other.data[i]; });
+            for (auto it1 = &*incomplete, it2 = other.begin(); it2 != other.end(); ++it1, ++it2)
+                *it1 = *it2;
             this->data = incomplete.move();
+            this->_length = other._length;
         }
         inline ManagedArray(ManagedArray&& other) noexcept
         {
@@ -72,7 +73,8 @@ namespace sys
         _const inline ManagedArray& operator=(const ManagedArray& other)
         {
             sc_ptr<T[]> incomplete = new T[other._length];
-            this->forEachAssign(other._length, [&](ssz i) { incomplete[i] = other.data[i]; });
+            for (auto it1 = &*incomplete, it2 = other.begin(); it2 != other.end(); ++it1, ++it2)
+                *it1 = *it2;
             delete[] this->data;
             this->data = incomplete.move();
             this->_length = other._length;
@@ -87,25 +89,25 @@ namespace sys
             return *this;
         }
 
-        _const inline T& operator[](ssz index, unsafe_tag)
-        {
-            return this->data[index];
-        }
         _const inline const T& operator[](ssz index, unsafe_tag) const
         {
             return this->data[index];
         }
-        _const inline Result<T&> operator[](ssz index)
+        _const inline T& operator[](ssz index, unsafe_tag)
         {
-            if (ssz(0) <= index && index < this->_length) [[likely]]
-                return (*this)[index, unsafe];
-            else return nullptr;
+            return _invoke_const_member_overload(operator[](index, unsafe), _asc);
         }
         _const inline Result<const T&> operator[](ssz index) const
         {
             if (ssz(0) <= index && index < this->_length) [[likely]]
                 return (*this)[index, unsafe];
-            else return nullptr;
+            else
+                return nullptr;
+        }
+        _const inline Result<T&> operator[](ssz index)
+        {
+            auto ret = _as(const ManagedArray<T>*, this)->operator[](index);
+            return _asr(Result<T&>&, ret);
         }
 
         _const inline const T* cbegin() const noexcept
@@ -158,18 +160,16 @@ namespace sys
 
         friend inline void swap(sys::ManagedArray<T>& a, sys::ManagedArray<T>& b) noexcept
         {
-            std::swap(a.data, b.data);
-            std::swap(a._length, b._length);
+            using std::swap;
+
+            swap(a.data, b.data);
+            swap(a._length, b._length);
         }
     private:
         T* data = nullptr;
         ssz _length = 0;
 
-        inline void forEachAssign(T* assign, ssz len, auto&& withIndex)
-        {
-            for (ssz i = 0; i < len; i++) std::invoke(withIndex, assign, i);
-            this->data = assign;
-            this->_length = len;
-        }
+        inline ManagedArray()
+        { }
     };
 } // namespace sys

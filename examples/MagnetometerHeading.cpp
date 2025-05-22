@@ -1,7 +1,7 @@
 #include <cstdio>
+#include <cstring>
 #include <entry.h>
 #include <print>
-
 
 #include <AccelGyro_LSM6DS3.h>
 #include <I2CDevice.h>
@@ -11,7 +11,6 @@
 #include <SerialInterfaceDevice.h>
 #include <Task.h>
 #include <Vector.h>
-
 
 using namespace atmc;
 using namespace sys;
@@ -100,7 +99,7 @@ __async(void) imuTest()
     _fence_contract_enforce(co_await imu.writeConfigRegister(fifoCtrl2) == HardwareStatus::Ok);
     _fence_contract_enforce(co_await imu.writeConfigRegister(fifoCtrl5) == HardwareStatus::Ok);
 
-    auto wakeupDur = (co_await imu.readConfigRegister<LSM6DS3::RegisterWakeupDuration>()).valueOrThrow();
+    auto wakeupDur = (co_await imu.readConfigRegister<LSM6DS3::RegisterWakeupDuration>()).expect();
     wakeupDur.wakeupDuration = LSM6DS3::RegisterWakeupDuration::timestampResolutionToBit(0.025f);
     _fence_contract_enforce(co_await imu.writeConfigRegister(wakeupDur) == HardwareStatus::Ok);
 
@@ -125,7 +124,7 @@ __async(void) imuTest()
         auto rA = (co_await imu.readFIFOData(pattern, readRemainder, &data[LSM6DS3::FIFOChunkSize - readRemainder]));
         if (!rA)
         {
-            switch (rA.takeError())
+            switch (rA.err())
             {
             case HardwareStatus::Timeout:
                 printf("Timeout\n");
@@ -141,7 +140,7 @@ __async(void) imuTest()
             }
             continue;
         }
-        uint16_t readCount = rA.takeValue();
+        uint16_t readCount = rA.move();
         int lastFinalIndex = -1;
         for (uint16_t i = 0; i < readCount; i++)
         {
