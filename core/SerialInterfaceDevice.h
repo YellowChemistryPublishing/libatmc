@@ -50,7 +50,7 @@ namespace atmc
             uint8_t data[2];
             HardwareStatus res = co_await this->readMemory(memAddr, std::span(data, 2));
             _fence_value_co_return(res, res != HardwareStatus::Ok);
-            co_return sys::s16fb2(data[1], data[0]);
+            co_return sys::s16fb2(u8(data[1]), u8(data[0]));
         }
 
         /// @brief Read contiguous data from a register as a specific type.

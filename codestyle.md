@@ -51,6 +51,13 @@ Don't forget `[[nodiscard]]` too!
 
 Where template parameters have restricted domain or constraints, they must be specified with a `requires` clause.
 
+## What Integer to Use
+
+ - `ixx` or `uxx` in most cases.
+ - `ssz` when referring to sizes and lengths.
+ - `(u)int_leastxx_t`, `size_t`, `ptrdiff_t` if you specifically need the underlying integer type at least as wide.
+ - `int` if you legitimately don't need to care.
+
 ## Library Checklist
 
 If you check all these boxes, you're code is probably sufficiently well thought out.

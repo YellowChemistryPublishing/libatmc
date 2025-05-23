@@ -43,7 +43,7 @@ public:
     inline static __thread_type currentThread()
     {
         __tcs guard;
-        return __thread_type(xTaskGetCurrentTaskHandle());
+        return xTaskGetCurrentTaskHandle();
     }
 
     inline __thread_id id()
@@ -84,4 +84,4 @@ public:
     taskYIELD();                                \
     return this->handle.promise().continuation;
 
-constexpr u32 __task_max_delay = HAL_MAX_DELAY;
+constexpr i32 __task_max_delay(std::numeric_limits<i32::UnderlyingType>::max());
