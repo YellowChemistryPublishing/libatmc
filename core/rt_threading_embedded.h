@@ -80,8 +80,8 @@ public:
 #define __task_yield_and_resume() \
     taskYIELD();                  \
     return this->handle
-#define __task_yield_and_continue()             \
-    taskYIELD();                                \
-    return this->handle.promise().continuation;
+#define __task_yield_and_continue()            \
+    taskYIELD();                               \
+    return this->handle.promise().continuation
 
-constexpr i32 __task_max_delay(std::numeric_limits<i32::UnderlyingType>::max());
+constexpr i32 __task_max_delay(std::numeric_limits<i32::Underlying>::max());

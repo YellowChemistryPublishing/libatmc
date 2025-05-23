@@ -148,12 +148,12 @@ target_link_libraries(rt PUBLIC freertos_kernel)
 
 # libcxxext
 
-set(PLATFORM_SUPPORT_RUNTIME_HEADER "${CMAKE_SOURCE_DIR}/core/rt_required.h")
-set(PLATFORM_SUPPORT_RUNTIME_LIBRARY "${CMAKE_SOURCE_DIR}/core/rt_embedded.cpp")
+set(PLATFORM_SUPPORT_THREADING_HEADER "${CMAKE_SOURCE_DIR}/core/rt_threading_embedded.h")
+set(PLATFORM_SUPPORT_THREADING_LIBRARY "${CMAKE_SOURCE_DIR}/core/rt_threading_embedded.cpp")
 add_subdirectory(libcxxext)
-target_include_directories(sys PUBLIC "/")
-target_link_libraries(sys PUBLIC rt freertos_kernel)
-set_target_properties(sys PROPERTIES
+target_include_directories(sys.Threading PUBLIC "/")
+target_link_libraries(sys.Threading PUBLIC rt freertos_kernel)
+set_target_properties(sys.Threading PROPERTIES
     C_CPPCHECK ${LINT_CPPCHECK}
     CXX_CPPCHECK ${LINT_CPPCHECK}
     C_CLANG_TIDY ${LINT_CLANG_TIDY}
@@ -166,7 +166,7 @@ file(GLOB_RECURSE CORE_SRCS CONFIGURE_DEPENDS
     "core/*.h"
     "core/*.cpp"
 )
-list(FILTER CORE_SRCS EXCLUDE REGEX "${CMAKE_SOURCE_DIR}/core/rt_embedded.cpp")
+list(FILTER CORE_SRCS EXCLUDE REGEX "${CMAKE_SOURCE_DIR}/core/rt_threading_embedded.cpp")
 file(GLOB_RECURSE CORE_MODULES CONFIGURE_DEPENDS
     "core/*.cppm"
 )
@@ -174,7 +174,7 @@ file(GLOB_RECURSE CORE_MODULES CONFIGURE_DEPENDS
 add_library(core STATIC ${CORE_SRCS})
 target_sources(core PUBLIC FILE_SET CXX_MODULES FILES ${CORE_MODULES})
 target_include_directories(core PUBLIC "/" "core")
-target_link_libraries(core PUBLIC rt freertos_kernel sys)
+target_link_libraries(core PUBLIC rt freertos_kernel sys sys.Containers sys.Threading)
 set_target_properties(core PROPERTIES
     C_CPPCHECK ${LINT_CPPCHECK}
     CXX_CPPCHECK ${LINT_CPPCHECK}
