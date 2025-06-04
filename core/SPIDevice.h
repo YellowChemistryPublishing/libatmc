@@ -55,10 +55,9 @@ namespace atmc
             co_return res;
         }
     public:
-        inline SPIDevice(
-            sys::fenced_pointer<SPI_HandleTypeDef> hspi, GPIOPin csPin, u8 (*registerByteFromAddr)(u16, bool) = [](u16 addr, [[maybe_unused]] bool read) -> u8
-            { return +addr; }, HardwareStatus (*waitDeviceReadySync)(u32, u32) = []([[maybe_unused]] u32 trials, [[maybe_unused]] u32 timeout) -> HardwareStatus
-            { return HardwareStatus::Ok; }) : memRegisterByteFromAddr(registerByteFromAddr), waitDeviceReadySync(waitDeviceReadySync), internalHandle(&*hspi), csPin(csPin)
+        inline SPIDevice(sys::fenced_pointer<SPI_HandleTypeDef> hspi, GPIOPin csPin, u8 (*registerByteFromAddr)(u16, bool) = [](u16 addr, [[maybe_unused]] bool read) -> u8
+        { return +addr; }, HardwareStatus (*waitDeviceReadySync)(u32, u32) = []([[maybe_unused]] u32 trials, [[maybe_unused]] u32 timeout) -> HardwareStatus
+        { return HardwareStatus::Ok; }) : memRegisterByteFromAddr(registerByteFromAddr), waitDeviceReadySync(waitDeviceReadySync), internalHandle(&*hspi), csPin(csPin)
         { }
 
         /// @brief You must call this, on _every_ `atmc::SPIDevice`, before using _any_ SPI functionality.

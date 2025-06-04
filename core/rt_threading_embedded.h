@@ -71,10 +71,10 @@ public:
         return ret;                                                                   \
     }
 #define __task_delay()                                                                   \
-    inline static task<void> delay(u32 ms)                                          \
+    inline static task<void> delay(u32 ms)                                               \
     requires (std::is_same<T, void>::value)                                              \
     {                                                                                    \
-        u32 from = xTaskGetTickCount();                                             \
+        u32 from = xTaskGetTickCount();                                                  \
         while (pdTICKS_TO_MS(xTaskGetTickCount() - from) < ms) co_await task<>::yield(); \
     }
 #define __task_yield_and_resume() \
