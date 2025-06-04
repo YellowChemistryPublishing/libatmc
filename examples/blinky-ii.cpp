@@ -1,8 +1,8 @@
 #include <print>
 
-#include <module/core.IO.Embedded.hpp>
-#include <module/core.hpp>
-#include <module/sys.hpp>
+#include <module/core.IO.Embedded>
+#include <module/core>
+#include <module/sys>
 
 using namespace sys;
 using namespace atmc;
@@ -15,7 +15,7 @@ struct ExampleConfig final
     constexpr static PWMPin ledPin = PWMPin(0, 0);
 };
 
-__async(void) entryPoint()
+async entryPoint()
 {
     while (true)
     {
@@ -27,7 +27,7 @@ __async(void) entryPoint()
 
         GPIOManager::pwmWrite(ExampleConfig::ledPin, dc);
 
-        co_await Task<>::delay(50);
+        co_await task<>::delay(50);
     }
 }
 

@@ -6,7 +6,7 @@ sys::InplaceAtomicSet<SPI_HandleTypeDef*, Config::SPIBusCount> SPIManager::txDon
 sys::InplaceAtomicSet<SPI_HandleTypeDef*, Config::SPIBusCount> SPIManager::rxDone(nullptr);
 sys::InplaceAtomicSet<SPI_HandleTypeDef*, Config::SPIBusCount> SPIManager::txrxDone(nullptr);
 
-sys::SpinLock SPIManager::busyLock;
+sys::spin_lock SPIManager::busyLock;
 sys::InplaceSet<SPI_HandleTypeDef*, Config::SPIBusCount> SPIManager::busy;
 
 extern "C" void HAL_SPI_TxCpltCallback([[maybe_unused]] SPI_HandleTypeDef* hspi)

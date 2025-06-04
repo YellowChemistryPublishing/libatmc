@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Exception.h"
 #include <cassert>
 #include <runtime_headers.h>
 #include <span>
@@ -33,8 +34,8 @@ namespace atmc
     class I2CDevice final : public SerialInterfaceDevice
     {
         I2C_HandleTypeDef* internalHandle;
-        uint16_t devAddr;
-        uint16_t memAddrSize;
+        u16 devAddr;
+        u16 memAddrSize;
     public:
         /// @brief Construct an `I2CDevice`.
         /// @param hi2c Underlying system I2C handle.
@@ -50,7 +51,7 @@ namespace atmc
         /// ...
         /// (&*hi2c)->~decltype(*&*hi2c)();
         /// ```
-        inline I2CDevice(sys::FencedPointer<I2C_HandleTypeDef> hi2c, uint16_t devAddr, uint16_t memAddrSize) :
+        inline I2CDevice(sys::fenced_pointer<I2C_HandleTypeDef> hi2c, u16 devAddr, u16 memAddrSize) :
             internalHandle(&*hi2c /* Contract implied: `hi2c != nullptr`. */), devAddr(devAddr), memAddrSize(memAddrSize)
         { }
 
@@ -58,9 +59,9 @@ namespace atmc
         /// @param trials Number of trials.
         /// @param timeout Timeout.
         /// @return Whether the operation was successful.
-        inline HardwareStatus waitReadySync(uint32_t trials, uint32_t timeout = HAL_MAX_DELAY) override
+        inline HardwareStatus waitReadySync(i32 trials, i32 timeout = HAL_MAX_DELAY) override
         {
-            return HardwareStatus(HAL_I2C_IsDeviceReady(this->internalHandle, this->devAddr << 1, trials, timeout));
+            return HardwareStatus(HAL_I2C_IsDeviceReady(this->internalHandle, +(this->devAddr << 1u), _asi(uint32_t, +trials), _asi(uint32_t, +timeout)));
         }
 
         /// @brief Read memory asynchronously.
@@ -75,12 +76,12 @@ namespace atmc
         /// ...
         /// data->~decltype(data)();
         /// ```
-        sys::Task<HardwareStatus> readMemory(uint16_t memAddr, std::span<uint8_t> data) override
+        sys::task<HardwareStatus> readMemory(u16 memAddr, std::span<byte> data) override
         {
-            HardwareStatus res = HardwareStatus(HAL_I2C_Mem_Read_IT(this->internalHandle, this->devAddr << 1, memAddr, this->memAddrSize, data.data(), data.size_bytes()));
+            HardwareStatus res = HardwareStatus(HAL_I2C_Mem_Read_IT(this->internalHandle, +(this->devAddr << 1u), +memAddr, +this->memAddrSize, data.data(), data.size_bytes()));
             _fence_value_co_return(res, res != HardwareStatus::Ok);
 
-            while (!I2CManager::rxDone.exchange(this->internalHandle, nullptr)) co_await sys::Task<>::yield();
+            while (!I2CManager::rxDone.exchange(this->internalHandle, nullptr)) co_await sys::task<>::yield();
 
             co_return HardwareStatus::Ok;
         }
@@ -95,12 +96,12 @@ namespace atmc
         /// ...
         /// data->~decltype(data)();
         /// ```
-        sys::Task<HardwareStatus> writeMemory(uint16_t memAddr, std::span<uint8_t> data) override
+        sys::task<HardwareStatus> writeMemory(u16 memAddr, std::span<byte> data) override
         {
-            HardwareStatus res = HardwareStatus(HAL_I2C_Mem_Write_IT(this->internalHandle, this->devAddr << 1, memAddr, this->memAddrSize, data.data(), data.size_bytes()));
+            HardwareStatus res = HardwareStatus(HAL_I2C_Mem_Write_IT(this->internalHandle, +(this->devAddr << 1u), +memAddr, +this->memAddrSize, data.data(), data.size_bytes()));
             _fence_value_co_return(res, res != HardwareStatus::Ok);
 
-            while (!I2CManager::txDone.exchange(this->internalHandle, nullptr)) co_await sys::Task<>::yield();
+            while (!I2CManager::txDone.exchange(this->internalHandle, nullptr)) co_await sys::task<>::yield();
 
             co_return HardwareStatus::Ok;
         }

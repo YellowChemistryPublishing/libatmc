@@ -91,7 +91,7 @@ void __launch_async(void* addr)
 {
     xTaskCreate([](void* pvParams)
     {
-        auto handle = std::coroutine_handle<AsyncPromise>::from_address(pvParams);
+        auto handle = std::coroutine_handle<async_promise>::from_address(pvParams);
         handle.resume();
         vTaskDelete(nullptr);
     }, "Async", atmc::Config::AsyncThreadStackSizeWords, addr, atmc::Config::AsyncThreadPriority, nullptr);

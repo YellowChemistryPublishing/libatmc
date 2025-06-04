@@ -46,12 +46,12 @@ void __initHandler()
     catch (const std::exception& ex)
     {
         std::println(stderr, "Exception thrown during call to `extern \"C\" void init()`: {}", ex.what());
-        _throw(TerminateException());
+        _throw(terminate_exception());
     }
     catch (...)
     {
-        std::println(stderr, "Unmanaged exception of type `{}` thrown during call to `extern \"C\" void init()`.", exceptionTypeName(std::current_exception()).get());
-        _throw(TerminateException());
+        std::println(stderr, "Unmanaged exception of type `{}` thrown during call to `extern \"C\" void init()`.", exception_type_name(std::current_exception()).get());
+        _throw(terminate_exception());
     }
     _pop_nowarn();
 }

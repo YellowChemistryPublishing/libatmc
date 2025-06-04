@@ -97,13 +97,13 @@ namespace atmc
         /// @brief Construct a GPIO pin.
         /// @param portAddr The address to the internal handle of the GPIO port.
         /// @param pin The pin number.
-        constexpr GPIOPin(uintptr_t portAddr, uint16_t pin) : port(portAddr), pin(pin)
+        constexpr GPIOPin(uintptr_t portAddr, u16 pin) : port(portAddr), pin(pin)
         { }
 
         friend class atmc::GPIOManager;
     private:
         uintptr_t port;
-        uint16_t pin;
+        u16 pin;
     };
 
     __gpio_define_ports();
@@ -191,11 +191,11 @@ namespace atmc
 
         /// @brief Await a pin interrupt, as preconfigured.
         /// @param pin The pin number to await.
-        inline static sys::Task<> pinInterrupt(uint16_t pin)
+        inline static sys::task<> pinInterrupt(u16 pin)
         {
-            int pinIndex = std::bit_width(pin) - 1;
+            int pinIndex = std::bit_width(+pin) - 1;
             GPIOManager::pinFlag[pinIndex].test_and_set();
-            while (GPIOManager::pinFlag[pinIndex].test()) co_await sys::Task<>::yield();
+            while (GPIOManager::pinFlag[pinIndex].test()) co_await sys::task<>::yield();
             co_return;
         }
 
@@ -204,9 +204,9 @@ namespace atmc
         /// @return The state of the pin.
         inline static GPIOPin::State digitalRead(GPIOPin pin)
         {
-            return HAL_GPIO_ReadPin(_asr(GPIO_TypeDef*, pin.port), pin.pin);
+            return HAL_GPIO_ReadPin(_asr(GPIO_TypeDef*, pin.port), +pin.pin);
         }
-        inline static sys::Task<sys::Result<float, HardwareStatus>> analogRead(AnalogPin pin)
+        inline static sys::task<sys::result<float, HardwareStatus>> analogRead(AnalogPin pin)
         {
             ADC_HandleTypeDef* hadc = pin.internalHandle();
             _fence_value_co_return(HardwareStatus::Error, !hadc);
@@ -235,7 +235,7 @@ namespace atmc
                 // `HAL_ADC_Stop_DMA(hadc)` called in ISR.
             }
 
-            co_await sys::Task<>::waitUntil([&] { return !GPIOManager::adcFlags[pin.adcIndex].test(); });
+            co_await sys::task<>::wait_until([&] { return !GPIOManager::adcFlags[pin.adcIndex].test(); });
 
             float maxVal = (1u << resolution) - 1;
             co_return float(GPIOManager::adcRaw[pin.adcIndex][pin.rank]) / maxVal;
@@ -246,7 +246,7 @@ namespace atmc
         /// @param state The state to set the pin to.
         inline static void digitalWrite(GPIOPin pin, GPIOPin::State state)
         {
-            HAL_GPIO_WritePin(_asr(GPIO_TypeDef*, pin.port), pin.pin, GPIO_PinState(state));
+            HAL_GPIO_WritePin(_asr(GPIO_TypeDef*, pin.port), +pin.pin, GPIO_PinState(state));
         }
 
         inline static HardwareStatus pwmWrite(PWMPin pin, float duty)

@@ -19,35 +19,35 @@ namespace atmc
         /// @param trials Number of trials.
         /// @param timeout Timeout.
         /// @return Whether the operation was successful.
-        virtual HardwareStatus waitReadySync(uint32_t trials, uint32_t timeout = sys::Task<>::MaxDelay) = 0;
+        virtual HardwareStatus waitReadySync(i32 trials, i32 timeout = sys::task<>::max_delay) = 0;
 
         /// @brief Read data to a register.
         /// @param memAddr Register address.
         /// @param data Data to read.
         /// @return Whether the operation was successful.
-        virtual sys::Task<HardwareStatus> readMemory(uint16_t memAddr, std::span<uint8_t> data) = 0;
+        virtual sys::task<HardwareStatus> readMemory(u16 memAddr, std::span<byte> data) = 0;
         /// @brief Write data from a register.
         /// @param memAddr Register address.
         /// @param data write to read.
         /// @return Whether the operation was successful.
-        virtual sys::Task<HardwareStatus> writeMemory(uint16_t memAddr, std::span<uint8_t> data) = 0;
+        virtual sys::task<HardwareStatus> writeMemory(u16 memAddr, std::span<byte> data) = 0;
 
         /// @brief Read a 16-bit unsigned integer from a register.
         /// @param memAddr Register address.
         /// @return The value read.
-        inline sys::Task<sys::Result<uint16_t, HardwareStatus>> readUInt16LSBFirst(uint16_t memAddr)
+        inline sys::task<sys::result<u16, HardwareStatus>> readUInt16LSBFirst(u16 memAddr)
         {
-            uint8_t data[2];
+            byte data[2];
             HardwareStatus res = co_await this->readMemory(memAddr, std::span(data, 2));
             _fence_value_co_return(res, res != HardwareStatus::Ok);
-            co_return (uint16_t(data[1]) << 8) | data[0];
+            co_return (u16(data[1]) << 8u) | sys::integer<byte>(data[0]);
         }
         /// @brief Read a 16-bit signed integer from a register.
         /// @param memAddr Register address.
         /// @return The value read.
-        inline sys::Task<sys::Result<int16_t, HardwareStatus>> readInt16LSBFirst(uint16_t memAddr)
+        inline sys::task<sys::result<i16, HardwareStatus>> readInt16LSBFirst(u16 memAddr)
         {
-            uint8_t data[2];
+            byte data[2];
             HardwareStatus res = co_await this->readMemory(memAddr, std::span(data, 2));
             _fence_value_co_return(res, res != HardwareStatus::Ok);
             co_return sys::s16fb2(u8(data[1]), u8(data[0]));
@@ -60,10 +60,10 @@ namespace atmc
         /// @return The value read.
         template <typename T>
         requires (std::is_default_constructible<T>::value && std::is_trivially_copyable<T>::value)
-        inline sys::Task<sys::Result<T, HardwareStatus>> readMemoryAs(uint16_t memAddr, uint16_t dataSize = sizeof(T))
+        inline sys::task<sys::result<T, HardwareStatus>> readMemoryAs(u16 memAddr, u16 dataSize = sizeof(T))
         {
             T ret;
-            HardwareStatus res = co_await this->readMemory(memAddr, std::span(reinterpret_cast<uint8_t*>(&ret), dataSize));
+            HardwareStatus res = co_await this->readMemory(memAddr, std::span(reinterpret_cast<u8*>(&ret), dataSize));
             _fence_value_co_return(res, res != HardwareStatus::Ok);
             co_return ret;
         }
@@ -75,13 +75,13 @@ namespace atmc
         /// @return Whether the operation was successful.
         template <typename DataType>
         requires (std::is_default_constructible<DataType>::value)
-        inline sys::Task<HardwareStatus> writeMemoryChecked(uint16_t memAddr, DataType data, uint16_t dataSize = sizeof(DataType))
+        inline sys::task<HardwareStatus> writeMemoryChecked(u16 memAddr, DataType data, u16 dataSize = sizeof(DataType))
         {
-            HardwareStatus res = co_await this->writeMemory(memAddr, std::span(reinterpret_cast<uint8_t*>(&data), dataSize));
+            HardwareStatus res = co_await this->writeMemory(memAddr, std::span(reinterpret_cast<u8*>(&data), dataSize));
             _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             DataType checkData;
-            res = co_await this->readMemory(memAddr, std::span(reinterpret_cast<uint8_t*>(&checkData), dataSize));
+            res = co_await this->readMemory(memAddr, std::span(reinterpret_cast<u8*>(&checkData), dataSize));
             _fence_value_co_return(res, res != HardwareStatus::Ok);
             _fence_value_co_return(HardwareStatus::Error, data != checkData);
 
@@ -95,13 +95,13 @@ namespace atmc
         /// @return Whether the operation was successful.
         template <typename DataType, size_t N>
         requires (std::is_default_constructible<DataType>::value)
-        inline sys::Task<HardwareStatus> writeMemoryChecked(uint16_t memAddr, DataType (&data)[N])
+        inline sys::task<HardwareStatus> writeMemoryChecked(u16 memAddr, DataType (&data)[N])
         {
-            HardwareStatus res = co_await this->writeMemory(memAddr, std::span(reinterpret_cast<uint8_t*>(&data), sizeof(DataType) * N));
+            HardwareStatus res = co_await this->writeMemory(memAddr, std::span(reinterpret_cast<u8*>(&data), sizeof(DataType) * N));
             _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             DataType checkData[N];
-            res = co_await this->readMemory(memAddr, std::span(reinterpret_cast<uint8_t*>(&checkData), sizeof(DataType) * N));
+            res = co_await this->readMemory(memAddr, std::span(reinterpret_cast<u8*>(&checkData), sizeof(DataType) * N));
             _fence_value_co_return(res, res != HardwareStatus::Ok);
             for (size_t i = 0; i < N; i++) _fence_value_co_return(HardwareStatus::Error, data[i] != checkData[i]);
 
