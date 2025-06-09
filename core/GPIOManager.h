@@ -185,7 +185,7 @@ namespace atmc
         static std::atomic_flag pinFlag[Config::PinCountGPIO];
 
         static std::atomic_flag adcFlags[Config::AnalogConverterCount];
-        static __dma_rw volatile uint16_t adcRaw[Config::AnalogConverterCount][Config::MaxADCChannels];
+        static __dma_rw alignas(uint32_t) volatile uint16_t adcRaw[Config::AnalogConverterCount][Config::MaxADCChannels];
     public:
         GPIOManager() = delete;
 
@@ -226,7 +226,9 @@ namespace atmc
 
             if (!GPIOManager::adcFlags[pin.adcIndex].test_and_set())
             {
+                _push_nowarn(_clWarn_cast_align);
                 HardwareStatus res = HardwareStatus(HAL_ADC_Start_DMA(hadc, _asr(uint32_t*, _asc(uint16_t*, GPIOManager::adcRaw[pin.adcIndex])), hadc->Init.NbrOfConversion));
+                _pop_nowarn();
                 if (res != HardwareStatus::Ok)
                 {
                     GPIOManager::adcFlags[pin.adcIndex].clear();
@@ -237,7 +239,7 @@ namespace atmc
 
             co_await sys::task<>::wait_until([&] { return !GPIOManager::adcFlags[pin.adcIndex].test(); });
 
-            float maxVal = (1u << resolution) - 1;
+            float maxVal = float((1u << resolution) - 1);
             co_return float(GPIOManager::adcRaw[pin.adcIndex][pin.rank]) / maxVal;
         }
 
@@ -256,7 +258,7 @@ namespace atmc
             TIM_HandleTypeDef* htim = pin.internalHandle();
             _fence_value_return(HardwareStatus::Error, !htim);
 
-            htim->Instance->CCR1 = uint32_t(htim->Instance->ARR * duty + 0.5f);
+            htim->Instance->CCR1 = uint32_t(float(htim->Instance->ARR) * duty + 0.5f);
 
             return HardwareStatus(HAL_TIM_PWM_Start(htim, uint32_t(pin.channel)));
         }

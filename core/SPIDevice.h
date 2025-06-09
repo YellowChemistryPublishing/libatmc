@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Exception.h"
 #include <atomic>
 #include <cassert>
+#include <numeric>
 #include <runtime_headers.h>
 #include <span>
 
@@ -154,7 +154,7 @@ namespace atmc
         /// @note This function is marked unchecked because it does not hold the CS line low, nor lock the bus.
         sys::task<HardwareStatus> readMemoryUnchecked(std::span<byte> data)
         {
-            HardwareStatus res = HardwareStatus(HAL_SPI_Receive_IT(this->internalHandle, data.data(), data.size_bytes()));
+            HardwareStatus res = HardwareStatus(HAL_SPI_Receive_IT(this->internalHandle, data.data(), std::saturate_cast<uint16_t>(data.size_bytes())));
             _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             while (!SPIManager::rxDone.exchange(this->internalHandle, nullptr)) co_await sys::task<>::yield();
@@ -167,7 +167,7 @@ namespace atmc
         /// @note This function is marked unchecked because it does not hold the CS line low, nor lock the bus.
         sys::task<HardwareStatus> writeMemoryUnchecked(std::span<const byte> data)
         {
-            HardwareStatus res = HardwareStatus(HAL_SPI_Transmit_IT(this->internalHandle, data.data(), data.size_bytes()));
+            HardwareStatus res = HardwareStatus(HAL_SPI_Transmit_IT(this->internalHandle, data.data(), std::saturate_cast<uint16_t>(data.size_bytes())));
             _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             while (!SPIManager::txDone.exchange(this->internalHandle, nullptr)) co_await sys::task<>::yield();
@@ -182,7 +182,7 @@ namespace atmc
         /// @note This function is marked unchecked because it does not hold the CS line low, nor lock the bus.
         sys::task<HardwareStatus> exchangeMemoryUnchecked(byte dataRx[], byte dataTx[], size_t dataSize)
         {
-            HardwareStatus res = HardwareStatus(HAL_SPI_TransmitReceive_IT(this->internalHandle, dataRx, dataTx, dataSize));
+            HardwareStatus res = HardwareStatus(HAL_SPI_TransmitReceive_IT(this->internalHandle, dataRx, dataTx, std::saturate_cast<uint16_t>(dataSize)));
             _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             while (!SPIManager::txrxDone.exchange(this->internalHandle, nullptr)) co_await sys::task<>::yield();

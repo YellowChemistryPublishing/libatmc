@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Exception.h"
 #include <cassert>
+#include <numeric>
 #include <runtime_headers.h>
 #include <span>
 
@@ -78,7 +78,8 @@ namespace atmc
         /// ```
         sys::task<HardwareStatus> readMemory(u16 memAddr, std::span<byte> data) override
         {
-            HardwareStatus res = HardwareStatus(HAL_I2C_Mem_Read_IT(this->internalHandle, +(this->devAddr << 1u), +memAddr, +this->memAddrSize, data.data(), data.size_bytes()));
+            HardwareStatus res = HardwareStatus(
+                HAL_I2C_Mem_Read_IT(this->internalHandle, +(this->devAddr << 1u), +memAddr, +this->memAddrSize, data.data(), std::saturate_cast<uint16_t>(data.size_bytes())));
             _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             while (!I2CManager::rxDone.exchange(this->internalHandle, nullptr)) co_await sys::task<>::yield();
@@ -98,7 +99,8 @@ namespace atmc
         /// ```
         sys::task<HardwareStatus> writeMemory(u16 memAddr, std::span<byte> data) override
         {
-            HardwareStatus res = HardwareStatus(HAL_I2C_Mem_Write_IT(this->internalHandle, +(this->devAddr << 1u), +memAddr, +this->memAddrSize, data.data(), data.size_bytes()));
+            HardwareStatus res = HardwareStatus(
+                HAL_I2C_Mem_Write_IT(this->internalHandle, +(this->devAddr << 1u), +memAddr, +this->memAddrSize, data.data(), std::saturate_cast<uint16_t>(data.size_bytes())));
             _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             while (!I2CManager::txDone.exchange(this->internalHandle, nullptr)) co_await sys::task<>::yield();
