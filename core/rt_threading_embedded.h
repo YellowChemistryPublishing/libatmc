@@ -84,4 +84,4 @@ public:
     taskYIELD();                               \
     return this->handle.promise().continuation
 
-constexpr i32 __task_max_delay(std::numeric_limits<i32::Underlying>::max());
+constexpr i32 __task_max_delay(std::numeric_limits<i32::underlying_type>::max());
