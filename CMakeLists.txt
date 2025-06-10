@@ -166,7 +166,7 @@ file(GLOB_RECURSE CORE_MODULES CONFIGURE_DEPENDS
 add_library(core STATIC ${CORE_SRCS})
 target_sources(core PUBLIC FILE_SET CXX_MODULES FILES ${CORE_MODULES})
 target_include_directories(core PUBLIC "/" "core")
-target_link_libraries(core PUBLIC rt freertos_kernel sys sys.Containers sys.Threading sys.BuildSupport.CompilerWarnings sys.BuildSupport.WarningsAsErrors)
+target_link_libraries(core PUBLIC rt freertos_kernel sys sys.Containers sys.Threading sys.BuildSupport.CompilerOptions sys.BuildSupport.WarningsAsErrors)
 set_target_properties(core PROPERTIES
     C_CPPCHECK ${LINT_CPPCHECK}
     CXX_CPPCHECK ${LINT_CPPCHECK}
@@ -187,7 +187,7 @@ file(GLOB_RECURSE DRIVERS_MODULES CONFIGURE_DEPENDS
 add_library(drivers STATIC ${DRIVERS_SRCS})
 target_sources(drivers PUBLIC FILE_SET CXX_MODULES FILES ${DRIVERS_MODULES})
 target_include_directories(drivers PUBLIC "drivers")
-target_link_libraries(drivers PUBLIC core sys.BuildSupport.CompilerWarnings sys.BuildSupport.WarningsAsErrors)
+target_link_libraries(drivers PUBLIC core sys.BuildSupport.CompilerOptions sys.BuildSupport.WarningsAsErrors)
 set_target_properties(drivers PROPERTIES
     C_CPPCHECK ${LINT_CPPCHECK}
     CXX_CPPCHECK ${LINT_CPPCHECK}
@@ -203,7 +203,7 @@ foreach(EXAMPLE_FILE ${EXAMPLES})
     get_filename_component(EXAMPLE_NAME ${EXAMPLE_FILE} NAME_WE)
 
     add_executable(${EXAMPLE_NAME} ${EXAMPLE_FILE})
-    target_link_libraries(${EXAMPLE_NAME} PUBLIC drivers sys.BuildSupport.CompilerWarnings sys.BuildSupport.WarningsAsErrors)
+    target_link_libraries(${EXAMPLE_NAME} PUBLIC drivers sys.BuildSupport.CompilerOptions sys.BuildSupport.WarningsAsErrors)
     set_target_properties(${EXAMPLE_NAME} PROPERTIES
         C_CPPCHECK ${LINT_CPPCHECK}
         CXX_CPPCHECK ${LINT_CPPCHECK}
