@@ -41,10 +41,10 @@ I2CDevice magIF { &hi2c1, LIS3MDL::AddrLow, LIS3MDL::RegAddr::Size };
 
 AccelGyro_LSM6DS3 imu;
 Magnetometer_LIS3MDL mag;
-Vector3 pos(0.0f, 0.0f, 0.0f);
-Vector3 vel(0.0f, 0.0f, 0.0f);
+vector3 pos(0.0f, 0.0f, 0.0f);
+vector3 vel(0.0f, 0.0f, 0.0f);
 
-__async(void) imuTest()
+async imuTest()
 {
     try
     {
@@ -112,16 +112,16 @@ __async(void) imuTest()
                                                        LSM6DS3::FIFOPatternWordType::TimestampHigh, LSM6DS3::FIFOPatternWordType::TimestampLow,
                                                        LSM6DS3::FIFOPatternWordType::StepCounter };
 
-    uint16_t readRemainder = LSM6DS3::FIFOChunkSize;
+    u16 readRemainder = LSM6DS3::FIFOChunkSize;
     LSM6DS3::FIFOData data[LSM6DS3::FIFOChunkSize];
     static uint16_t lastTimestamp = 0;
-    Vector3 curAccel;
-    Vector3 curVel = Vector3(0.0f, 0.0f, 0.0f);
-    Vector3 curPos = Vector3(0.0f, 0.0f, 0.0f);
+    vector3 curAccel;
+    vector3 curVel = vector3(0.0f, 0.0f, 0.0f);
+    vector3 curPos = vector3(0.0f, 0.0f, 0.0f);
     while (true)
     {
         printf("Begin cycle...\n");
-        auto rA = (co_await imu.readFIFOData(pattern, readRemainder, &data[LSM6DS3::FIFOChunkSize - readRemainder]));
+        auto rA = (co_await imu.readFIFOData(pattern, +readRemainder, &data[+(LSM6DS3::FIFOChunkSize - readRemainder)]));
         if (!rA)
         {
             switch (rA.err())
@@ -147,24 +147,24 @@ __async(void) imuTest()
             switch (data[i].type)
             {
             case LSM6DS3::FIFOPatternWordType::GyroZ:
-                printf("Gyro: { %f, %f, %f }\n", data[i - 2].gx, data[i - 1].gy, data[i].gz);
+                printf("Gyro: { %f, %f, %f }\n", double(data[i - 2].gx), double(data[i - 1].gy), double(data[i].gz));
                 lastFinalIndex = i;
                 break;
             case LSM6DS3::FIFOPatternWordType::AccelZ:
-                fprintf(stderr, "Accel: { %f, %f, %f }\n", data[i - 2].ax, data[i - 1].ay, data[i].az);
-                curAccel = Vector3(data[i - 2].ax, data[i - 1].ay, data[i].az);
+                fprintf(stderr, "Accel: { %f, %f, %f }\n", double(data[i - 2].ax), double(data[i - 1].ay), double(data[i].az));
+                curAccel = vector3(data[i - 2].ax, data[i - 1].ay, data[i].az);
                 lastFinalIndex = i;
                 break;
             case LSM6DS3::FIFOPatternWordType::TimestampLow:
                 {
-                    printf("Timestamp: %f\n", uint16_t((data[i - 1].timestampHigh << 8) | data[i].timestampLow) * imu.durSecPerLSB());
+                    printf("Timestamp: %f\n", double(uint16_t((data[i - 1].timestampHigh << 8) | data[i].timestampLow) * imu.durSecPerLSB()));
                     if (lastTimestamp != 0)
                     {
                         float dT = (uint16_t((data[i - 1].timestampHigh << 8) | data[i].timestampLow) - lastTimestamp) * imu.durSecPerLSB();
-                        printf("DeltaT: %f\n", dT);
+                        printf("DeltaT: %f\n", double(dT));
                         curVel += curAccel * dT;
                         curPos += curVel * dT;
-                        printf("pos: { %f, %f, %f }\n", curPos.x, curPos.y, curPos.z);
+                        printf("pos: { %f, %f, %f }\n", double(curPos.x), double(curPos.y), double(curPos.z));
                         lastFinalIndex = i;
                     }
                     lastTimestamp = (data[i - 1].timestampHigh << 8) | data[i].timestampLow;
@@ -242,7 +242,7 @@ void tick()
 //             auto tempRes = co_await mag.readTemperature();
 //             if (readRes && tempRes)
 //             {
-//                 Vector3 readVal = readRes.takeValue();
+//                 vector3 readVal = readRes.takeValue();
 //                 float temp = tempRes.takeValue();
 //                 printf("%.4f\t%.4f\t%.4f\t%.4f\n", readVal.x, readVal.y, readVal.z, temp);
 //                 printf("heading: %.4f, offx: %f, offy: %f, offz: %f\n", atan2f((readVal.y), (readVal.x)) * 180.0f / float(std::numbers::pi), mag.softIronScale().x,
@@ -268,7 +268,7 @@ void tick()
 //         assert(co_await mag.begin(&hi2c2) == HardwareStatus::Ok && "Failed to start / detect magnetometer!");
 //         auto stRes = co_await mag.selfTest();
 //         assert(stRes && stRes.takeValue() && "Failed self-test!");
-//         co_await mag.setOffset(Vector3Int16 { int16_t(-0.133255f / mag.gaussPerLSB() + 0.5f), int16_t(-0.101987 / mag.gaussPerLSB() + 0.5f), int16_t(-0.468147 /
+//         co_await mag.setOffset(vector3i16 { int16_t(-0.133255f / mag.gaussPerLSB() + 0.5f), int16_t(-0.101987 / mag.gaussPerLSB() + 0.5f), int16_t(-0.468147 /
 //         mag.gaussPerLSB() + 0.5f) }); co_await mainLoop();
 //     }();
 //     printf("end setup\n");

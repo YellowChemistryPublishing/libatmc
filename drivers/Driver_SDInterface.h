@@ -119,7 +119,7 @@ namespace atmc
             return crc;
         }
 
-        inline sys::Task<HardwareStatus> waitBytesUnchecked(size_t count)
+        inline sys::task<HardwareStatus> waitBytesUnchecked(size_t count)
         {
             uint8_t block[16];
             while (count > 16)
@@ -131,7 +131,7 @@ namespace atmc
             co_return co_await this->device->readMemoryUnchecked(std::span(block, count));
         }
 
-        inline sys::Task<sys::Result<SDI::Response, HardwareStatus>> sendCommandUnchecked(uint8_t cmd, uint32_t arg, bool acmd = false)
+        inline sys::task<sys::result<SDI::Response, HardwareStatus>> sendCommandUnchecked(uint8_t cmd, uint32_t arg, bool acmd = false)
         {
             if (acmd)
             {
@@ -183,11 +183,11 @@ namespace atmc
         /// ...
         /// this->device->~decltype(*this->device)();
         /// ```
-        inline sys::Task<HardwareStatus> begin()
+        inline sys::task<HardwareStatus> begin()
         {
             // `this->device` is technically not-owned, but just to be safe...
             this->device->begin();
-            HardwareStatus res = this->device->waitReadySync(4, sys::Task<>::MaxDelay);
+            HardwareStatus res = this->device->waitReadySync(4, sys::task<>::MaxDelay);
             _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             this->generateCRCTable();

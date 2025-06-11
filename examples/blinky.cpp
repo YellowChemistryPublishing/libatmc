@@ -1,8 +1,8 @@
 #include <print>
 
-#include <module/core.IO.Embedded.hpp>
-#include <module/sys.Threading.hpp>
-#include <module/sys.hpp>
+#include <module/core.IO.Embedded>
+#include <module/sys.Threading>
+#include <module/sys>
 
 using namespace atmc;
 using namespace sys;
@@ -15,7 +15,7 @@ struct ExampleConfig final
     constexpr static int BlinkyAlternateDuration = 1000;
 };
 
-Async entryPoint()
+async entryPoint()
 {
     GPIOPin::State pinState = GPIOPin::High;
     while (true)
@@ -27,7 +27,7 @@ Async entryPoint()
         else
             pinState = GPIOPin::High;
 
-        co_await Task<>::delay(ExampleConfig::BlinkyAlternateDuration);
+        co_await task<>::delay(ExampleConfig::BlinkyAlternateDuration);
     }
 }
 

@@ -12,11 +12,11 @@ struct ExampleConfig final
     ExampleConfig() = delete;
 };
 
-Async entryPoint()
+async entryPoint()
 {
-    auto arr = ManagedArray<int>::ctor(23);
+    auto arr = managed_array<int>::ctor(23);
     auto arrdone = arr.move();
-    std::println("{}", arr[0].move());
+    std::println("{}", arrdone[0].move());
 
     co_return;
 }

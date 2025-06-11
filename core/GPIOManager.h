@@ -226,9 +226,11 @@ namespace atmc
 
             if (!GPIOManager::adcFlags[pin.adcIndex].test_and_set())
             {
-                _push_nowarn(_clWarn_cast_align);
+                _push_nowarn_gcc(_clWarn_gcc_cast_align);
+                _push_nowarn_clang(_clWarn_clang_cast_align);
                 HardwareStatus res = HardwareStatus(HAL_ADC_Start_DMA(hadc, _asr(uint32_t*, _asc(uint16_t*, GPIOManager::adcRaw[pin.adcIndex])), hadc->Init.NbrOfConversion));
-                _pop_nowarn();
+                _pop_nowarn_clang();
+                _pop_nowarn_gcc();
                 if (res != HardwareStatus::Ok)
                 {
                     GPIOManager::adcFlags[pin.adcIndex].clear();

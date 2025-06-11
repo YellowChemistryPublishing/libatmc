@@ -7,7 +7,7 @@ struct ExampleConfig final
     ExampleConfig() = delete;
 };
 
-Async entryPoint()
+async entryPoint()
 {
     co_return;
 }

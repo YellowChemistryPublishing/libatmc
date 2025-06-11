@@ -36,7 +36,8 @@ extern "C" __weak void init()
 
 void __initHandler()
 {
-    _push_nowarn(_clWarn_use_after_free);
+    _push_nowarn_gcc(_clWarn_gcc_use_after_free);
+    _push_nowarn_clang(_clWarn_clang_use_after_free);
     try
     {
         init();
@@ -53,5 +54,6 @@ void __initHandler()
         std::println(stderr, "Unmanaged exception of type `{}` thrown during call to `extern \"C\" void init()`.", exception_type_name(std::current_exception()).get());
         _throw(terminate_exception());
     }
-    _pop_nowarn();
+    _pop_nowarn_clang();
+    _pop_nowarn_gcc();
 }

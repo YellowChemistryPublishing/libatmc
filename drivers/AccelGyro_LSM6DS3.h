@@ -242,7 +242,7 @@ namespace atmc
 
         constexpr uint16_t thresholdBitsToBytes(uint8_t msb, uint8_t lsb)
         {
-            return ((uint16_t(msb) << 8) | uint16_t(lsb)) * 2;
+            return uint16_t(((uint16_t(msb) << 8) | uint16_t(lsb)) * 2);
         }
         constexpr uint16_t thresholdBytesToBits(uint16_t bytes)
         {
@@ -282,7 +282,9 @@ namespace atmc
         constexpr void setRegisterThresholdBits(RegisterFIFOCtrl1& ctrl1, RegisterFIFOCtrl2& ctrl2, uint16_t bits)
         {
             ctrl1.threshold = uint8_t(bits);
-            ctrl2.thresholdHighBits = bits >> 8;
+            _push_nowarn_gcc(_clWarn_gcc_conversion);
+            ctrl2.thresholdHighBits = uint8_t(bits >> 8);
+            _pop_nowarn_gcc();
         }
         
         constexpr uint8_t decimationBitsForNoSensor = 0;
@@ -1476,14 +1478,14 @@ namespace atmc
     public:
         inline AccelGyro_LSM6DS3() = default;
 
-        inline sys::Task<HardwareStatus> begin(SerialInterfaceDevice* device, [[maybe_unused]] LSM6DS3::LiterallyEveryConfigRegister conf = LSM6DS3::LiterallyEveryConfigRegister())
+        inline sys::task<HardwareStatus> begin(SerialInterfaceDevice* device, [[maybe_unused]] LSM6DS3::LiterallyEveryConfigRegister conf = LSM6DS3::LiterallyEveryConfigRegister())
         {
             this->device = device;
 
             HardwareStatus res = this->device->waitReadySync(4, LSM6DS3::TimeoutDuration);
             _fence_value_co_return(res, res != HardwareStatus::Ok);
 
-            uint8_t id; __fence_result_co_return(co_await this->deviceID(), id);
+            uint8_t id; _fence_result_co_return(co_await this->deviceID(), id);
             _fence_value_co_return(HardwareStatus::Error, id != LSM6DS3::DeviceID); // Probably faulty.
 
             // res = co_await this->writeConfigRegister(conf.featureConfig);
@@ -1563,7 +1565,7 @@ namespace atmc
             co_return HardwareStatus::Ok;
         }
 
-        inline sys::Task<sys::Result<uint8_t, HardwareStatus>> deviceID()
+        inline sys::task<sys::result<uint8_t, HardwareStatus>> deviceID()
         {
             return this->device->readMemoryAs<uint8_t>(LSM6DS3::RegAddr::WhoAmI);
         }
@@ -1586,17 +1588,17 @@ namespace atmc
         }
 
         template <LSM6DS3::DataRegisterType T>
-        inline sys::Task<sys::Result<T, HardwareStatus>> readDataRegister()
+        inline sys::task<sys::result<T, HardwareStatus>> readDataRegister()
         {
             return this->device->readMemoryAs<T>(LSM6DS3::registerAddressOf<T>());
         }
         template <LSM6DS3::ConfigRegisterType T>
-        inline sys::Task<sys::Result<T, HardwareStatus>> readConfigRegister()
+        inline sys::task<sys::result<T, HardwareStatus>> readConfigRegister()
         {
             return this->device->readMemoryAs<T>(LSM6DS3::registerAddressOf<T>());
         }
         template <LSM6DS3::ConfigRegisterType T>
-        inline sys::Task<HardwareStatus> writeConfigRegister(T value)
+        inline sys::task<HardwareStatus> writeConfigRegister(T value)
         {
             if constexpr (std::is_same<T, LSM6DS3::RegisterCtrl1Accel>::value)
             {
@@ -1629,64 +1631,64 @@ namespace atmc
             else co_return co_await this->device->writeMemoryChecked(LSM6DS3::registerAddressOf<T>(), value);
         }
 
-        inline sys::Task<sys::Result<float, HardwareStatus>> sensorSyncTimeFrame()
+        inline sys::task<sys::result<float, HardwareStatus>> sensorSyncTimeFrame()
         {
             co_return (co_await this->device->readMemoryAs<uint8_t>(LSM6DS3::RegAddr::SensorSyncTimeFrame)) * 0.5f;
         }
-        inline sys::Task<HardwareStatus> setSensorSyncTimeFrame(float timeFr)
+        inline sys::task<HardwareStatus> setSensorSyncTimeFrame(float timeFr)
         {
             return this->device->writeMemoryChecked(LSM6DS3::RegAddr::SensorSyncTimeFrame, uint8_t(uint8_t(timeFr * 2.0f + 0.5f) & 0b00001111));
         }
-        inline sys::Task<sys::Result<int, HardwareStatus>> sensorSyncResRatioTwoTo()
+        inline sys::task<sys::result<int, HardwareStatus>> sensorSyncResRatioTwoTo()
         {
-            uint8_t ret; __fence_result_co_return(co_await this->device->readMemoryAs<uint8_t>(LSM6DS3::RegAddr::SensorSyncResRatio), ret);
+            uint8_t ret; _fence_result_co_return(co_await this->device->readMemoryAs<uint8_t>(LSM6DS3::RegAddr::SensorSyncResRatio), ret);
             co_return ret + 11;
         }
-        inline sys::Task<HardwareStatus> setSensorSyncResRatioTwoTo(int consequent)
+        inline sys::task<HardwareStatus> setSensorSyncResRatioTwoTo(int consequent)
         {
             _fence_contract_enforce(consequent >= 11 && consequent <= 14 && "Invalid sync resolution ratio.");
             return this->device->writeMemoryChecked(LSM6DS3::RegAddr::SensorSyncResRatio, uint8_t(consequent - 11));
         }
 
-        inline sys::Task<sys::Result<float, HardwareStatus>> readTemperature()
+        inline sys::task<sys::result<float, HardwareStatus>> readTemperature()
         {
-            int16_t ret; __fence_result_co_return(co_await this->device->readInt16LSBFirst(LSM6DS3::RegAddr::OutTempL), ret);
+            i16 ret; _fence_result_co_return(co_await this->device->readInt16LSBFirst(LSM6DS3::RegAddr::OutTempL), ret);
             co_return float(ret) / 256.0f + 25.0f;
         }
-        inline sys::Task<sys::Result<sysm::Vector3, HardwareStatus>> readGyro()
+        inline sys::task<sys::result<sysm::vector3, HardwareStatus>> readGyro()
         {
             uint8_t data[6];
             HardwareStatus res = co_await this->device->readMemory(LSM6DS3::RegAddr::OutXLGyro, data);
             _fence_value_co_return(res, res != HardwareStatus::Ok);
-            co_return sysm::Vector3(sys::s16fb2(data[1], data[0]) * this->_dpsPerLSB, sys::s16fb2(data[3], data[2]) * this->_dpsPerLSB, sys::s16fb2(data[5], data[4]) * this->_dpsPerLSB);
+            co_return sysm::vector3(sys::s16fb2(data[1], data[0]) * this->_dpsPerLSB, sys::s16fb2(data[3], data[2]) * this->_dpsPerLSB, sys::s16fb2(data[5], data[4]) * this->_dpsPerLSB);
         }
-        inline sys::Task<sys::Result<sysm::Vector3, HardwareStatus>> readAccel()
+        inline sys::task<sys::result<sysm::vector3, HardwareStatus>> readAccel()
         {
             uint8_t data[6];
             HardwareStatus res = co_await this->device->readMemory(LSM6DS3::RegAddr::OutXLAccel, data);
             _fence_value_co_return(res, res != HardwareStatus::Ok);
-            co_return sysm::Vector3(sys::s16fb2(data[1], data[0]) * this->_geePerLSB, sys::s16fb2(data[3], data[2]) * this->_geePerLSB, sys::s16fb2(data[5], data[4]) * this->_geePerLSB);
+            co_return sysm::vector3(sys::s16fb2(data[1], data[0]) * this->_geePerLSB, sys::s16fb2(data[3], data[2]) * this->_geePerLSB, sys::s16fb2(data[5], data[4]) * this->_geePerLSB);
         }
-        inline sys::Task<sys::Result<sysm::Vector3Int16, HardwareStatus>> readExternalMagnetometer()
+        inline sys::task<sys::result<sysm::vector3i16, HardwareStatus>> readExternalMagnetometer()
         {
             uint8_t data[6];
             HardwareStatus res = co_await this->device->readMemory(LSM6DS3::RegAddr::OutMagRawXL, data);
             _fence_value_co_return(res, res != HardwareStatus::Ok);
-            co_return sysm::Vector3Int16(sys::s16fb2(data[1], data[0]), sys::s16fb2(data[3], data[2]), sys::s16fb2(data[5], data[4]));
+            co_return sysm::vector3i16(sys::s16fb2(data[1], data[0]), sys::s16fb2(data[3], data[2]), sys::s16fb2(data[5], data[4]));
         }
 
-        inline sys::Task<sys::Result<sysm::Vector3Int8, HardwareStatus>> accelOffset()
+        inline sys::task<sys::result<sysm::vector3i8, HardwareStatus>> accelOffset()
         {
-            return this->device->readMemoryAs<sysm::Vector3Int8>(LSM6DS3::RegAddr::XOfsUsr, 3);
+            return this->device->readMemoryAs<sysm::vector3i8>(LSM6DS3::RegAddr::XOfsUsr, 3);
         }
-        inline sys::Task<HardwareStatus> setAccelOffset(sysm::Vector3Int8 offset)
+        inline sys::task<HardwareStatus> setAccelOffset(sysm::vector3i8 offset)
         {
             return this->device->writeMemoryChecked(LSM6DS3::RegAddr::XOfsUsr, reinterpret_cast<uint8_t*>(&offset), 3);
         }
 
         template <uint8_t SensorHub>
         requires (SensorHub > 0 && SensorHub <= 18)
-        inline sys::Task<sys::Result<uint8_t, HardwareStatus>> readSensorHubRegister()
+        inline sys::task<sys::result<uint8_t, HardwareStatus>> readSensorHubRegister()
         {
             if constexpr (SensorHub <= 12)
                 return this->device->readMemoryAs<uint8_t>(LSM6DS3::RegAddr::SensorHub1Reg + SensorHub - 1);
@@ -1695,7 +1697,7 @@ namespace atmc
         }
         template <uint8_t SensorHub, size_t N>
         requires (SensorHub > 0 && SensorHub <= 18)
-        inline sys::Task<HardwareStatus> readSensorHubRegistersFrom(uint8_t (&data)[N])
+        inline sys::task<HardwareStatus> readSensorHubRegistersFrom(uint8_t (&data)[N])
         {
             HardwareStatus res;
             if constexpr (SensorHub <= 12)
@@ -1705,30 +1707,30 @@ namespace atmc
             co_return res;
         }
 
-        inline sys::Task<sys::Result<uint16_t, HardwareStatus>> fifoUnreadCount()
+        inline sys::task<sys::result<uint16_t, HardwareStatus>> fifoUnreadCount()
         {
             uint8_t data[2];
             HardwareStatus res = co_await this->device->readMemory(LSM6DS3::RegAddr::FIFOStatus1, data);
             _fence_value_co_return(res, res != HardwareStatus::Ok);
             data[1] &= 0b00000111;
-            co_return (uint16_t(data[1]) << 8) | data[0];
+            co_return uint16_t((uint16_t(data[1]) << 8) | data[0]);
         }
-        inline sys::Task<sys::Result<uint16_t, HardwareStatus>> fifoRecursivePatternAtNextRead()
+        inline sys::task<sys::result<u16, HardwareStatus>> fifoRecursivePatternAtNextRead()
         {
             return this->device->readUInt16LSBFirst(LSM6DS3::RegAddr::FIFOStatus3);
         }
-        inline sys::Task<sys::Result<uint16_t, HardwareStatus>> readFIFOData()
+        inline sys::task<sys::result<u16, HardwareStatus>> readFIFOData()
         {
             return this->device->readUInt16LSBFirst(LSM6DS3::RegAddr::FIFODataOutL);
         }
         template <uint16_t N>
-        inline sys::Task<sys::Result<size_t, HardwareStatus>> readFIFOData(const LSM6DS3::FIFOPatternWordType (&fifoPattern)[N], uint16_t outSize, LSM6DS3::FIFOData* out)
+        inline sys::task<sys::result<size_t, HardwareStatus>> readFIFOData(const LSM6DS3::FIFOPatternWordType (&fifoPattern)[N], uint16_t outSize, LSM6DS3::FIFOData* out)
         {
-            uint8_t fifoStatus1; __fence_result_co_return(co_await this->device->readMemoryAs<uint8_t>(LSM6DS3::RegAddr::FIFOStatus1), fifoStatus1);
-            LSM6DS3::RegisterFIFOStatus2 fifoStatus2; __fence_result_co_return(co_await this->readDataRegister<LSM6DS3::RegisterFIFOStatus2>(), fifoStatus2);
+            uint8_t fifoStatus1; _fence_result_co_return(co_await this->device->readMemoryAs<uint8_t>(LSM6DS3::RegAddr::FIFOStatus1), fifoStatus1);
+            LSM6DS3::RegisterFIFOStatus2 fifoStatus2; _fence_result_co_return(co_await this->readDataRegister<LSM6DS3::RegisterFIFOStatus2>(), fifoStatus2);
             uint16_t unreadCount = fifoStatus2.overrunStatus ? UINT16_MAX : uint16_t(uint16_t(uint8_t(reinterpret_cast<uint8_t&>(fifoStatus2) & 0b00000111) << 8) | fifoStatus1);
 
-            uint16_t pattern; __fence_result_co_return(co_await this->fifoRecursivePatternAtNextRead(), pattern);
+            u16 pattern; _fence_result_co_return(co_await this->fifoRecursivePatternAtNextRead(), pattern);
             uint16_t readCount = std::min(uint16_t(LSM6DS3::FIFOChunkSize), unreadCount);
             _fence_value_co_return(0u, readCount == 0);
 
@@ -1741,7 +1743,7 @@ namespace atmc
             {
                 if (pattern < N)
                 {
-                    switch (fifoPattern[pattern])
+                    switch (fifoPattern[+pattern])
                     {
                     case LSM6DS3::FIFOPatternWordType::GyroX:
                         out[outNext].gx = sys::s16fb2(data[i * 2 + 1], data[i * 2]) * this->_dpsPerLSB;
@@ -1774,17 +1776,17 @@ namespace atmc
                         ++outNext;
                         break;
                     case LSM6DS3::FIFOPatternWordType::MagX:
-                        out[outNext].mx = sys::s16fb2(data[i * 2 + 1], data[i * 2]);
+                        out[outNext].mx = +sys::s16fb2(data[i * 2 + 1], data[i * 2]);
                         out[outNext].type = LSM6DS3::FIFOPatternWordType::MagX;
                         ++outNext;
                         break;
                     case LSM6DS3::FIFOPatternWordType::MagY:
-                        out[outNext].my = sys::s16fb2(data[i * 2 + 1], data[i * 2]);
+                        out[outNext].my = +sys::s16fb2(data[i * 2 + 1], data[i * 2]);
                         out[outNext].type = LSM6DS3::FIFOPatternWordType::MagY;
                         ++outNext;
                         break;
                     case LSM6DS3::FIFOPatternWordType::MagZ:
-                        out[outNext].mz = sys::s16fb2(data[i * 2 + 1], data[i * 2]);
+                        out[outNext].mz = +sys::s16fb2(data[i * 2 + 1], data[i * 2]);
                         out[outNext].type = LSM6DS3::FIFOPatternWordType::MagZ;
                         ++outNext;
                         break;
@@ -1819,130 +1821,130 @@ namespace atmc
             }
             co_return outNext;
         }
-        inline sys::Task<sys::Result<float, HardwareStatus>> readTimestamp()
+        inline sys::task<sys::result<float, HardwareStatus>> readTimestamp()
         {
             uint8_t data[3];
             HardwareStatus res = co_await this->device->readMemory(LSM6DS3::RegAddr::Timestamp0Reg, data);
             _fence_value_co_return(res, res != HardwareStatus::Ok);
             co_return ((uint32_t(data[2]) << 16) | (uint32_t(data[1]) << 8) | data[0]) * this->_durSecPerLSB;
         }
-        inline sys::Task<sys::Result<float, HardwareStatus>> readStepTimestamp()
+        inline sys::task<sys::result<float, HardwareStatus>> readStepTimestamp()
         {
             co_return (co_await this->device->readUInt16LSBFirst(LSM6DS3::RegAddr::StepTimestampL)) * this->_durSecPerLSB;
         }
-        inline sys::Task<sys::Result<uint16_t, HardwareStatus>> readStepCounter()
+        inline sys::task<sys::result<u16, HardwareStatus>> readStepCounter()
         {
             return this->device->readUInt16LSBFirst(LSM6DS3::RegAddr::StepCounterL);
         }
 
-        inline sys::Task<sys::Result<uint8_t, HardwareStatus>> significantMotionThreshold()
+        inline sys::task<sys::result<uint8_t, HardwareStatus>> significantMotionThreshold()
         {
             return this->device->readMemoryAs<uint8_t>(LSM6DS3::RegAddr::SMThs);
         }
-        inline sys::Task<HardwareStatus> setSignificantMotionThreshold(uint8_t threshold)
+        inline sys::task<HardwareStatus> setSignificantMotionThreshold(uint8_t threshold)
         {
             return this->device->writeMemoryChecked(LSM6DS3::RegAddr::SMThs, threshold);
         }
-        inline sys::Task<sys::Result<float, HardwareStatus>> stepCounterDeltaTime()
+        inline sys::task<sys::result<float, HardwareStatus>> stepCounterDeltaTime()
         {
             co_return (co_await this->device->readMemoryAs<uint8_t>(LSM6DS3::RegAddr::StepCountDelta) * 1.6384f);
         }
-        inline sys::Task<HardwareStatus> setStepCounterDeltaTime(float time)
+        inline sys::task<HardwareStatus> setStepCounterDeltaTime(float time)
         {
             return this->device->writeMemoryChecked(LSM6DS3::RegAddr::StepCountDelta, uint8_t(time / 1.6384f + 0.5f));
         }
 
-        inline sys::Task<sys::Result<sysm::Matrix3x3UInt8, HardwareStatus>> magnetometerSoftIronCorrection()
+        inline sys::task<sys::result<sysm::matrix3x3u8, HardwareStatus>> magnetometerSoftIronCorrection()
         {
-            return this->device->readMemoryAs<sysm::Matrix3x3UInt8>(LSM6DS3::RegAddr::MagSI_XX, sizeof(uint8_t) * 9);
+            return this->device->readMemoryAs<sysm::matrix3x3u8>(LSM6DS3::RegAddr::MagSI_XX, sizeof(uint8_t) * 9);
         }
-        inline sys::Task<HardwareStatus> setMagnetometerSoftIronCorrection(sysm::Matrix3x3UInt8 correction)
+        inline sys::task<HardwareStatus> setMagnetometerSoftIronCorrection(sysm::matrix3x3u8 correction)
         {
             return this->device->writeMemoryChecked(LSM6DS3::RegAddr::MagSI_XX, reinterpret_cast<uint8_t*>(&correction), sizeof(uint8_t) * 9);
         }
-        inline sys::Task<sys::Result<sysm::Vector3Int16, HardwareStatus>> magnetometerHardIronCorrection()
+        inline sys::task<sys::result<sysm::vector3i16, HardwareStatus>> magnetometerHardIronCorrection()
         {
             uint8_t data[6];
             HardwareStatus res = co_await this->device->readMemory(LSM6DS3::RegAddr::MagOffXL, data);
             _fence_value_co_return(res, res != HardwareStatus::Ok);
-            co_return sysm::Vector3Int16(sys::s16fb2(data[1], data[0]), sys::s16fb2(data[3], data[2]), sys::s16fb2(data[5], data[4]));
+            co_return sysm::vector3i16(sys::s16fb2(data[1], data[0]), sys::s16fb2(data[3], data[2]), sys::s16fb2(data[5], data[4]));
         }
 
-        inline sys::Task<sys::Result<float, HardwareStatus>> wristTiltLatency()
+        inline sys::task<sys::result<float, HardwareStatus>> wristTiltLatency()
         {
             co_return (co_await this->device->readMemoryAs<uint8_t>(LSM6DS3::RegAddr::AWristTiltLat) * 0.040f);
         }
-        inline sys::Task<HardwareStatus> setWristTiltLatency(float latency)
+        inline sys::task<HardwareStatus> setWristTiltLatency(float latency)
         {
             return this->device->writeMemoryChecked(LSM6DS3::RegAddr::AWristTiltLat, uint8_t(latency / 0.040f + 0.5f));
         }
-        inline sys::Task<sys::Result<float, HardwareStatus>> absoluteWristTiltThreshold()
+        inline sys::task<sys::result<float, HardwareStatus>> absoluteWristTiltThreshold()
         {
             co_return (co_await this->device->readMemoryAs<uint8_t>(LSM6DS3::RegAddr::AWristTiltThs) * 15.625f);
         }
-        inline sys::Task<HardwareStatus> setAbsoluteWristTiltThreshold(float threshold)
+        inline sys::task<HardwareStatus> setAbsoluteWristTiltThreshold(float threshold)
         {
             return this->device->writeMemoryChecked(LSM6DS3::RegAddr::AWristTiltThs, uint8_t(threshold / 15.625f + 0.5f));
         }
 
-        inline sys::Task<sys::Result<uint8_t, HardwareStatus>> sensorSyncMasterCommandCode()
+        inline sys::task<sys::result<uint8_t, HardwareStatus>> sensorSyncMasterCommandCode()
         {
             return this->device->readMemoryAs<uint8_t>(LSM6DS3::RegAddr::MasterCmdCode);
         }
-        inline sys::Task<HardwareStatus> setSensorSyncMasterCommandCode(uint8_t code)
+        inline sys::task<HardwareStatus> setSensorSyncMasterCommandCode(uint8_t code)
         {
             return this->device->writeMemoryChecked(LSM6DS3::RegAddr::MasterCmdCode, code);
         }
-        inline sys::Task<sys::Result<uint8_t, HardwareStatus>> sensorSyncSPIErrorCode()
+        inline sys::task<sys::result<uint8_t, HardwareStatus>> sensorSyncSPIErrorCode()
         {
             return this->device->readMemoryAs<uint8_t>(LSM6DS3::RegAddr::SensSyncSPIErrorCode);
         }
-        inline sys::Task<HardwareStatus> setSensorSyncSPIErrorCode(uint8_t code)
+        inline sys::task<HardwareStatus> setSensorSyncSPIErrorCode(uint8_t code)
         {
             return this->device->writeMemoryChecked(LSM6DS3::RegAddr::SensSyncSPIErrorCode, code);
         }
 
-        inline sys::Task<sys::Result<uint8_t, HardwareStatus>> slave0WriteData()
+        inline sys::task<sys::result<uint8_t, HardwareStatus>> slave0WriteData()
         {
             return this->device->readMemoryAs<uint8_t>(LSM6DS3::RegAddr::DataWriteSrcModeSubSlv0);
         }
-        inline sys::Task<HardwareStatus> setSlave0WriteData(uint8_t data)
+        inline sys::task<HardwareStatus> setSlave0WriteData(uint8_t data)
         {
             return this->device->writeMemoryChecked(LSM6DS3::RegAddr::DataWriteSrcModeSubSlv0, data);
         }
         template <int SensorIndex>
         requires (SensorIndex >= 1 && SensorIndex <= 3)
-        inline sys::Task<sys::Result<LSM6DS3::RegisterSlavexAddr, HardwareStatus>> slaveI2CAddress()
+        inline sys::task<sys::result<LSM6DS3::RegisterSlavexAddr, HardwareStatus>> slaveI2CAddress()
         {
             return this->device->readMemoryAs<LSM6DS3::RegisterSlavexAddr>(LSM6DS3::RegAddr::Slv0Add + SensorIndex * 3);
         }
         template <int SensorIndex>
         requires (SensorIndex >= 1 && SensorIndex <= 3)
-        inline sys::Task<HardwareStatus> setSlaveI2CAddress(LSM6DS3::RegisterSlavexAddr value)
+        inline sys::task<HardwareStatus> setSlaveI2CAddress(LSM6DS3::RegisterSlavexAddr value)
         {
             return this->device->writeMemoryChecked(LSM6DS3::RegAddr::Slv0SubAdd + SensorIndex * 3, value);
         }
         template <int SensorIndex>
         requires (SensorIndex >= 0 && SensorIndex <= 3)
-        inline sys::Task<sys::Result<uint8_t, HardwareStatus>> slaveI2CRegisterAddress()
+        inline sys::task<sys::result<uint8_t, HardwareStatus>> slaveI2CRegisterAddress()
         {
             return this->device->readMemoryAs<uint8_t>(LSM6DS3::RegAddr::Slv0SubAdd + SensorIndex * 3);
         }
         template <int SensorIndex>
         requires (SensorIndex >= 0 && SensorIndex <= 3)
-        inline sys::Task<HardwareStatus> setSlaveI2CRegisterAddress(uint8_t address)
+        inline sys::task<HardwareStatus> setSlaveI2CRegisterAddress(uint8_t address)
         {
             return this->device->writeMemoryChecked(LSM6DS3::RegAddr::Slv0SubAdd + SensorIndex * 3, address);
         }
         template <int SensorIndex>
         requires (SensorIndex >= 2 && SensorIndex <= 3)
-        inline sys::Task<sys::Result<LSM6DS3::RegisterSlavexConfig, HardwareStatus>> slaveI2CConfig()
+        inline sys::task<sys::result<LSM6DS3::RegisterSlavexConfig, HardwareStatus>> slaveI2CConfig()
         {
             return this->device->readMemoryAs<LSM6DS3::RegisterSlavexConfig>(LSM6DS3::RegAddr::Slave0Config + SensorIndex * 3);
         }
         template <int SensorIndex>
         requires (SensorIndex >= 2 && SensorIndex <= 3)
-        inline sys::Task<HardwareStatus> setSlaveI2CConfig(LSM6DS3::RegisterSlavexConfig value)
+        inline sys::task<HardwareStatus> setSlaveI2CConfig(LSM6DS3::RegisterSlavexConfig value)
         {
             return this->device->writeMemoryChecked(LSM6DS3::RegAddr::Slave0Config + SensorIndex * 3, value);
         }

@@ -27,7 +27,7 @@ if (NOT RUN_STM32_PROGRAMMER_CLI)
     message(WARNING "STM32_Programmer_CLI not found. Flashing will be disabled.")
 else()
     function(create_stm32_programmer_target EXAMPLE_NAME)
-        add_custom_target(${EXAMPLE_NAME}-upload
+        add_custom_target(upload_${EXAMPLE_NAME}
             COMMAND ${RUN_STM32_PROGRAMMER_CLI} --connect port=swd --download "$<TARGET_FILE:${EXAMPLE_NAME}>" -hardRst || exit 0 # Ignore error if no device is connected.
             DEPENDS ${EXAMPLE_NAME}
         )
@@ -44,7 +44,7 @@ if (NOT (CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_ID STREQUAL "
     message(WARNING "Compiler set is not gcc, expect errors.")
 endif()
 
-# Target Specific
+# Target specific.
 
 if (BOARD_NAME MATCHES "STM32")
     string(SUBSTRING ${BOARD_NAME} 0 7 RUNTIME_LIBRARY)
@@ -201,6 +201,7 @@ file(GLOB EXAMPLES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/examples/*.cpp")
 
 foreach(EXAMPLE_FILE ${EXAMPLES})
     get_filename_component(EXAMPLE_NAME ${EXAMPLE_FILE} NAME_WE)
+    set(EXAMPLE_NAME "example_${EXAMPLE_NAME}")
 
     add_executable(${EXAMPLE_NAME} ${EXAMPLE_FILE})
     target_link_libraries(${EXAMPLE_NAME} PUBLIC drivers sys.BuildSupport.CompilerOptions sys.BuildSupport.WarningsAsErrors)

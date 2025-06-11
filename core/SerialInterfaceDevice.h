@@ -63,7 +63,7 @@ namespace atmc
         inline sys::task<sys::result<T, HardwareStatus>> readMemoryAs(u16 memAddr, u16 dataSize = sizeof(T))
         {
             T ret;
-            HardwareStatus res = co_await this->readMemory(memAddr, std::span(reinterpret_cast<u8*>(&ret), dataSize));
+            HardwareStatus res = co_await this->readMemory(memAddr, std::span(reinterpret_cast<byte*>(&ret), +dataSize));
             _fence_value_co_return(res, res != HardwareStatus::Ok);
             co_return ret;
         }
@@ -77,11 +77,11 @@ namespace atmc
         requires (std::is_default_constructible<DataType>::value)
         inline sys::task<HardwareStatus> writeMemoryChecked(u16 memAddr, DataType data, u16 dataSize = sizeof(DataType))
         {
-            HardwareStatus res = co_await this->writeMemory(memAddr, std::span(reinterpret_cast<u8*>(&data), dataSize));
+            HardwareStatus res = co_await this->writeMemory(memAddr, std::span(reinterpret_cast<byte*>(&data), +dataSize));
             _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             DataType checkData;
-            res = co_await this->readMemory(memAddr, std::span(reinterpret_cast<u8*>(&checkData), dataSize));
+            res = co_await this->readMemory(memAddr, std::span(reinterpret_cast<byte*>(&checkData), +dataSize));
             _fence_value_co_return(res, res != HardwareStatus::Ok);
             _fence_value_co_return(HardwareStatus::Error, data != checkData);
 
@@ -97,11 +97,11 @@ namespace atmc
         requires (std::is_default_constructible<DataType>::value)
         inline sys::task<HardwareStatus> writeMemoryChecked(u16 memAddr, DataType (&data)[N])
         {
-            HardwareStatus res = co_await this->writeMemory(memAddr, std::span(reinterpret_cast<u8*>(&data), sizeof(DataType) * N));
+            HardwareStatus res = co_await this->writeMemory(memAddr, std::span(reinterpret_cast<byte*>(&data), sizeof(DataType) * N));
             _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             DataType checkData[N];
-            res = co_await this->readMemory(memAddr, std::span(reinterpret_cast<u8*>(&checkData), sizeof(DataType) * N));
+            res = co_await this->readMemory(memAddr, std::span(reinterpret_cast<byte*>(&checkData), sizeof(DataType) * N));
             _fence_value_co_return(res, res != HardwareStatus::Ok);
             for (size_t i = 0; i < N; i++) _fence_value_co_return(HardwareStatus::Error, data[i] != checkData[i]);
 
