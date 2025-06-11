@@ -126,17 +126,10 @@ async imuTest()
         {
             switch (rA.err())
             {
-            case HardwareStatus::Timeout:
-                printf("Timeout\n");
-                break;
-            case HardwareStatus::Error:
-                printf("Error\n");
-                break;
-            case HardwareStatus::Busy:
-                printf("Busy\n");
-                break;
-            default:
-                break;
+            case HardwareStatus::Timeout: printf("Timeout\n"); break;
+            case HardwareStatus::Error: printf("Error\n"); break;
+            case HardwareStatus::Busy: printf("Busy\n"); break;
+            default: break;
             }
             continue;
         }
@@ -179,8 +172,7 @@ async imuTest()
             case LSM6DS3::FIFOPatternWordType::AccelX:
             case LSM6DS3::FIFOPatternWordType::AccelY:
             case LSM6DS3::FIFOPatternWordType::TimestampHigh:
-            default:
-                break;
+            default: break;
             }
         }
         std::memmove(data, &data[lastFinalIndex + 1], unsigned(_as(int, readCount) - lastFinalIndex - 1) * sizeof(LSM6DS3::FIFOData));

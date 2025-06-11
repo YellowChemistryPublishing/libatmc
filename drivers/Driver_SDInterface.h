@@ -6,8 +6,9 @@
 #include <cxxutil.hpp>
 #include <span>
 
-#include <Task.h>
 #include <SPIDevice.h>
+#include <Task.h>
+
 
 namespace atmc
 {
@@ -36,7 +37,7 @@ namespace atmc
 
             Cmd() = delete;
         };
-        
+
         struct ACmd
         {
             constexpr static CmdRegAddress SDStatus = 13;
@@ -44,8 +45,8 @@ namespace atmc
 
             ACmd() = delete;
         };
-        
-        #pragma pack(push, 1)
+
+#pragma pack(push, 1)
 
         struct ResponseR1
         {
@@ -80,19 +81,19 @@ namespace atmc
         };
         static_assert(sizeof(Response) == 5, "Type `Response` must be packed to five byte.");
 
-        #pragma pack(pop)
+#pragma pack(pop)
 
         constexpr uint8_t cmdIndexToCmd(uint8_t index)
         {
             return 0b01000000 | (index & 0b00111111);
         }
-    }
+    } // namespace SDI
 
     class Driver_SDInterface
     {
         SPIDevice* device;
         uint8_t crcTable[256];
- 
+
         inline void generateCRCTable()
         {
             uint8_t crcPoly = 0x89;
@@ -114,8 +115,7 @@ namespace atmc
         inline uint8_t crcOf(uint8_t message[], size_t length)
         {
             uint8_t crc = 0;
-            for (size_t i = 0; i < length; i++)
-                crc = this->crcAdd(crc, message[i]);
+            for (size_t i = 0; i < length; i++) crc = this->crcAdd(crc, message[i]);
             return crc;
         }
 
@@ -152,12 +152,12 @@ namespace atmc
 
             HardwareStatus res = co_await this->device->writeMemoryUnchecked(data);
             _fence_value_co_return(res, res != HardwareStatus::Ok);
-            
+
             co_return co_await this->waitBytesUnchecked(1);
         }
     public:
-        /// @brief 
-        /// @param device 
+        /// @brief
+        /// @param device
         /// @attention Lifetime assumptions!
         /// ```cpp
         /// (&*device)->decltype(*&*device)();
@@ -173,8 +173,8 @@ namespace atmc
             this->generateCRCTable();
         }
 
-        /// @brief 
-        /// @return 
+        /// @brief
+        /// @return
         /// @attention Lifetime assumptions!
         /// ```cpp
         /// this->device->begin();
@@ -191,7 +191,6 @@ namespace atmc
             _fence_value_co_return(res, res != HardwareStatus::Ok);
 
             this->generateCRCTable();
-            
         }
     };
-}
+} // namespace atmc

@@ -4,7 +4,7 @@
 /// @brief Magnetometer driver for the LIS3MDL.
 
 #if __has_include(<config.h>)
-#include <config.h>
+    #include <config.h>
 #endif
 
 #include <algorithm>
@@ -68,23 +68,23 @@ namespace atmc
 
         // ^ Register definitions. / Magnetometer sensitivity constants. v
 
-        constexpr float SensitivityForFS4G = 1.0f / 6842.0f; // Sensitivity value for 4 gauss full scale.
-        constexpr float SensitivityForFS8G = 1.0f / 3421.0f; // Sensitivity value for 8 gauss full scale.
+        constexpr float SensitivityForFS4G = 1.0f / 6842.0f;  // Sensitivity value for 4 gauss full scale.
+        constexpr float SensitivityForFS8G = 1.0f / 3421.0f;  // Sensitivity value for 8 gauss full scale.
         constexpr float SensitivityForFS12G = 1.0f / 2281.0f; // Sensitivity value for 12 gauss full scale.
         constexpr float SensitivityForFS16G = 1.0f / 1711.0f; // Sensitivity value for 16 gauss full scale.
 
         // ^ Magnetometer sensitivity constants. / Default configuration settings. v
 
-        #if LIS3MDL_TIMEOUT
+#if LIS3MDL_TIMEOUT
         constexpr int TimeoutDuration = LIS3MDL_TIMEOUT;
-        #else
+#else
         constexpr int TimeoutDuration = 10000;
-        #endif
+#endif
 
         // ^ Default configuration settings.
 
-        #pragma pack(push, 1)
-        
+#pragma pack(push, 1)
+
         /// @brief Operating mode settings.
         /// @see `RegisterCtrl1::operatingModeXY` and `RegisterCtrl4::operatingModeZ`.
         enum class OperatingMode : uint_least8_t
@@ -132,7 +132,7 @@ namespace atmc
             constexpr bool operator==(const RegisterCtrl1& other) const noexcept = default;
         };
         static_assert(sizeof(RegisterCtrl1) == 1, "Type `RegisterCtrl1` must be packed to one byte.");
-        
+
         /// @brief Control register 2 settings.
         struct RegisterCtrl2
         {
@@ -152,15 +152,11 @@ namespace atmc
             {
                 switch (rangeUpper)
                 {
-                case 8:
-                    return 0b01;
-                case 12:
-                    return 0b10;
-                case 16:
-                    return 0b11;
+                case 8: return 0b01;
+                case 12: return 0b10;
+                case 16: return 0b11;
                 case 4:
-                default:
-                    return 0b00;
+                default: return 0b00;
                 }
             }
             /// @brief Obtain the sensitivity multiplier for the magnetometer data range by its bit representation.
@@ -172,15 +168,11 @@ namespace atmc
             {
                 switch (fullScaleConfig)
                 {
-                case RegisterCtrl2::fullScaleConfigRangeToBits(8):
-                    return LIS3MDL::SensitivityForFS8G;
-                case RegisterCtrl2::fullScaleConfigRangeToBits(12):
-                    return LIS3MDL::SensitivityForFS12G;
-                case RegisterCtrl2::fullScaleConfigRangeToBits(16):
-                    return LIS3MDL::SensitivityForFS16G;
+                case RegisterCtrl2::fullScaleConfigRangeToBits(8): return LIS3MDL::SensitivityForFS8G;
+                case RegisterCtrl2::fullScaleConfigRangeToBits(12): return LIS3MDL::SensitivityForFS12G;
+                case RegisterCtrl2::fullScaleConfigRangeToBits(16): return LIS3MDL::SensitivityForFS16G;
                 case RegisterCtrl2::fullScaleConfigRangeToBits(4):
-                default:
-                    return LIS3MDL::SensitivityForFS4G;
+                default: return LIS3MDL::SensitivityForFS4G;
                 }
             }
 
@@ -256,7 +248,7 @@ namespace atmc
             constexpr bool operator==(const RegisterCtrl5& other) const noexcept = default;
         };
         static_assert(sizeof(RegisterCtrl5) == 1, "Type `RegisterCtrl5` must be packed to one byte.");
-        
+
         /// @brief Status register settings.
         struct RegisterStatus
         {
@@ -301,7 +293,7 @@ namespace atmc
             constexpr bool operator==(const RegisterIRQConfig& other) const noexcept = default;
         };
         static_assert(sizeof(RegisterIRQConfig) == 1, "Type `RegisterIRQConfig` must be packed to one byte.");
-        
+
         /// @brief Interrupt source register settings.
         struct RegisterIRQSrc
         {
@@ -317,10 +309,8 @@ namespace atmc
         static_assert(sizeof(RegisterIRQSrc) == 1, "Type `RegisterIRQSrc` must be packed to one byte.");
 
         template <typename T>
-        concept ConfigRegisterType =
-        std::same_as<T, RegisterCtrl1> || std::same_as<T, RegisterCtrl2> ||
-        std::same_as<T, RegisterCtrl3> || std::same_as<T, RegisterCtrl4> ||
-        std::same_as<T, RegisterCtrl5> || std::same_as<T, RegisterIRQConfig>;
+        concept ConfigRegisterType = std::same_as<T, RegisterCtrl1> || std::same_as<T, RegisterCtrl2> || std::same_as<T, RegisterCtrl3> || std::same_as<T, RegisterCtrl4> ||
+            std::same_as<T, RegisterCtrl5> || std::same_as<T, RegisterIRQConfig>;
 
         template <typename T>
         concept DataRegisterType = std::same_as<T, RegisterStatus> || std::same_as<T, RegisterIRQSrc>;
@@ -345,32 +335,37 @@ namespace atmc
                 return LIS3MDL::RegAddr::StatusReg;
             else if constexpr (std::same_as<T, RegisterIRQSrc>)
                 return LIS3MDL::RegAddr::IntSrc;
-            else []<bool _false = false> { static_assert(_false, "Unknown register type."); }();
+            else
+                []<bool _false = false>
+                {
+                    static_assert(_false, "Unknown register type.");
+                }();
         }
 
-        #pragma pack(pop)
-    }
+#pragma pack(pop)
+    } // namespace LIS3MDL
 
     /// @brief Magnetometer driver for the LIS3MDL.
     /// @note
     /// Please read the datasheet and application note provided by STMicroelectronics. It will help you understand the registers and how to use them.
-    /// 
-    /// You must call Magnetometer_LIS3MDL::begin() and verify its successful initialization, once, and _only once_, per instance of this driver, before using any other enclosed functions.
-    /// 
+    ///
+    /// You must call Magnetometer_LIS3MDL::begin() and verify its successful initialization, once, and _only once_, per instance of this driver, before using any other enclosed
+    /// functions.
+    ///
     /// #### Calibration:
-    /// 
+    ///
     /// The calibration process is as follows:
-    /// 
+    ///
     /// 1. Set the magnetometer to the desired settings.
-    /// 
+    ///
     /// 2. Call `Magnetometer_LIS3MDL::beginCalibration()` to start the calibration process.
-    /// 
+    ///
     /// 3. Repeatedly call `Magnetometer_LIS3MDL::calibrationSingleCycle()`, moving the magnetometer into as many different orientations as possible.
-    /// 
+    ///
     /// 4. When you are satisfied with the calibration, call `Magnetometer_LIS3MDL::endCalibration()`.
-    /// 
+    ///
     /// 5. The hard-iron calibration data will be set as the offset of the magnetometer.
-    /// 
+    ///
     /// Alternatively, you can set the hard-iron calibration data manually, or, for convenience, use the `Magnetometer_LIS3MDL::calibrateUntil()` function.
     /// @warning Single-threaded read/write only.
     class Magnetometer_LIS3MDL final
@@ -399,15 +394,16 @@ namespace atmc
         /// @return Whether initialization was successful.
         /// @attention Lifetime assumptions! `handle->decltype(*handle)()` < `this->begin(...)` and `this->...` <  `handle->~decltype(*handle)()`.
         inline sys::task<HardwareStatus> begin(SerialInterfaceDevice* device, LIS3MDL::RegisterCtrl1 ctrl1 = LIS3MDL::RegisterCtrl1(),
-                                          LIS3MDL::RegisterCtrl2 ctrl2 = LIS3MDL::RegisterCtrl2(), LIS3MDL::RegisterCtrl3 ctrl3 = LIS3MDL::RegisterCtrl3(),
-                                          LIS3MDL::RegisterCtrl4 ctrl4 = LIS3MDL::RegisterCtrl4(), LIS3MDL::RegisterCtrl5 ctrl5 = LIS3MDL::RegisterCtrl5())
+                                               LIS3MDL::RegisterCtrl2 ctrl2 = LIS3MDL::RegisterCtrl2(), LIS3MDL::RegisterCtrl3 ctrl3 = LIS3MDL::RegisterCtrl3(),
+                                               LIS3MDL::RegisterCtrl4 ctrl4 = LIS3MDL::RegisterCtrl4(), LIS3MDL::RegisterCtrl5 ctrl5 = LIS3MDL::RegisterCtrl5())
         {
             this->device = device;
 
             HardwareStatus res = this->device->waitReadySync(4, LIS3MDL::TimeoutDuration);
             _fence_value_co_return(res, res != HardwareStatus::Ok);
 
-            uint8_t id; _fence_result_co_return(co_await this->deviceID(), id);
+            uint8_t id;
+            _fence_result_co_return(co_await this->deviceID(), id);
             _fence_value_co_return(HardwareStatus::Error, id != LIS3MDL::DeviceID); // Probably faulty.
 
             res = co_await this->writeConfigRegister<LIS3MDL::RegisterCtrl1>(ctrl1);
@@ -468,7 +464,8 @@ namespace atmc
                 this->_gaussPerLSB = LIS3MDL::RegisterCtrl2::fullScaleConfigToGaussPerLSB(value.fullScaleConfig);
                 co_return HardwareStatus::Ok;
             }
-            else co_return co_await this->device->writeMemoryChecked<T>(LIS3MDL::registerAddressOf<T>(), value);
+            else
+                co_return co_await this->device->writeMemoryChecked<T>(LIS3MDL::registerAddressOf<T>(), value);
         }
 
         /// @brief Read the device ID.
@@ -479,9 +476,12 @@ namespace atmc
         }
         inline sys::task<sys::result<bool, HardwareStatus>> selfTest()
         {
-            LIS3MDL::RegisterCtrl1 oldCtrl1; _fence_result_co_return(co_await this->readConfigRegister<LIS3MDL::RegisterCtrl1>(), oldCtrl1);
-            LIS3MDL::RegisterCtrl2 oldCtrl2; _fence_result_co_return(co_await this->readConfigRegister<LIS3MDL::RegisterCtrl2>(), oldCtrl2);
-            LIS3MDL::RegisterCtrl3 oldCtrl3; _fence_result_co_return(co_await this->readConfigRegister<LIS3MDL::RegisterCtrl3>(), oldCtrl3);
+            LIS3MDL::RegisterCtrl1 oldCtrl1;
+            _fence_result_co_return(co_await this->readConfigRegister<LIS3MDL::RegisterCtrl1>(), oldCtrl1);
+            LIS3MDL::RegisterCtrl2 oldCtrl2;
+            _fence_result_co_return(co_await this->readConfigRegister<LIS3MDL::RegisterCtrl2>(), oldCtrl2);
+            LIS3MDL::RegisterCtrl3 oldCtrl3;
+            _fence_result_co_return(co_await this->readConfigRegister<LIS3MDL::RegisterCtrl3>(), oldCtrl3);
 
             LIS3MDL::RegisterCtrl1 ctrl1;
             reinterpret_cast<uint8_t&>(ctrl1) = 0x1C;
@@ -511,8 +511,9 @@ namespace atmc
                 }
                 while (status.xyzNewDataAvail == false);
 
-                [[maybe_unused]] sysm::vector3i16 _; _fence_result_co_return(co_await this->readRaw(), _);
-                    
+                [[maybe_unused]] sysm::vector3i16 _;
+                _fence_result_co_return(co_await this->readRaw(), _);
+
                 sysm::vector3 out = sysm::vector3 { 0.0f, 0.0f, 0.0f };
 
                 for (int i = 0; i < 5; i++)
@@ -524,7 +525,8 @@ namespace atmc
                     }
                     while (status.xyzNewDataAvail == false);
 
-                    sysm::vector3 read; _fence_result_co_return(co_await this->read(), read);
+                    sysm::vector3 read;
+                    _fence_result_co_return(co_await this->read(), read);
                     out.x += read.x;
                     out.y += read.y;
                     out.z += read.z;
@@ -537,7 +539,8 @@ namespace atmc
                 co_return out;
             };
 
-            sysm::vector3 outNoST; _fence_result_co_return(co_await readOut(), outNoST);
+            sysm::vector3 outNoST;
+            _fence_result_co_return(co_await readOut(), outNoST);
 
             reinterpret_cast<uint8_t&>(ctrl1) = 0x1D;
             res = co_await this->writeConfigRegister<LIS3MDL::RegisterCtrl1>(ctrl1);
@@ -545,12 +548,11 @@ namespace atmc
 
             co_await sys::task<>::delay(60);
 
-            sysm::vector3 outST; _fence_result_co_return(co_await readOut(), outST);
+            sysm::vector3 outST;
+            _fence_result_co_return(co_await readOut(), outST);
 
-            bool pass =
-            1.0f <= std::abs(outST.x - outNoST.x) && std::abs(outST.x - outNoST.x) <= 3.0f &&
-            1.0f <= std::abs(outST.y - outNoST.y) && std::abs(outST.y - outNoST.y) <= 3.0f &&
-            0.1f <= std::abs(outST.z - outNoST.z) && std::abs(outST.z - outNoST.z) <= 1.0f;
+            bool pass = 1.0f <= std::abs(outST.x - outNoST.x) && std::abs(outST.x - outNoST.x) <= 3.0f && 1.0f <= std::abs(outST.y - outNoST.y) &&
+                std::abs(outST.y - outNoST.y) <= 3.0f && 0.1f <= std::abs(outST.z - outNoST.z) && std::abs(outST.z - outNoST.z) <= 1.0f;
 
             res = co_await this->writeConfigRegister<LIS3MDL::RegisterCtrl1>(oldCtrl1);
             _fence_value_co_return(res, res != HardwareStatus::Ok);
@@ -605,7 +607,8 @@ namespace atmc
         /// @return The magnetometer data, or an error code.
         inline sys::task<sys::result<sysm::vector3, HardwareStatus>> read()
         {
-            sysm::vector3i16 raw; _fence_result_co_return(co_await this->readRaw(), raw);
+            sysm::vector3i16 raw;
+            _fence_result_co_return(co_await this->readRaw(), raw);
             co_return sysm::vector3(raw.x * this->_gaussPerLSB * this->xSI, raw.y * this->_gaussPerLSB * this->ySI, raw.z * this->_gaussPerLSB * this->zSI);
         }
         /// @brief Read the onboard temperature data.
@@ -658,9 +661,10 @@ namespace atmc
         /// @return Whether the operation was successful.
         inline sys::task<HardwareStatus> calibrationSingleCycle()
         {
-            sysm::vector3 readVal; _fence_result_co_return(co_await this->read(), readVal);
-            if (std::isnan(this->readXMin) || std::isnan(this->readYMin) || std::isnan(this->readZMin) ||
-                std::isnan(this->readXMax) || std::isnan(this->readYMax) || std::isnan(this->readZMax))
+            sysm::vector3 readVal;
+            _fence_result_co_return(co_await this->read(), readVal);
+            if (std::isnan(this->readXMin) || std::isnan(this->readYMin) || std::isnan(this->readZMin) || std::isnan(this->readXMax) || std::isnan(this->readYMax) ||
+                std::isnan(this->readZMax))
             {
                 // Initial values.
                 this->readXMin = readVal.x;
@@ -692,12 +696,9 @@ namespace atmc
             this->xSI = avgDiff / xDiff;
             this->ySI = avgDiff / yDiff;
             this->zSI = avgDiff / zDiff;
-            co_return co_await this->setOffset(sysm::vector3i16
-            {
-                int16_t((this->readXMax + this->readXMin) * 0.5f / this->_gaussPerLSB + 0.5f),
-                int16_t((this->readYMax + this->readYMin) * 0.5f / this->_gaussPerLSB + 0.5f),
-                int16_t((this->readZMax + this->readZMin) * 0.5f / this->_gaussPerLSB + 0.5f)
-            });
+            co_return co_await this->setOffset(sysm::vector3i16 { int16_t((this->readXMax + this->readXMin) * 0.5f / this->_gaussPerLSB + 0.5f),
+                                                                  int16_t((this->readYMax + this->readYMin) * 0.5f / this->_gaussPerLSB + 0.5f),
+                                                                  int16_t((this->readZMax + this->readZMin) * 0.5f / this->_gaussPerLSB + 0.5f) });
         }
 
         /// @brief Useful function to calibrate the magnetometer until a certain condition is met.
@@ -730,4 +731,4 @@ namespace atmc
             co_return co_await this->endCalibration();
         }
     };
-}
+} // namespace atmc
