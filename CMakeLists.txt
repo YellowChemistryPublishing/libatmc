@@ -118,7 +118,7 @@ set(FREERTOS_PORT "GCC_ARM_CM7" CACHE STRING "" FORCE)
 
 add_subdirectory(freertos)
 
-# stm32 Runtime
+# stm32 Board Support
 
 file(GLOB RT_SRCS CONFIGURE_DEPENDS
     "stm32/Drivers/${RUNTIME_LIBRARY}_HAL_Driver/Inc/*.h"

@@ -2,11 +2,11 @@
 
 ## Preamble
 
-It turns out STM32CubeMX is a very useful codegen tool!
-A development `.ioc` file we use to test is already provided, but please configure your own as you need.
-Don't forget to regenerate HAL code whenever you change your board configuration!
+It turns out STM32CubeMX is a very useful codegen tool! A development `.ioc` file we use to test is already provided, but please configure your own as you need. Don't forget to
+regenerate HAL code whenever you change your board configuration!
 
-Whilst this means that you, the humble embedded systems engineer, has a high level of control over your peripherals, there are some caveats, as `libatmc` expects some specific settings set in many cases.
+Whilst this means that you, the humble embedded systems engineer, has a high level of control over your peripherals, there are some caveats, as `libatmc` expects some specific
+settings set in many cases.
 
 ## General
 
@@ -19,18 +19,21 @@ Under `System Core -> NVIC -> Code Generation`, ensure the following are set.
 | `Pendable request for system service`     | :white_large_square:   |
 | `Time base: System tick timer`            | :white_large_square:   |
 
-The hardfault interrupt is replaced with our own handler, which provides slightly improved debugging utility.
-The systick handler is also replaced so that stm32 code invokes `HAL_IncTick` and `xPortSysTickHandler`.
-`SVC_Handler` and `PendSV_Handler` are deferred to FreeRTOS.
+The hardfault interrupt is replaced with our own handler, which provides slightly improved debugging utility. The systick handler is also replaced so that stm32 code invokes
+`HAL_IncTick` and `xPortSysTickHandler`. `SVC_Handler` and `PendSV_Handler` are deferred to FreeRTOS.
+
+Under `Project Manager -> Code Generator`, make sure `Copy all used libraries into the project folder` is set.
+
+Don't forget to generate code!
 
 ## Ready-to-Go Peripherals
 
 These peripherals need only active interrupts for `libatmc` support:
 
- - Digital Pin IO (`PZx`) (No interrupts needed either, unless directly awaiting a pin interrupt!)
- - Hardware Timers (`TIMx`)
- - Serial Protocols, I2C (`I2Cx`)
- - Serial Protocols, SPI (`SPIx`)
+-   Digital Pin IO (`PZx`) (No interrupts needed either, unless directly awaiting a pin interrupt!)
+-   Hardware Timers (`TIMx`)
+-   Serial Protocols, I2C (`I2Cx`)
+-   Serial Protocols, SPI (`SPIx`)
 
 ## ADC
 
@@ -41,12 +44,11 @@ You may configure ADC _almost_ however you'd like, but make sure to do the follo
 2. Under `DMA Settings`:
     - A DMA request is added for the ADC(s) you intend to use.
     - Under `DMA Request Settings`:
-       - `Mode` is `Circular`.
-       - `Data Width` is `Half Word` for both `Peripheral` and `Memory`.
+        - `Mode` is `Circular`.
+        - `Data Width` is `Half Word` for both `Peripheral` and `Memory`.
 3. Under `Parameter Settings`:
     - If using more than one rank, `Scan Conversion Mode` is `Enabled`.
     - `Continuous Conversion Mode` and `Discontinuous Conversion Mode` is `Disabled`.
     - `End of Conversion Selection` is `End of sequence of conversion`.
     - `Conversion Data Management Mode` is `DMA Circular Mode`.
     - `External Trigger Conversion Edge` is `None`.
-
