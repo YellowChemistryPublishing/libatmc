@@ -1680,7 +1680,7 @@ namespace atmc
             return this->device->readUInt16LSBFirst(LSM6DS3::RegAddr::FIFODataOutL);
         }
         template <uint16_t N>
-        inline sys::task<sys::result<size_t, HardwareStatus>> readFIFOData(const LSM6DS3::FIFOPatternWordType (&fifoPattern)[N], uint16_t outSize, LSM6DS3::FIFOData* out)
+        inline sys::task<sys::result<uint16_t, HardwareStatus>> readFIFOData(const LSM6DS3::FIFOPatternWordType (&fifoPattern)[N], uint16_t outSize, LSM6DS3::FIFOData* out)
         {
             uint8_t fifoStatus1;
             _fence_result_co_return(co_await this->device->readMemoryAs<uint8_t>(LSM6DS3::RegAddr::FIFOStatus1), fifoStatus1);
