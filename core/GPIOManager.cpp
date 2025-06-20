@@ -5,7 +5,7 @@ using namespace atmc;
 std::atomic_flag GPIOManager::pinFlag[Config::PinCountGPIO];
 
 std::atomic_flag GPIOManager::adcFlags[Config::AnalogConverterCount];
-__dma_rw volatile uint16_t GPIOManager::adcRaw[Config::AnalogConverterCount][Config::MaxADCChannels];
+__dma_rw alignas(uint32_t) volatile uint16_t GPIOManager::adcRaw[Config::AnalogConverterCount][Config::MaxADCChannels];
 
 extern "C" void HAL_GPIO_EXTI_Callback(uint16_t pin)
 {

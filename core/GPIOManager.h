@@ -185,7 +185,7 @@ namespace atmc
         static std::atomic_flag pinFlag[Config::PinCountGPIO];
 
         static std::atomic_flag adcFlags[Config::AnalogConverterCount];
-        static __dma_rw alignas(uint32_t) volatile uint16_t adcRaw[Config::AnalogConverterCount][Config::MaxADCChannels];
+        static __dma_rw volatile uint16_t adcRaw[Config::AnalogConverterCount][Config::MaxADCChannels];
     public:
         GPIOManager() = delete;
 

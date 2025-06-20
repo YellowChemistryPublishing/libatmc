@@ -5,7 +5,16 @@ include(cmake/stm32_gcc.cmake)
 project(libatmc)
 enable_language(ASM C CXX)
 
+if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    set(LIBATMC_DEVELOPMENT_MODE ON CACHE STRING "Build libcxxext in development mode.")
+else()
+    set(LIBATMC_DEVELOPMENT_MODE OFF CACHE STRING "Build libcxxext in development mode.")
+endif()
+
 set(BOARD_NAME "STM32H753ZI")
+
+include(CMakeDependentOption)
+cmake_dependent_option(LIBATMC_EXAMPLES "Build examples." ON "LIBATMC_DEVELOPMENT_MODE" OFF)
 
 # Helpers.
 
@@ -14,13 +23,6 @@ if (NOT RUN_CPPCHECK)
     message(FATAL_ERROR "Cppcheck not found. Required for static analysis.")
 endif()
 set(LINT_CPPCHECK ${RUN_CPPCHECK} --suppress=preprocessorErrorDirective --enable=all --inconclusive --inline-suppr --force --max-configs=64 -DconfigUSE_16_BIT_TICKS)
-
-# Give up for now, very inconvenient setup for arm-none-eabi-gcc.
-# find_program(RUN_CLANG_TIDY clang-tidy PATHS "C:/Program Files/LLVM/bin" "/usr/bin")
-# if (NOT RUN_CLANG_TIDY)
-#     message(FATAL_ERROR "clang-tidy not found. Required for static analysis.")
-# endif()
-# set(LINT_CLANG_TIDY ${RUN_CLANG_TIDY} -checks=*)
 
 find_program(RUN_STM32_PROGRAMMER_CLI STM32_Programmer_CLI PATHS "C:/Program Files/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin" "/usr/bin")
 if (NOT RUN_STM32_PROGRAMMER_CLI)
@@ -140,17 +142,10 @@ target_link_libraries(rt PUBLIC freertos_kernel)
 
 # libcxxext
 
-set(PLATFORM_SUPPORT_THREADING_HEADER "${CMAKE_SOURCE_DIR}/core/rt_threading_embedded.h")
-set(PLATFORM_SUPPORT_THREADING_LIBRARY "${CMAKE_SOURCE_DIR}/core/rt_threading_embedded.cpp")
+set(PLATFORM_SUPPORT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/core/platform")
 add_subdirectory(libcxxext)
 target_include_directories(sys.Threading PUBLIC "/")
 target_link_libraries(sys.Threading PUBLIC rt freertos_kernel)
-set_target_properties(sys.Threading PROPERTIES
-    C_CPPCHECK ${LINT_CPPCHECK}
-    CXX_CPPCHECK ${LINT_CPPCHECK}
-    C_CLANG_TIDY ${LINT_CLANG_TIDY}
-    CXX_CLANG_TIDY ${LINT_CLANG_TIDY}
-)
 
 # core Library
 
@@ -158,7 +153,7 @@ file(GLOB_RECURSE CORE_SRCS CONFIGURE_DEPENDS
     "core/*.h"
     "core/*.cpp"
 )
-list(FILTER CORE_SRCS EXCLUDE REGEX "${CMAKE_SOURCE_DIR}/core/rt_threading_embedded.cpp")
+list(FILTER CORE_SRCS EXCLUDE REGEX "rt_threading\..*$")
 file(GLOB_RECURSE CORE_MODULES CONFIGURE_DEPENDS
     "core/*.cppm"
 )
@@ -167,12 +162,6 @@ add_library(core STATIC ${CORE_SRCS})
 target_sources(core PUBLIC FILE_SET CXX_MODULES FILES ${CORE_MODULES})
 target_include_directories(core PUBLIC "/" "core")
 target_link_libraries(core PUBLIC rt freertos_kernel sys sys.Containers sys.Threading sys.BuildSupport.CompilerOptions sys.BuildSupport.WarningsAsErrors)
-set_target_properties(core PROPERTIES
-    C_CPPCHECK ${LINT_CPPCHECK}
-    CXX_CPPCHECK ${LINT_CPPCHECK}
-    C_CLANG_TIDY ${LINT_CLANG_TIDY}
-    CXX_CLANG_TIDY ${LINT_CLANG_TIDY}
-)
 
 # drivers Library
 
@@ -188,31 +177,21 @@ add_library(drivers STATIC ${DRIVERS_SRCS})
 target_sources(drivers PUBLIC FILE_SET CXX_MODULES FILES ${DRIVERS_MODULES})
 target_include_directories(drivers PUBLIC "drivers")
 target_link_libraries(drivers PUBLIC core sys.BuildSupport.CompilerOptions sys.BuildSupport.WarningsAsErrors)
-set_target_properties(drivers PROPERTIES
-    C_CPPCHECK ${LINT_CPPCHECK}
-    CXX_CPPCHECK ${LINT_CPPCHECK}
-    C_CLANG_TIDY ${LINT_CLANG_TIDY}
-    CXX_CLANG_TIDY ${LINT_CLANG_TIDY}
-)
 
 # Examples
 
 file(GLOB EXAMPLES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/examples/*.cpp")
 
-foreach(EXAMPLE_FILE ${EXAMPLES})
-    get_filename_component(EXAMPLE_NAME ${EXAMPLE_FILE} NAME_WE)
-    set(EXAMPLE_NAME "example_${EXAMPLE_NAME}")
+if (LIBATMC_EXAMPLES)
+    foreach(EXAMPLE_FILE ${EXAMPLES})
+        get_filename_component(EXAMPLE_NAME ${EXAMPLE_FILE} NAME_WE)
+        set(EXAMPLE_NAME "example_${EXAMPLE_NAME}")
 
-    add_executable(${EXAMPLE_NAME} ${EXAMPLE_FILE})
-    target_link_libraries(${EXAMPLE_NAME} PUBLIC drivers sys.BuildSupport.CompilerOptions sys.BuildSupport.WarningsAsErrors)
-    set_target_properties(${EXAMPLE_NAME} PROPERTIES
-        C_CPPCHECK ${LINT_CPPCHECK}
-        CXX_CPPCHECK ${LINT_CPPCHECK}
-        C_CLANG_TIDY ${LINT_CLANG_TIDY}
-        CXX_CLANG_TIDY ${LINT_CLANG_TIDY}
-    )
-
-    if (RUN_STM32_PROGRAMMER_CLI)
-        create_stm32_programmer_target(${EXAMPLE_NAME})
-    endif()
-endforeach()
+        add_executable(${EXAMPLE_NAME} ${EXAMPLE_FILE})
+        target_link_libraries(${EXAMPLE_NAME} PUBLIC drivers sys.BuildSupport.CompilerOptions sys.BuildSupport.WarningsAsErrors)
+        
+        if (RUN_STM32_PROGRAMMER_CLI)
+            create_stm32_programmer_target(${EXAMPLE_NAME})
+        endif()
+    endforeach()
+endif()
