@@ -11,7 +11,6 @@ So I wrote one.
 
 |                  |                                                          |
 | ---------------- | -------------------------------------------------------- |
-| `libsysCore`     | Basic general-purpose utility library.                   |
 | `libatmcCore`    | Provides core interfaces with specific microcontrollers. |
 | `libatmcDrivers` | Handful of drivers that I've implemented for you to use! |
 | `libsysIO`       | File IO library for FAT formatted SD cards.              |

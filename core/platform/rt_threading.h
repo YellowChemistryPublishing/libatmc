@@ -8,51 +8,56 @@
 
 #include <LanguageSupport.h>
 
-struct __tcs_isr
+namespace sys::platform
 {
-    _inline_always __tcs_isr() : irqStatus(taskENTER_CRITICAL_FROM_ISR())
-    { }
-    _inline_always ~__tcs_isr()
+    struct ThreadCriticalSectionISR
     {
-        taskEXIT_CRITICAL_FROM_ISR(this->irqStatus);
-    }
-private:
-    UBaseType_t irqStatus;
-};
-struct __tcs
-{
-    _inline_always __tcs()
+        _inline_always ThreadCriticalSectionISR() : irqStatus(taskENTER_CRITICAL_FROM_ISR())
+        { }
+        _inline_always ~ThreadCriticalSectionISR()
+        {
+            taskEXIT_CRITICAL_FROM_ISR(this->irqStatus);
+        }
+    private:
+        UBaseType_t irqStatus;
+    };
+    struct ThreadCriticalSection
     {
-        taskENTER_CRITICAL();
-    }
-    _inline_always ~__tcs()
+        _inline_always ThreadCriticalSection()
+        {
+            taskENTER_CRITICAL();
+        }
+        _inline_always ~ThreadCriticalSection()
+        {
+            taskEXIT_CRITICAL();
+        }
+    };
+
+    using ThreadID = UBaseType_t;
+
+    class ThreadHandle
     {
-        taskEXIT_CRITICAL();
-    }
-};
+        TaskHandle_t handle;
 
-using __thread_id = UBaseType_t;
+        inline ThreadHandle(TaskHandle_t handle) : handle(handle)
+        { }
+    public:
+        inline static ThreadHandle currentThread()
+        {
+            ThreadCriticalSection guard;
+            return xTaskGetCurrentTaskHandle();
+        }
 
-class __thread_type
-{
-    TaskHandle_t handle;
+        inline ThreadID id()
+        {
+            return uxTaskGetTaskNumber(this->handle);
+        }
+    };
 
-    inline __thread_type(TaskHandle_t handle) : handle(handle)
-    { }
-public:
-    inline static __thread_type currentThread()
-    {
-        __tcs guard;
-        return xTaskGetCurrentTaskHandle();
-    }
+    constexpr i32 _task_max_delay(std::numeric_limits<i32::underlying_type>::max());
+} // namespace sys::platform
 
-    inline __thread_id id()
-    {
-        return uxTaskGetTaskNumber(this->handle);
-    }
-};
-
-#define __task_yield()                                                                \
+#define _impl_task_yield()                                                            \
     inline static auto yield()                                                        \
     requires (std::is_same<T, void>::value)                                           \
     {                                                                                 \
@@ -70,18 +75,16 @@ public:
         } ret;                                                                        \
         return ret;                                                                   \
     }
-#define __task_delay()                                                                   \
+#define _impl_task_delay()                                                               \
     inline static task<void> delay(u32 ms)                                               \
     requires (std::is_same<T, void>::value)                                              \
     {                                                                                    \
         u32 from = xTaskGetTickCount();                                                  \
         while (pdTICKS_TO_MS(xTaskGetTickCount() - from) < ms) co_await task<>::yield(); \
     }
-#define __task_yield_and_resume() \
-    taskYIELD();                  \
+#define _task_yield_and_resume() \
+    taskYIELD();                 \
     return this->handle
-#define __task_yield_and_continue()            \
+#define _task_yield_and_continue()             \
     taskYIELD();                               \
     return this->handle.promise().continuation
-
-constexpr i32 __task_max_delay(std::numeric_limits<i32::underlying_type>::max());

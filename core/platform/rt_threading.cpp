@@ -79,15 +79,15 @@ namespace atmc
 using namespace sys;
 using namespace atmc;
 
-void* __task_operator_new(size_t sz)
+void* ::sys::platform::_task_operator_new(size_t sz)
 {
     return TaskAllocator::alloc(sz);
 }
-void __task_operator_delete(void* ptr)
+void ::sys::platform::_task_operator_delete(void* ptr)
 {
     TaskAllocator::free(ptr);
 }
-void __launch_async(void* addr)
+void ::sys::platform::_launch_async(void* addr)
 {
     xTaskCreate([](void* pvParams)
     {
