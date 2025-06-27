@@ -1,6 +1,6 @@
 #include "rt.h"
 
-#include <print>
+#include <coroutine>
 
 // clang-format off
 #include <FreeRTOS.h>
@@ -10,6 +10,7 @@
 #include <Config.h>
 #include <LanguageSupport.h>
 #include <TaskEx.h>
+#include <Thread.h>
 
 namespace atmc
 {
@@ -42,6 +43,8 @@ namespace atmc
 
         inline static void* alloc(size_t sz) noexcept
         {
+            sys::thread_critical_section guard;
+
             size_t chunkSize = (sz + alignof(std::max_align_t) - 1) & -alignof(std::max_align_t);
             if ((!TaskAllocator::stackTop ? TaskAllocator::stack : _as(unsigned char*, TaskAllocator::stackTop->next())) + sizeof(ChunkHeader) + chunkSize >=
                 TaskAllocator::stack + atmc::Config::TaskPromiseStackSize) [[unlikely]]
@@ -60,6 +63,8 @@ namespace atmc
         {
             if (!ptr) [[unlikely]]
                 return;
+
+            sys::thread_critical_section guard;
 
             ChunkHeader* header = _asr(ChunkHeader*, ptr) - 1;
             if (TaskAllocator::stackTop == header)
