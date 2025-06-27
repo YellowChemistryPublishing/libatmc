@@ -14,10 +14,6 @@ struct ExampleConfig final
 
 async entryPoint()
 {
-    auto arr = managed_array<int>::ctor(23);
-    auto arrdone = arr.move();
-    std::println("{}", arrdone[0].move());
-
     co_return;
 }
 
