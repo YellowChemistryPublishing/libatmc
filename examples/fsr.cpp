@@ -53,7 +53,9 @@ async entryPoint()
         // => 1k / (1k + Rfsr) = vRead / vDD
         // => Rfsr = 1k / (vRead / vDD) - 1k
 
-        //                      +---o vRead
+        //                    vRead
+        //                      o
+        //                      |
         // GND o---[ 1 kOhm ]---+---[ vres /^ ]---o vDD
 
         float resistance = (1000.0f / (co_await GPIOManager::analogRead(ExampleConfig::fsrPin)).expect() - 1000.0f) / 1000.0f;
