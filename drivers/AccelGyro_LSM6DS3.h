@@ -9,11 +9,11 @@
 #include <span>
 
 #include <LanguageSupport.h>
+#include <Matrix.h>
 #include <Result.h>
 #include <SerialInterfaceDevice.h>
 #include <TaskEx.h>
 #include <Vector.h>
-
 
 namespace atmc
 {

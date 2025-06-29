@@ -188,7 +188,7 @@ if (LIBATMC_EXAMPLES)
         set(EXAMPLE_NAME "example_${EXAMPLE_NAME}")
 
         add_executable(${EXAMPLE_NAME} ${EXAMPLE_FILE})
-        target_link_libraries(${EXAMPLE_NAME} PUBLIC drivers sys.BuildSupport.CompilerOptions sys.BuildSupport.WarningsAsErrors)
+        target_link_libraries(${EXAMPLE_NAME} PUBLIC drivers sys.Mathematics sys.BuildSupport.CompilerOptions sys.BuildSupport.WarningsAsErrors)
         
         if (RUN_STM32_PROGRAMMER_CLI)
             create_stm32_programmer_target(${EXAMPLE_NAME})
