@@ -6,80 +6,71 @@
 #include <cstddef>
 #include <cstdint>
 #include <entry.h>
-// clang-format off
 #include <module/sys>
-#include <module/sys.Threading>
-// clang-format on
-#include <runtime_headers.h> // NOLINT(misc-include-cleaner)
+#include <runtime_headers.h>
 
 #include <Config.h>
-#include <Target.h>
 
-#if _libatmc_target_stm32
-#define _gpio_declare_pin(port, pin) static const GPIOPin P##port##pin
-#define _gpio_declare_port_pins(port) \
-    _gpio_declare_pin(port, 0);       \
-    _gpio_declare_pin(port, 1);       \
-    _gpio_declare_pin(port, 2);       \
-    _gpio_declare_pin(port, 3);       \
-    _gpio_declare_pin(port, 4);       \
-    _gpio_declare_pin(port, 5);       \
-    _gpio_declare_pin(port, 6);       \
-    _gpio_declare_pin(port, 7);       \
-    _gpio_declare_pin(port, 8);       \
-    _gpio_declare_pin(port, 9);       \
-    _gpio_declare_pin(port, 10);      \
-    _gpio_declare_pin(port, 11);      \
-    _gpio_declare_pin(port, 12);      \
-    _gpio_declare_pin(port, 13);      \
-    _gpio_declare_pin(port, 14);      \
-    _gpio_declare_pin(port, 15)
-#define _gpio_declare_ports()   \
-    _gpio_declare_port_pins(A); \
-    _gpio_declare_port_pins(B); \
-    _gpio_declare_port_pins(C); \
-    _gpio_declare_port_pins(D); \
-    _gpio_declare_port_pins(E); \
-    _gpio_declare_port_pins(F); \
-    _gpio_declare_port_pins(G); \
-    _gpio_declare_port_pins(H); \
-    _gpio_declare_port_pins(I); \
-    _gpio_declare_port_pins(J); \
-    _gpio_declare_port_pins(K)
-#define _gpio_define_pin(port, pin) constexpr GPIOPin GPIOPin::P##port##pin(GPIO##port##_BASE, u16(GPIO_PIN_##pin))
-#define _gpio_define_port_pins(port) \
-    _gpio_define_pin(port, 0);       \
-    _gpio_define_pin(port, 1);       \
-    _gpio_define_pin(port, 2);       \
-    _gpio_define_pin(port, 3);       \
-    _gpio_define_pin(port, 4);       \
-    _gpio_define_pin(port, 5);       \
-    _gpio_define_pin(port, 6);       \
-    _gpio_define_pin(port, 7);       \
-    _gpio_define_pin(port, 8);       \
-    _gpio_define_pin(port, 9);       \
-    _gpio_define_pin(port, 10);      \
-    _gpio_define_pin(port, 11);      \
-    _gpio_define_pin(port, 12);      \
-    _gpio_define_pin(port, 13);      \
-    _gpio_define_pin(port, 14);      \
-    _gpio_define_pin(port, 15)
-#define _gpio_define_ports()   \
-    _gpio_define_port_pins(A); \
-    _gpio_define_port_pins(B); \
-    _gpio_define_port_pins(C); \
-    _gpio_define_port_pins(D); \
-    _gpio_define_port_pins(E); \
-    _gpio_define_port_pins(F); \
-    _gpio_define_port_pins(G); \
-    _gpio_define_port_pins(H); \
-    _gpio_define_port_pins(I); \
-    _gpio_define_port_pins(J); \
-    _gpio_define_port_pins(K)
-#else
-#define _gpio_declare_ports() static const GPIOPin PZ9;
-#define _gpio_define_ports() constexpr GPIOPin GPIOPin::PZ9(0, 0);
-#endif
+#define __gpio_declare_pin(port, pin) static const GPIOPin P##port##pin
+#define __gpio_declare_port_pins(port) \
+    __gpio_declare_pin(port, 0);       \
+    __gpio_declare_pin(port, 1);       \
+    __gpio_declare_pin(port, 2);       \
+    __gpio_declare_pin(port, 3);       \
+    __gpio_declare_pin(port, 4);       \
+    __gpio_declare_pin(port, 5);       \
+    __gpio_declare_pin(port, 6);       \
+    __gpio_declare_pin(port, 7);       \
+    __gpio_declare_pin(port, 8);       \
+    __gpio_declare_pin(port, 9);       \
+    __gpio_declare_pin(port, 10);      \
+    __gpio_declare_pin(port, 11);      \
+    __gpio_declare_pin(port, 12);      \
+    __gpio_declare_pin(port, 13);      \
+    __gpio_declare_pin(port, 14);      \
+    __gpio_declare_pin(port, 15)
+#define __gpio_declare_ports()   \
+    __gpio_declare_port_pins(A); \
+    __gpio_declare_port_pins(B); \
+    __gpio_declare_port_pins(C); \
+    __gpio_declare_port_pins(D); \
+    __gpio_declare_port_pins(E); \
+    __gpio_declare_port_pins(F); \
+    __gpio_declare_port_pins(G); \
+    __gpio_declare_port_pins(H); \
+    __gpio_declare_port_pins(I); \
+    __gpio_declare_port_pins(J); \
+    __gpio_declare_port_pins(K)
+#define __gpio_define_pin(port, pin) constexpr GPIOPin GPIOPin::P##port##pin(GPIO##port##_BASE, u16(GPIO_PIN_##pin))
+#define __gpio_define_port_pins(port) \
+    __gpio_define_pin(port, 0);       \
+    __gpio_define_pin(port, 1);       \
+    __gpio_define_pin(port, 2);       \
+    __gpio_define_pin(port, 3);       \
+    __gpio_define_pin(port, 4);       \
+    __gpio_define_pin(port, 5);       \
+    __gpio_define_pin(port, 6);       \
+    __gpio_define_pin(port, 7);       \
+    __gpio_define_pin(port, 8);       \
+    __gpio_define_pin(port, 9);       \
+    __gpio_define_pin(port, 10);      \
+    __gpio_define_pin(port, 11);      \
+    __gpio_define_pin(port, 12);      \
+    __gpio_define_pin(port, 13);      \
+    __gpio_define_pin(port, 14);      \
+    __gpio_define_pin(port, 15)
+#define __gpio_define_ports()   \
+    __gpio_define_port_pins(A); \
+    __gpio_define_port_pins(B); \
+    __gpio_define_port_pins(C); \
+    __gpio_define_port_pins(D); \
+    __gpio_define_port_pins(E); \
+    __gpio_define_port_pins(F); \
+    __gpio_define_port_pins(G); \
+    __gpio_define_port_pins(H); \
+    __gpio_define_port_pins(I); \
+    __gpio_define_port_pins(J); \
+    __gpio_define_port_pins(K)
 
 namespace atmc
 {
@@ -215,8 +206,8 @@ namespace atmc
     {
         static std::atomic_flag pinFlag[Config::PinCountGPIO]; // NOLINT(bugprone-dynamic-static-initializers)
 
-        static std::atomic_flag adcFlags[Config::AnalogConverterCount];                                // NOLINT(bugprone-dynamic-static-initializers)
-        static _dma_rw volatile uint16_t adcRaw[Config::AnalogConverterCount][Config::MaxADCChannels]; // NOLINT(bugprone-dynamic-static-initializers)
+        static std::atomic_flag adcFlags[Config::AnalogConverterCount];
+        static _dma_rw volatile uint16_t adcRaw[Config::AnalogConverterCount][Config::MaxADCChannels];
     public:
         GPIOManager() = delete;
 
@@ -224,34 +215,20 @@ namespace atmc
         /// @param pin The pin number to await.
         static sys::task<> pinInterrupt(u16 pin)
         {
-            const sz pinIndex(std::bit_width(*pin) - 1);
-            _coretif(, pinIndex >= sz(Config::PinCountGPIO));
-
-            // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
+            sz pinIndex(std::bit_width(*pin) - 1);
             GPIOManager::pinFlag[*pinIndex].test_and_set();
             while (GPIOManager::pinFlag[*pinIndex].test())
                 co_await sys::task<>::yield();
-            // NOLINTEND(cppcoreguidelines-pro-bounds-constant-array-index)
-
             co_return;
         }
 
         /// @brief Read a pin.
         /// @param pin The pin to read.
         /// @return The state of the pin.
-        static GPIOPin::State digitalRead(GPIOPin pin)
+        inline static GPIOPin::State digitalRead(GPIOPin pin) { return HAL_GPIO_ReadPin(_asr(GPIO_TypeDef*, pin.port), *pin.pin); }
+        inline static sys::task<sys::result<float, HardwareStatus>> analogRead(AnalogPin pin)
         {
-#if _libatmc_target_stm32
-            return HAL_GPIO_ReadPin(_asr(GPIO_TypeDef*, pin.port), *pin.pin);
-#else
-            (void)pin;
-            return GPIOPin::Low;
-#endif
-        }
-        static sys::task<sys::result<float, HardwareStatus>> analogRead(AnalogPin pin)
-        {
-#if _libatmc_target_stm32
-            ADCNativeHandle* hadc = pin.internalHandle();
+            ADC_HandleTypeDef* hadc = pin.internalHandle();
             _coretif(HardwareStatus::Error, !hadc);
 
             int resolution = 0;
@@ -299,22 +276,13 @@ namespace atmc
         /// @brief Set a pin.
         /// @param pin The pin to set.
         /// @param state The state to set the pin to.
-        static void digitalWrite(GPIOPin pin, GPIOPin::State state)
-        {
-#if _libatmc_target_stm32
-            HAL_GPIO_WritePin(_asr(GPIO_TypeDef*, pin.port), *pin.pin, GPIO_PinState(state));
-#else
-            (void)pin;
-            (void)state;
-#endif
-        }
+        inline static void digitalWrite(GPIOPin pin, GPIOPin::State state) { HAL_GPIO_WritePin(_asr(GPIO_TypeDef*, pin.port), *pin.pin, GPIO_PinState(state)); }
 
         static HardwareStatus pwmWrite(PWMPin pin, float duty)
         {
-#if _libatmc_target_stm32
             _retif(HardwareStatus::Error, pin.channel == -1 || duty < 0.0f || duty > 1.0f);
 
-            HwTimerNativeHandle* htim = pin.internalHandle();
+            TIM_HandleTypeDef* htim = pin.internalHandle();
             _retif(HardwareStatus::Error, !htim);
 
             htim->Instance->CCR1 = _as(uint32_t, _as(float, htim->Instance->ARR) * duty + 0.5f);
@@ -328,10 +296,9 @@ namespace atmc
         }
         static HardwareStatus pwmClear(PWMPin pin)
         {
-#if _libatmc_target_stm32
             _retif(HardwareStatus::Error, pin.channel == -1);
 
-            HwTimerNativeHandle* htim = pin.internalHandle();
+            TIM_HandleTypeDef* htim = pin.internalHandle();
             _retif(HardwareStatus::Error, !htim);
 
             return HardwareStatus(HAL_TIM_PWM_Stop(htim, _as(uint32_t, pin.channel)));

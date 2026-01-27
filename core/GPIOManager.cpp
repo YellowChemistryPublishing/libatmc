@@ -15,8 +15,6 @@ std::atomic_flag GPIOManager::pinFlag[Config::PinCountGPIO];
 std::atomic_flag GPIOManager::adcFlags[Config::AnalogConverterCount];
 _dma_rw alignas(uint32_t) volatile uint16_t GPIOManager::adcRaw[Config::AnalogConverterCount][Config::MaxADCChannels];
 
-#if _libatmc_target_stm32
-
 extern "C" void HAL_GPIO_EXTI_Callback(uint16_t pin)
 {
     int pinIndex = std::bit_width(pin) - 1;

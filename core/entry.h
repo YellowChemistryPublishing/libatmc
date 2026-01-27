@@ -1,6 +1,12 @@
 #pragma once
 
-#include <runtime_headers.h> // NOLINT(misc-include-cleaner)
+#include <runtime_headers.h>
+
+#ifdef STM32H7xx
+#define _dma_rw __attribute__((section(".dma_data")))
+#else
+#define _dma_rw
+#endif
 
 #ifdef __cplusplus
 
