@@ -4,15 +4,10 @@
 #include <bit>
 #include <board.h>
 #include <entry.h>
+#include <module/sys>
 #include <runtime_headers.h>
 
 #include <Config.h>
-#include <Exception.h>
-#include <InplaceAtomicSet.h>
-#include <InplaceVector.h>
-#include <Result.h>
-#include <SpinLock.h>
-#include <TaskEx.h>
 
 #define __gpio_declare_pin(port, pin) static const GPIOPin P##port##pin
 #define __gpio_declare_port_pins(port) \
@@ -44,7 +39,7 @@
     __gpio_declare_port_pins(I); \
     __gpio_declare_port_pins(J); \
     __gpio_declare_port_pins(K)
-#define __gpio_define_pin(port, pin) constexpr GPIOPin GPIOPin::P##port##pin(GPIO##port##_BASE, GPIO_PIN_##pin)
+#define __gpio_define_pin(port, pin) constexpr GPIOPin GPIOPin::P##port##pin(GPIO##port##_BASE, u16(GPIO_PIN_##pin))
 #define __gpio_define_port_pins(port) \
     __gpio_define_pin(port, 0);       \
     __gpio_define_pin(port, 1);       \
@@ -97,8 +92,7 @@ namespace atmc
         /// @brief Construct a GPIO pin.
         /// @param portAddr The address to the internal handle of the GPIO port.
         /// @param pin The pin number.
-        constexpr GPIOPin(uintptr_t portAddr, u16 pin) : port(portAddr), pin(pin)
-        { }
+        constexpr GPIOPin(uintptr_t portAddr, u16 pin) : port(portAddr), pin(pin) { }
 
         friend class atmc::GPIOManager;
     private:
@@ -110,8 +104,7 @@ namespace atmc
 
     struct AnalogPin final
     {
-        constexpr AnalogPin(int adc, int rank) : adcIndex(adc), rank(rank)
-        { }
+        constexpr AnalogPin(int adc, int rank) : adcIndex(adc), rank(rank) { }
 
         constexpr bool operator==(const AnalogPin& other) const = default;
 
@@ -185,7 +178,7 @@ namespace atmc
         static std::atomic_flag pinFlag[Config::PinCountGPIO];
 
         static std::atomic_flag adcFlags[Config::AnalogConverterCount];
-        static __dma_rw volatile uint16_t adcRaw[Config::AnalogConverterCount][Config::MaxADCChannels];
+        static _dma_rw volatile uint16_t adcRaw[Config::AnalogConverterCount][Config::MaxADCChannels];
     public:
         GPIOManager() = delete;
 
@@ -193,23 +186,21 @@ namespace atmc
         /// @param pin The pin number to await.
         inline static sys::task<> pinInterrupt(u16 pin)
         {
-            int pinIndex = std::bit_width(+pin) - 1;
-            GPIOManager::pinFlag[pinIndex].test_and_set();
-            while (GPIOManager::pinFlag[pinIndex].test()) co_await sys::task<>::yield();
+            sz pinIndex(std::bit_width(*pin) - 1);
+            GPIOManager::pinFlag[*pinIndex].test_and_set();
+            while (GPIOManager::pinFlag[*pinIndex].test())
+                co_await sys::task<>::yield();
             co_return;
         }
 
         /// @brief Read a pin.
         /// @param pin The pin to read.
         /// @return The state of the pin.
-        inline static GPIOPin::State digitalRead(GPIOPin pin)
-        {
-            return HAL_GPIO_ReadPin(_asr(GPIO_TypeDef*, pin.port), +pin.pin);
-        }
+        inline static GPIOPin::State digitalRead(GPIOPin pin) { return HAL_GPIO_ReadPin(_asr(GPIO_TypeDef*, pin.port), *pin.pin); }
         inline static sys::task<sys::result<float, HardwareStatus>> analogRead(AnalogPin pin)
         {
             ADC_HandleTypeDef* hadc = pin.internalHandle();
-            _fence_value_co_return(HardwareStatus::Error, !hadc);
+            _coretif(HardwareStatus::Error, !hadc);
 
             int resolution;
             switch (ADC_GET_RESOLUTION(hadc))
@@ -248,17 +239,14 @@ namespace atmc
         /// @brief Set a pin.
         /// @param pin The pin to set.
         /// @param state The state to set the pin to.
-        inline static void digitalWrite(GPIOPin pin, GPIOPin::State state)
-        {
-            HAL_GPIO_WritePin(_asr(GPIO_TypeDef*, pin.port), +pin.pin, GPIO_PinState(state));
-        }
+        inline static void digitalWrite(GPIOPin pin, GPIOPin::State state) { HAL_GPIO_WritePin(_asr(GPIO_TypeDef*, pin.port), *pin.pin, GPIO_PinState(state)); }
 
         inline static HardwareStatus pwmWrite(PWMPin pin, float duty)
         {
-            _fence_value_return(HardwareStatus::Error, pin.channel == -1 || duty < 0.0f || duty > 1.0f);
+            _retif(HardwareStatus::Error, pin.channel == -1 || duty < 0.0f || duty > 1.0f);
 
             TIM_HandleTypeDef* htim = pin.internalHandle();
-            _fence_value_return(HardwareStatus::Error, !htim);
+            _retif(HardwareStatus::Error, !htim);
 
             htim->Instance->CCR1 = uint32_t(float(htim->Instance->ARR) * duty + 0.5f);
 
@@ -266,10 +254,10 @@ namespace atmc
         }
         inline static HardwareStatus pwmClear(PWMPin pin)
         {
-            _fence_value_return(HardwareStatus::Error, pin.channel == -1);
+            _retif(HardwareStatus::Error, pin.channel == -1);
 
             TIM_HandleTypeDef* htim = pin.internalHandle();
-            _fence_value_return(HardwareStatus::Error, !htim);
+            _retif(HardwareStatus::Error, !htim);
 
             return HardwareStatus(HAL_TIM_PWM_Stop(htim, uint32_t(pin.channel)));
         }

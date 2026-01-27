@@ -3,9 +3,9 @@
 #include <runtime_headers.h>
 
 #ifdef STM32H7xx
-    #define __dma_rw __attribute__((section(".dma_data")))
+#define _dma_rw __attribute__((section(".dma_data")))
 #else
-    #define __dma_rw
+#define _dma_rw
 #endif
 
 #ifdef __cplusplus

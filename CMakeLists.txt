@@ -5,36 +5,16 @@ include(cmake/stm32_gcc.cmake)
 project(libatmc)
 enable_language(ASM C CXX)
 
-if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     set(LIBATMC_DEVELOPMENT_MODE ON CACHE STRING "Build libcxxext in development mode.")
 else()
     set(LIBATMC_DEVELOPMENT_MODE OFF CACHE STRING "Build libcxxext in development mode.")
 endif()
 
-set(BOARD_NAME "STM32H753ZI")
-
+# Config
 include(CMakeDependentOption)
+set(BOARD_NAME "STM32H753ZI")
 cmake_dependent_option(LIBATMC_EXAMPLES "Build examples." ON "LIBATMC_DEVELOPMENT_MODE" OFF)
-
-# Helpers.
-
-find_program(RUN_CPPCHECK cppcheck PATHS "C:/Program Files/Cppcheck" "/usr/bin")
-if (NOT RUN_CPPCHECK)
-    message(FATAL_ERROR "Cppcheck not found. Required for static analysis.")
-endif()
-set(LINT_CPPCHECK ${RUN_CPPCHECK} --suppress=preprocessorErrorDirective --enable=all --inconclusive --inline-suppr --force --max-configs=64 -DconfigUSE_16_BIT_TICKS)
-
-find_program(RUN_STM32_PROGRAMMER_CLI STM32_Programmer_CLI PATHS "C:/Program Files/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin" "/usr/bin")
-if (NOT RUN_STM32_PROGRAMMER_CLI)
-    message(WARNING "STM32_Programmer_CLI not found. Flashing will be disabled.")
-else()
-    function(create_stm32_programmer_target EXAMPLE_NAME)
-        add_custom_target(upload_${EXAMPLE_NAME}
-            COMMAND ${RUN_STM32_PROGRAMMER_CLI} --connect port=swd --download "$<TARGET_FILE:${EXAMPLE_NAME}>" -hardRst || exit 0 # Ignore error if no device is connected.
-            DEPENDS ${EXAMPLE_NAME}
-        )
-    endfunction()
-endif()
 
 # Compiler settings.
 
@@ -42,13 +22,15 @@ set(CMAKE_C_STANDARD 23)
 set(CMAKE_CXX_STANDARD 26 REQUIRED)
 set(CMAKE_CXX_SCAN_FOR_MODULES FALSE)
 
-if (NOT (CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
+if(NOT (CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
     message(WARNING "Compiler set is not gcc, expect errors.")
 endif()
 
-# Target specific.
+include(cmake/stm32_prog.cmake)
 
-if (BOARD_NAME MATCHES "STM32")
+# Target specific configuration.
+
+if(BOARD_NAME MATCHES "STM32")
     string(SUBSTRING ${BOARD_NAME} 0 7 RUNTIME_LIBRARY)
     set(RUNTIME_LIBRARY "${RUNTIME_LIBRARY}xx")
     string(SUBSTRING ${BOARD_NAME} 0 9 MCU_ID)
@@ -63,18 +45,18 @@ file(GLOB RUNTIME_LINKER_SCRIPT_QUERY
 )
 message(STATUS "Found linker script for runtime \"${RUNTIME_LINKER_SCRIPT_QUERY}\".")
 list(LENGTH RUNTIME_LINKER_SCRIPT_QUERY RUNTIME_LINKER_SCRIPT_QUERY_LENGTH)
-if (RUNTIME_LINKER_SCRIPT_QUERY_LENGTH EQUAL 0)
+if(RUNTIME_LINKER_SCRIPT_QUERY_LENGTH EQUAL 0)
     message(FATAL_ERROR "No linker script found for ${BOARD_NAME}.")
-elseif (RUNTIME_LINKER_SCRIPT_QUERY_LENGTH GREATER 1)
+elseif(RUNTIME_LINKER_SCRIPT_QUERY_LENGTH GREATER 1)
     message(FATAL_ERROR "Multiple linker scripts found for ${BOARD_NAME}.")
 endif()
 list(GET RUNTIME_LINKER_SCRIPT_QUERY 0 RUNTIME_LINKER_SCRIPT)
 
 set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -T \"${RUNTIME_LINKER_SCRIPT}\"")
 set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -T \"${RUNTIME_LINKER_SCRIPT}\"")
-if (RUNTIME_LIBRARY STREQUAL "STM32H7xx")
-    set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -T \"${CMAKE_CURRENT_LIST_DIR}/stm32/STM32H7xx_DMA.ld\"")
-    set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -T \"${CMAKE_CURRENT_LIST_DIR}/stm32/STM32H7xx_DMA.ld\"")
+if(RUNTIME_LIBRARY STREQUAL "STM32H7xx")
+    set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -T \"${CMAKE_CURRENT_SOURCE_DIR}/stm32/STM32H7xx_DMA.ld\"")
+    set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -T \"${CMAKE_CURRENT_SOURCE_DIR}/stm32/STM32H7xx_DMA.ld\"")
 endif()
 
 file(GLOB RT_HEADERS
@@ -84,7 +66,7 @@ file(GLOB RT_HEADERS
 file(WRITE ${CMAKE_BINARY_DIR}/runtime_headers.h "#pragma once\n\n#ifdef __cplusplus\n#define register\n\nextern\"C\"\n{\n#endif\n\n")
 foreach(HEADER ${RT_HEADERS})
     get_filename_component(HEADER ${HEADER} NAME)
-    if (NOT HEADER MATCHES "_template")
+    if(NOT HEADER MATCHES "_template")
         file(APPEND ${CMAKE_BINARY_DIR}/runtime_headers.h "#include \"${HEADER}\"\n")
     endif()
 endforeach()
@@ -102,7 +84,7 @@ set(RT_INCLUDE_DIRS
     "${CMAKE_SOURCE_DIR}/core"
 )
 set(RT_DEFINITIONS "${MCU_ID}=1" "${RUNTIME_LIBRARY}=1")
-if (MCU_ID MATCHES "STM32")
+if(MCU_ID MATCHES "STM32")
     set(RT_DEFINITIONS ${RT_DEFINITIONS} "STM32=1" "HAL_ADC_MODULE_ENABLED")
 endif()
 
@@ -154,14 +136,10 @@ file(GLOB_RECURSE CORE_SRCS CONFIGURE_DEPENDS
     "core/*.cpp"
 )
 list(FILTER CORE_SRCS EXCLUDE REGEX "rt_threading\..*$")
-file(GLOB_RECURSE CORE_MODULES CONFIGURE_DEPENDS
-    "core/*.cppm"
-)
 
-add_library(core STATIC ${CORE_SRCS})
-target_sources(core PUBLIC FILE_SET CXX_MODULES FILES ${CORE_MODULES})
-target_include_directories(core PUBLIC "/" "core")
-target_link_libraries(core PUBLIC rt freertos_kernel sys sys.Containers sys.Threading sys.BuildSupport.CompilerOptions sys.BuildSupport.WarningsAsErrors)
+add_library(atmc.Core STATIC ${CORE_SRCS})
+target_include_directories(atmc.Core PUBLIC "/" "core")
+target_link_libraries(atmc.Core PUBLIC rt freertos_kernel sys sys.Containers sys.Threading sys.BuildSupport.CompilerOptions sys.BuildSupport.WarningsAsErrors)
 
 # drivers Library
 
@@ -169,29 +147,23 @@ file(GLOB_RECURSE DRIVERS_SRCS CONFIGURE_DEPENDS
     "drivers/*.h"
     "drivers/*.cpp"
 )
-file(GLOB_RECURSE DRIVERS_MODULES CONFIGURE_DEPENDS
-    "drivers/*.cppm"
-)
 
-add_library(drivers STATIC ${DRIVERS_SRCS})
-target_sources(drivers PUBLIC FILE_SET CXX_MODULES FILES ${DRIVERS_MODULES})
-target_include_directories(drivers PUBLIC "drivers")
-target_link_libraries(drivers PUBLIC core sys.BuildSupport.CompilerOptions sys.BuildSupport.WarningsAsErrors)
+add_library(atmc.Drivers INTERFACE)
+target_include_directories(atmc.Drivers INTERFACE "drivers")
+target_link_libraries(atmc.Drivers INTERFACE atmc.Core sys.BuildSupport.CompilerOptions sys.BuildSupport.WarningsAsErrors)
 
 # Examples
 
 file(GLOB EXAMPLES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/examples/*.cpp")
 
-if (LIBATMC_EXAMPLES)
+if(LIBATMC_EXAMPLES)
     foreach(EXAMPLE_FILE ${EXAMPLES})
         get_filename_component(EXAMPLE_NAME ${EXAMPLE_FILE} NAME_WE)
         set(EXAMPLE_NAME "example_${EXAMPLE_NAME}")
 
         add_executable(${EXAMPLE_NAME} ${EXAMPLE_FILE})
-        target_link_libraries(${EXAMPLE_NAME} PUBLIC drivers sys.Mathematics sys.BuildSupport.CompilerOptions sys.BuildSupport.WarningsAsErrors)
-        
-        if (RUN_STM32_PROGRAMMER_CLI)
-            create_stm32_programmer_target(${EXAMPLE_NAME})
-        endif()
+        target_link_libraries(${EXAMPLE_NAME} PUBLIC atmc.Drivers sys.BuildSupport.CompilerOptions sys.BuildSupport.WarningsAsErrors)
+
+        target_run_stm32_programmer(${EXAMPLE_NAME})
     endforeach()
 endif()

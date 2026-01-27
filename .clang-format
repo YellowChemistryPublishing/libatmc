@@ -1,4 +1,16 @@
+# Sync with `libcxxext/.clang-format`.
+
 BasedOnStyle: Microsoft
+
+# General
+# v Add this when clang-format-22 becomes more available.
+# NumericLiteralCase:
+#     ExponentLetter: Lower
+#     HexDigit: Upper
+#     Prefix: Lower
+#     Suffix: Lower
+IncludeBlocks: Preserve
+SortIncludes: CaseInsensitive
 
 # Braces
 BreakBeforeBraces: Custom
@@ -41,7 +53,7 @@ IndentWidth: 4
 SpaceInEmptyBlock: true # Won't work for initializer lists, implement when feature is available.
 PointerAlignment: Left
 LambdaBodyIndentation: OuterScope
-IndentPPDirectives: BeforeHash
+IndentPPDirectives: None
 NamespaceIndentation: All
 ContinuationIndentWidth: 4
 AlignEscapedNewlines: LeftWithLastLine
@@ -62,10 +74,10 @@ Cpp11BracedListStyle: false
 # Control Flow
 AllowShortCaseLabelsOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: Never
-AllowShortLoopsOnASingleLine: true
-AllowShortBlocksOnASingleLine: false
-AllowShortLambdasOnASingleLine: Inline
-AllowShortFunctionsOnASingleLine: None
+AllowShortLoopsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Empty
+AllowShortLambdasOnASingleLine: All
+AllowShortFunctionsOnASingleLine: All
 
 # Types
 IndentRequiresClause: false

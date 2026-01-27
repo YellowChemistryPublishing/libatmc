@@ -2,7 +2,6 @@
 
 #include <atomic>
 #include <cassert>
-#include <numeric>
 #include <runtime_headers.h>
 #include <span>
 
@@ -20,13 +19,13 @@ namespace atmc
     class SPIManager final
     {
     public:
-        static sys::InplaceAtomicSet<SPI_HandleTypeDef*, Config::SPIBusCount> txDone;
-        static sys::InplaceAtomicSet<SPI_HandleTypeDef*, Config::SPIBusCount> rxDone;
-        static sys::InplaceAtomicSet<SPI_HandleTypeDef*, Config::SPIBusCount> txrxDone;
+        static sys::inplace_atomic_set<SPI_HandleTypeDef*, Config::SPIBusCount> txDone;
+        static sys::inplace_atomic_set<SPI_HandleTypeDef*, Config::SPIBusCount> rxDone;
+        static sys::inplace_atomic_set<SPI_HandleTypeDef*, Config::SPIBusCount> txrxDone;
         static_assert(std::atomic<SPI_HandleTypeDef*>::is_always_lock_free, "Atomic SPI handle must be lock-free.");
 
-        static sys::spin_lock busyLock;
-        static sys::InplaceSet<SPI_HandleTypeDef*, Config::SPIBusCount> busy;
+        static atmc::SpinLock busyLock;
+        static sys::inplace_set<SPI_HandleTypeDef*, Config::SPIBusCount> busy;
 
         SPIManager() = delete;
 
@@ -40,9 +39,9 @@ namespace atmc
         SPI_HandleTypeDef* internalHandle;
         GPIOPin csPin;
 
-        inline sys::task<HardwareStatus> rwMemory(u16 memAddr, sys::task<HardwareStatus> rw)
+        sys::task<HardwareStatus> rwMemory(u16 memAddr, sys::task<HardwareStatus> rw)
         {
-            byte _memAddr = +this->memRegisterByteFromAddr(memAddr, true);
+            byte _memAddr = *this->memRegisterByteFromAddr(memAddr, true);
 
             auto accGuard = co_await this->guardBus();
             auto csGuard = this->acquire();
@@ -55,35 +54,26 @@ namespace atmc
             co_return res;
         }
     public:
-        inline SPIDevice(sys::fenced_pointer<SPI_HandleTypeDef> hspi, GPIOPin csPin, u8 (*registerByteFromAddr)(u16, bool) = [](u16 addr, [[maybe_unused]] bool read) -> u8
-        { return +addr; }, HardwareStatus (*waitDeviceReadySync)(u32, u32) = []([[maybe_unused]] u32 trials, [[maybe_unused]] u32 timeout) -> HardwareStatus
-        { return HardwareStatus::Ok; }) : memRegisterByteFromAddr(registerByteFromAddr), waitDeviceReadySync(waitDeviceReadySync), internalHandle(&*hspi), csPin(csPin)
+        SPIDevice(SPI_HandleTypeDef& hspi, GPIOPin csPin, u8 (*registerByteFromAddr)(u16, bool) = [](u16 addr, [[maybe_unused]] bool read) -> u8 { return *addr; },
+                  HardwareStatus (*waitDeviceReadySync)(u32, u32) = []([[maybe_unused]] u32 trials, [[maybe_unused]] u32 timeout) -> HardwareStatus
+        { return HardwareStatus::Ok; }) : memRegisterByteFromAddr(registerByteFromAddr), waitDeviceReadySync(waitDeviceReadySync), internalHandle(&hspi), csPin(csPin)
         { }
 
         /// @brief You must call this, on _every_ `atmc::SPIDevice`, before using _any_ SPI functionality.
-        inline void begin()
-        {
-            this->deselect();
-        }
+        void begin() { this->deselect(); }
 
-        inline void select()
-        {
-            GPIOManager::digitalWrite(this->csPin, GPIOPin::Low);
-        }
-        inline void deselect()
-        {
-            GPIOManager::digitalWrite(this->csPin, GPIOPin::High);
-        }
+        void select() { GPIOManager::digitalWrite(this->csPin, GPIOPin::Low); }
+        void deselect() { GPIOManager::digitalWrite(this->csPin, GPIOPin::High); }
 
         struct AcquireGuard
         {
-            inline AcquireGuard(const AcquireGuard&) = delete;
-            inline AcquireGuard(AcquireGuard&& other)
+            AcquireGuard(const AcquireGuard&) = delete;
+            AcquireGuard(AcquireGuard&& other)
             {
                 this->hspi = other.hspi;
                 other.hspi = nullptr;
             }
-            inline ~AcquireGuard()
+            ~AcquireGuard()
             {
                 if (this->hspi)
                     this->hspi->deselect();
@@ -93,31 +83,25 @@ namespace atmc
         private:
             SPIDevice* hspi;
 
-            inline AcquireGuard(sys::fenced_pointer<SPIDevice> hspi) : hspi(&*hspi)
-            {
-                this->hspi->select();
-            }
+            AcquireGuard(SPIDevice& hspi) : hspi(&hspi) { this->hspi->select(); }
         };
 
-        inline AcquireGuard acquire()
-        {
-            return AcquireGuard(this);
-        }
+        AcquireGuard acquire() { return AcquireGuard(*this); }
 
         struct AccessGuard
         {
-            inline AccessGuard(const AccessGuard&) = delete;
-            inline AccessGuard(AccessGuard&& other)
+            AccessGuard(const AccessGuard&) = delete;
+            AccessGuard(AccessGuard&& other)
             {
                 this->hspi = other.hspi;
                 other.hspi = nullptr;
             }
-            inline ~AccessGuard()
+            ~AccessGuard()
             {
                 if (this->hspi)
                 {
-                    sys::lock_guard guard(SPIManager::busyLock);
-                    SPIManager::busy.tryErase(this->hspi);
+                    LockGuard guard(SPIManager::busyLock);
+                    SPIManager::busy.try_erase(this->hspi);
                 }
             }
 
@@ -125,28 +109,24 @@ namespace atmc
         private:
             SPI_HandleTypeDef* hspi;
 
-            inline AccessGuard(sys::fenced_pointer<SPI_HandleTypeDef> hspi) : hspi(&*hspi)
-            { }
+            AccessGuard(SPI_HandleTypeDef& hspi) : hspi(&hspi) { }
         };
 
         sys::task<AccessGuard> guardBus()
         {
         Retry:
             {
-                sys::lock_guard guard(SPIManager::busyLock);
-                if (!SPIManager::busy.tryInsert(this->internalHandle))
+                LockGuard guard(SPIManager::busyLock);
+                if (!SPIManager::busy.try_insert(this->internalHandle))
                 {
                     co_await sys::task<>::yield();
                     goto Retry;
                 }
             }
-            co_return AccessGuard(this->internalHandle);
+            co_return AccessGuard(*this->internalHandle);
         }
 
-        constexpr HardwareStatus waitReadySync([[maybe_unused]] i32 trials, [[maybe_unused]] i32 timeout = HAL_MAX_DELAY) override
-        {
-            return HardwareStatus::Ok;
-        }
+        constexpr HardwareStatus waitReadySync([[maybe_unused]] i32 trials, [[maybe_unused]] i32 timeout = i32(HAL_MAX_DELAY)) override { return HardwareStatus::Ok; }
 
         /// @brief
         /// @param data
@@ -154,10 +134,11 @@ namespace atmc
         /// @note This function is marked unchecked because it does not hold the CS line low, nor lock the bus.
         sys::task<HardwareStatus> readMemoryUnchecked(std::span<byte> data)
         {
-            HardwareStatus res = HardwareStatus(HAL_SPI_Receive_IT(this->internalHandle, data.data(), std::saturate_cast<uint16_t>(data.size_bytes())));
-            _fence_value_co_return(res, res != HardwareStatus::Ok);
+            HardwareStatus res = HardwareStatus(HAL_SPI_Receive_IT(this->internalHandle, data.data(), sys::numeric_cast<uint16_t>(data.size_bytes(), unsafe())));
+            _coretif(res, res != HardwareStatus::Ok);
 
-            while (!SPIManager::rxDone.exchange(this->internalHandle, nullptr)) co_await sys::task<>::yield();
+            while (!SPIManager::rxDone.exchange(this->internalHandle, nullptr))
+                co_await sys::task<>::yield();
 
             co_return HardwareStatus::Ok;
         }
@@ -167,10 +148,11 @@ namespace atmc
         /// @note This function is marked unchecked because it does not hold the CS line low, nor lock the bus.
         sys::task<HardwareStatus> writeMemoryUnchecked(std::span<const byte> data)
         {
-            HardwareStatus res = HardwareStatus(HAL_SPI_Transmit_IT(this->internalHandle, data.data(), std::saturate_cast<uint16_t>(data.size_bytes())));
-            _fence_value_co_return(res, res != HardwareStatus::Ok);
+            HardwareStatus res = HardwareStatus(HAL_SPI_Transmit_IT(this->internalHandle, data.data(), sys::numeric_cast<uint16_t>(data.size_bytes(), unsafe())));
+            _coretif(res, res != HardwareStatus::Ok);
 
-            while (!SPIManager::txDone.exchange(this->internalHandle, nullptr)) co_await sys::task<>::yield();
+            while (!SPIManager::txDone.exchange(this->internalHandle, nullptr))
+                co_await sys::task<>::yield();
 
             co_return HardwareStatus::Ok;
         }
@@ -182,41 +164,36 @@ namespace atmc
         /// @note This function is marked unchecked because it does not hold the CS line low, nor lock the bus.
         sys::task<HardwareStatus> exchangeMemoryUnchecked(byte dataRx[], byte dataTx[], size_t dataSize)
         {
-            HardwareStatus res = HardwareStatus(HAL_SPI_TransmitReceive_IT(this->internalHandle, dataRx, dataTx, std::saturate_cast<uint16_t>(dataSize)));
-            _fence_value_co_return(res, res != HardwareStatus::Ok);
+            HardwareStatus res = HardwareStatus(HAL_SPI_TransmitReceive_IT(this->internalHandle, dataRx, dataTx, sys::numeric_cast<uint16_t>(dataSize, unsafe())));
+            _coretif(res, res != HardwareStatus::Ok);
 
-            while (!SPIManager::txrxDone.exchange(this->internalHandle, nullptr)) co_await sys::task<>::yield();
+            while (!SPIManager::txrxDone.exchange(this->internalHandle, nullptr))
+                co_await sys::task<>::yield();
 
             co_return HardwareStatus::Ok;
         }
 
-        inline sys::task<HardwareStatus> readMemory(std::span<byte> data)
+        sys::task<HardwareStatus> readMemory(std::span<byte> data)
         {
             auto accGuard = co_await this->guardBus();
             auto csGuard = this->acquire();
             co_return co_await this->readMemoryUnchecked(data);
         }
-        inline sys::task<HardwareStatus> writeMemory(std::span<const byte> data)
+        sys::task<HardwareStatus> writeMemory(std::span<const byte> data)
         {
             auto accGuard = co_await this->guardBus();
             auto csGuard = this->acquire();
             co_return co_await this->writeMemoryUnchecked(data);
         }
-        inline sys::task<HardwareStatus> exchangeMemory(byte dataRx[], byte dataTx[], size_t dataSize)
+        sys::task<HardwareStatus> exchangeMemory(byte dataRx[], byte dataTx[], size_t dataSize)
         {
             auto accGuard = co_await this->guardBus();
             auto csGuard = this->acquire();
             co_return co_await this->exchangeMemoryUnchecked(dataRx, dataTx, dataSize);
         }
 
-        inline sys::task<HardwareStatus> readMemory(u16 memAddr, std::span<byte> data) override
-        {
-            return this->rwMemory(memAddr, this->readMemoryUnchecked(data));
-        }
-        inline sys::task<HardwareStatus> writeMemory(u16 memAddr, std::span<byte> data) override
-        {
-            return this->rwMemory(memAddr, this->writeMemoryUnchecked(data));
-        }
+        sys::task<HardwareStatus> readMemory(u16 memAddr, std::span<byte> data) override { return this->rwMemory(memAddr, this->readMemoryUnchecked(data)); }
+        sys::task<HardwareStatus> writeMemory(u16 memAddr, std::span<byte> data) override { return this->rwMemory(memAddr, this->writeMemoryUnchecked(data)); }
 
         friend class atmc::SPIManager;
     };

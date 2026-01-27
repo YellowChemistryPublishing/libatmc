@@ -27,11 +27,8 @@ async entryPoint()
 
         GPIOManager::pwmWrite(ExampleConfig::ledPin, dc);
 
-        co_await task<>::delay(50);
+        co_await task<>::delay(50_i32);
     }
 }
 
-void init()
-{
-    entryPoint();
-}
+void init() { entryPoint(); }
