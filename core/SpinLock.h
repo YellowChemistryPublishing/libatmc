@@ -16,12 +16,12 @@ namespace atmc
 
         void lock()
         {
-            while (!this->flag.test_and_set(std::memory_order_acquire))
+            while (this->flag.test_and_set(std::memory_order_acquire))
             { }
         }
         void unlock() { this->flag.clear(std::memory_order_release); }
     private:
-        std::atomic_flag flag = ATOMIC_FLAG_INIT;
+        std::atomic_flag flag;
     };
 
     struct LockGuard final
