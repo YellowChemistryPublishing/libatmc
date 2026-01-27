@@ -1,26 +1,34 @@
 #pragma once
 
-#include <limits>
+#include <module/sys>
 
 #include <FreeRTOS.h>
-#include <stm32h7xx_hal_def.h>
+#include <runtime_headers.h>
 #include <task.h>
-
-#include <LanguageSupport.h>
 
 namespace sys::platform
 {
     struct thread_critical_section_isr
     {
         _inline_always thread_critical_section_isr() : irqStatus(taskENTER_CRITICAL_FROM_ISR()) { }
+        thread_critical_section_isr(const thread_critical_section_isr&) = delete;
+        thread_critical_section_isr& operator=(const thread_critical_section_isr&) = delete;
         _inline_always ~thread_critical_section_isr() { taskEXIT_CRITICAL_FROM_ISR(this->irqStatus); }
+
+        thread_critical_section_isr& operator=(thread_critical_section_isr&&) = delete;
+        thread_critical_section_isr(thread_critical_section_isr&&) = delete;
     private:
         UBaseType_t irqStatus;
     };
     struct thread_critical_section
     {
         _inline_always thread_critical_section() { taskENTER_CRITICAL(); }
+        thread_critical_section(const thread_critical_section&) = delete;
+        thread_critical_section& operator=(const thread_critical_section&) = delete;
         _inline_always ~thread_critical_section() { taskEXIT_CRITICAL(); }
+
+        thread_critical_section& operator=(thread_critical_section&&) = delete;
+        thread_critical_section(thread_critical_section&&) = delete;
     };
 
     using thread_id = UBaseType_t;
@@ -29,15 +37,15 @@ namespace sys::platform
     {
         TaskHandle_t handle;
 
-        inline thread_handle(TaskHandle_t handle) : handle(handle) { }
+        thread_handle(TaskHandle_t handle) : handle(handle) { }
     public:
-        inline static thread_handle currentThread()
+        static thread_handle currentThread()
         {
             thread_critical_section guard;
             return xTaskGetCurrentTaskHandle();
         }
 
-        inline thread_id id() { return uxTaskGetTaskNumber(this->handle); }
+        thread_id id() { return uxTaskGetTaskNumber(this->handle); }
     };
 
     constexpr i32 task_max_delay = i32::highest();

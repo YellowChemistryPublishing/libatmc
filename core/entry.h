@@ -1,9 +1,8 @@
 #pragma once
 
-#include <module/sys>
 #include <runtime_headers.h> // NOLINT(misc-include-cleaner)
 
-#include <Target.h>
+#ifdef __cplusplus
 
 #if _libatmc_target_stm32 && defined(STM32H7xx)
 #define _dma_rw __attribute__((section(".dma_data")))
@@ -11,7 +10,10 @@
 #define _dma_rw
 #endif
 
-#ifdef __cplusplus
+#include <module/sys>
+
+#include <Target.h>
+
 namespace atmc
 {
 #if _libatmc_target_stm32
@@ -33,6 +35,7 @@ namespace atmc
     };
 #endif
 } // namespace atmc
+
 #endif
 
 #ifdef __cplusplus

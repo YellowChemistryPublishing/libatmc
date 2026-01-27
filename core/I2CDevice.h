@@ -64,7 +64,7 @@ namespace atmc
         I2CDevice(I2CNativeHandle& hi2c, u16 devAddr, u16 memAddrSize) : internalHandle(&hi2c), devAddr(devAddr), memAddrSize(memAddrSize) { }
 
 #if _libatmc_target_stm32
-        HardwareStatus waitReadySync(i32 trials, i32 timeout = i32(HAL_MAX_DELAY)) override
+        HardwareStatus waitReadySync(i32 trials, i32 timeout = i32(HAL_MAX_DELAY)) override // NOLINT(google-default-arguments)
 #else
         /// @brief Wait for the device to be ready synchronously.
         /// @param trials Number of trials.

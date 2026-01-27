@@ -6,7 +6,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <entry.h>
-
 // clang-format off
 #include <module/sys>
 #include <module/sys.Threading>
@@ -100,7 +99,7 @@ namespace atmc
     /// @note Pass `byval`.
     struct GPIOPin
     {
-        _gpio_declare_ports();
+        _gpio_declare_ports(); // NOLINT(bugprone-dynamic-static-initializers)
 
         /// @brief The state of a GPIO pin.
         using State = int;
@@ -167,6 +166,7 @@ namespace atmc
             case 2: return TIM_CHANNEL_3;
             case 3: return TIM_CHANNEL_4;
             case 4: return TIM_CHANNEL_5;
+            // NOLINTNEXTLINE(readability-magic-numbers)
             case 5: return TIM_CHANNEL_6;
 #endif
 
@@ -182,6 +182,7 @@ namespace atmc
 
         [[nodiscard]] HwTimerNativeHandle* internalHandle() const
         {
+            // NOLINTBEGIN(readability-magic-numbers)
             switch (this->timerIndex)
             {
 #if _libatmc_target_stm32
@@ -199,10 +200,12 @@ namespace atmc
             case 14: return &htim15;
             case 15: return &htim16;
             case 16: return &htim17;
+
 #endif
 
             default: return nullptr;
             }
+            // NOLINTEND(readability-magic-numbers)
         }
     };
 
@@ -210,10 +213,10 @@ namespace atmc
     /// @note Static class.
     class GPIOManager final
     {
-        static std::atomic_flag pinFlag[Config::PinCountGPIO];
+        static std::atomic_flag pinFlag[Config::PinCountGPIO]; // NOLINT(bugprone-dynamic-static-initializers)
 
-        static std::atomic_flag adcFlags[Config::AnalogConverterCount];
-        static _dma_rw volatile uint16_t adcRaw[Config::AnalogConverterCount][Config::MaxADCChannels];
+        static std::atomic_flag adcFlags[Config::AnalogConverterCount];                                // NOLINT(bugprone-dynamic-static-initializers)
+        static _dma_rw volatile uint16_t adcRaw[Config::AnalogConverterCount][Config::MaxADCChannels]; // NOLINT(bugprone-dynamic-static-initializers)
     public:
         GPIOManager() = delete;
 
@@ -251,7 +254,8 @@ namespace atmc
             ADCNativeHandle* hadc = pin.internalHandle();
             _coretif(HardwareStatus::Error, !hadc);
 
-            int resolution;
+            int resolution = 0;
+            // NOLINTBEGIN(readability-magic-numbers)
             switch (ADC_GET_RESOLUTION(hadc))
             {
             case ADC_RESOLUTION_8B: resolution = 8; break;
@@ -263,17 +267,20 @@ namespace atmc
             case ADC_RESOLUTION_16B: resolution = 16; break;
             default: co_return HardwareStatus::Error;
             }
+            // NOLINTEND(readability-magic-numbers)
 
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
             if (!GPIOManager::adcFlags[pin.adcIndex].test_and_set())
             {
                 _push_nowarn_gcc(_clwarn_gcc_cast_align);
                 _push_nowarn_clang(_clwarn_clang_cast_align);
-                HardwareStatus res = HardwareStatus(HAL_ADC_Start_DMA(hadc, _asr(uint32_t*, _asc(uint16_t*, GPIOManager::adcRaw[pin.adcIndex])), hadc->Init.NbrOfConversion));
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index, cppcoreguidelines-pro-type-const-cast)
+                HardwareStatus res = _as(HardwareStatus, HAL_ADC_Start_DMA(hadc, _asr(uint32_t*, _asc(uint16_t*, GPIOManager::adcRaw[pin.adcIndex])), hadc->Init.NbrOfConversion));
                 _pop_nowarn_clang();
                 _pop_nowarn_gcc();
                 if (res != HardwareStatus::Ok)
                 {
-                    GPIOManager::adcFlags[pin.adcIndex].clear();
+                    GPIOManager::adcFlags[pin.adcIndex].clear(); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
                     co_return res;
                 }
                 // `HAL_ADC_Stop_DMA(hadc)` called in ISR.
@@ -281,8 +288,8 @@ namespace atmc
 
             co_await sys::task<>::wait_until([&] { return !GPIOManager::adcFlags[pin.adcIndex].test(); });
 
-            float maxVal = float((1u << resolution) - 1);
-            co_return float(GPIOManager::adcRaw[pin.adcIndex][pin.rank]) / maxVal;
+            float maxVal = _as(float, (1u << _as(unsigned, resolution)) - 1);
+            co_return _as(float, GPIOManager::adcRaw[pin.adcIndex][pin.rank]) / maxVal;
 #else
             (void)pin;
             co_return 0.0f;
@@ -310,9 +317,9 @@ namespace atmc
             HwTimerNativeHandle* htim = pin.internalHandle();
             _retif(HardwareStatus::Error, !htim);
 
-            htim->Instance->CCR1 = uint32_t(float(htim->Instance->ARR) * duty + 0.5f);
+            htim->Instance->CCR1 = _as(uint32_t, _as(float, htim->Instance->ARR) * duty + 0.5f);
 
-            return HardwareStatus(HAL_TIM_PWM_Start(htim, uint32_t(pin.channel)));
+            return HardwareStatus(HAL_TIM_PWM_Start(htim, _as(uint32_t, pin.channel)));
 #else
             (void)pin;
             (void)duty;
@@ -327,7 +334,7 @@ namespace atmc
             HwTimerNativeHandle* htim = pin.internalHandle();
             _retif(HardwareStatus::Error, !htim);
 
-            return HardwareStatus(HAL_TIM_PWM_Stop(htim, uint32_t(pin.channel)));
+            return HardwareStatus(HAL_TIM_PWM_Stop(htim, _as(uint32_t, pin.channel)));
 #else
             (void)pin;
             return HardwareStatus::Ok;
@@ -336,7 +343,7 @@ namespace atmc
 
 #if _libatmc_target_stm32
         friend void ::HAL_GPIO_EXTI_Callback(uint16_t pin);
-        friend void ::HAL_ADC_ConvCpltCallback(ADCNativeHandle* hadc);
+        friend void ::HAL_ADC_ConvCpltCallback(atmc::ADCNativeHandle* hadc);
 #endif
     };
 } // namespace atmc
