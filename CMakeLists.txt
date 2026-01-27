@@ -8,7 +8,9 @@ endif()
 
 # Config
 include(CMakeDependentOption)
-set(BOARD_NAME "Hosted") # i.e. STM32H753ZI
+if(NOT BOARD_NAME)
+    set(BOARD_NAME "Hosted") # i.e. STM32H753ZI
+endif()
 cmake_dependent_option(LIBATMC_EXAMPLES "Build examples." ON "LIBATMC_DEVELOPMENT_MODE" OFF)
 
 if(BOARD_NAME MATCHES "STM32")
@@ -180,9 +182,6 @@ file(GLOB_RECURSE DRIVERS_HEADERS CONFIGURE_DEPENDS
     "drivers/*.h"
 )
 list(FILTER DRIVERS_HEADERS EXCLUDE REGEX "FreeRTOSConfig\.h$")
-file(GLOB_RECURSE DRIVERS_SRCS CONFIGURE_DEPENDS
-    "drivers/*.cpp"
-)
 
 add_library(atmc.Drivers INTERFACE)
 target_include_directories(atmc.Drivers INTERFACE "drivers")
