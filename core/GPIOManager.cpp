@@ -3,6 +3,7 @@
 #include <atomic>
 #include <cstdint>
 #include <entry.h>
+#include <runtime_headers.h> // NOLINT(misc-include-cleaner)
 
 #include <Config.h>
 #include <Target.h>

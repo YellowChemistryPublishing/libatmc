@@ -8,7 +8,7 @@ endif()
 
 # Config
 include(CMakeDependentOption)
-set(BOARD_NAME "Hosted")
+set(BOARD_NAME "Hosted") # i.e. STM32H753ZI
 cmake_dependent_option(LIBATMC_EXAMPLES "Build examples." ON "LIBATMC_DEVELOPMENT_MODE" OFF)
 
 if(BOARD_NAME MATCHES "STM32")
@@ -73,7 +73,7 @@ if(BOARD_NAME MATCHES "STM32")
     foreach(HEADER ${RT_HEADERS})
         get_filename_component(HEADER ${HEADER} NAME)
         if(NOT HEADER MATCHES "_template")
-            file(APPEND ${CMAKE_BINARY_DIR}/runtime_headers.h "#include \"${HEADER}\"\n")
+            file(APPEND ${CMAKE_BINARY_DIR}/runtime_headers.h "#include \"${HEADER}\" // IWYU pragma: export\n")
         endif()
     endforeach()
     file(APPEND ${CMAKE_BINARY_DIR}/runtime_headers.h "\n#ifdef __cplusplus\n}\n\n#undef register\n#endif\n")
@@ -171,7 +171,7 @@ target_include_directories(atmc.Core PUBLIC "/" "core")
 target_link_libraries(atmc.Core PUBLIC rt sys sys.Containers sys.Threading sys.BuildSupport.CompilerOptions sys.BuildSupport.WarningsAsErrors)
 
 if(BOARD_NAME STREQUAL "Hosted")
-    target_lint_clang_tidy(atmc.Core "-header-filter=.*" ${CORE_HEADERS})
+    target_lint_clang_tidy(atmc.Core "-header-filter=\"^${CMAKE_CURRENT_SOURCE_DIR}/core/.*\"" ${CORE_HEADERS})
 endif()
 
 # Drivers Library
@@ -189,7 +189,7 @@ target_include_directories(atmc.Drivers INTERFACE "drivers")
 target_link_libraries(atmc.Drivers INTERFACE atmc.Core sys.BuildSupport.CompilerOptions sys.BuildSupport.WarningsAsErrors)
 
 if(BOARD_NAME STREQUAL "Hosted")
-    target_lint_clang_tidy(atmc.Drivers "-header-filter=.*" ${DRIVERS_HEADERS})
+    target_lint_clang_tidy(atmc.Drivers "-header-filter=\"^${CMAKE_CURRENT_SOURCE_DIR}/drivers/.*\"" ${DRIVERS_HEADERS})
 endif()
 
 # Examples
