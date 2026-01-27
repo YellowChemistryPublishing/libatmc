@@ -1,18 +1,10 @@
-#include <TaskEx.h>
-
-using namespace sys;
+#include <module/sys.Threading>
 
 struct ExampleConfig final
 {
     ExampleConfig() = delete;
 };
 
-async entryPoint()
-{
-    co_return;
-}
+sys::async entryPoint() { co_return; }
 
-void init()
-{
-    entryPoint();
-}
+void init() { entryPoint(); }

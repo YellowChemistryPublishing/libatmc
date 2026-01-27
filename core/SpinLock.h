@@ -26,9 +26,14 @@ namespace atmc
 
     struct LockGuard final
     {
-        LockGuard(SpinLock& lock) : lock(lock) { this->lock.lock(); }
+        explicit LockGuard(SpinLock& lock) : lock(lock) { this->lock.lock(); }
+        LockGuard(const LockGuard&) = delete;
+        LockGuard(LockGuard&&) = delete;
         ~LockGuard() { this->lock.unlock(); }
+
+        LockGuard& operator=(const LockGuard&) = delete;
+        LockGuard& operator=(LockGuard&&) = delete;
     private:
-        SpinLock& lock;
+        SpinLock& lock; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
     };
 } // namespace atmc

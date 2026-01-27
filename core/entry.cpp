@@ -1,15 +1,20 @@
+#include <cstdio>
 #include <entry.h>
 #include <exception>
+#include <module/sys>
 #include <print>
+#include <rt_threading.h>
 
-#include <Exception.h>
-#include <GPIOManager.h>
 #include <LanguageSupport.h>
+#include <Target.h>
+
+#if _libatmc_target_stm32
 #include <Task.h>
+#endif
 
 using namespace atmc;
-using namespace sys;
 
+#if _libatmc_target_stm32
 void* operator new(size_t sz)
 {
     void* ret = pvPortMalloc(sz);
@@ -18,17 +23,11 @@ void* operator new(size_t sz)
     else
         return ret;
 }
-void operator delete(void* p) noexcept
-{
-    vPortFree(p);
-}
-void operator delete(void* p, size_t) noexcept
-{
-    vPortFree(p);
-}
+void operator delete(void* p) noexcept { vPortFree(p); }
+void operator delete(void* p, size_t) noexcept { vPortFree(p); }
+#endif
 
-extern "C" __weak void init()
-{ }
+extern "C" _weak void init() { }
 
 // `try`-`catch` blocks are rarely used in embedded systems, and I've never gotten them to work properly.
 // If they are, they should be used to catch exceptions thrown by the `init` and `tick` functions.
@@ -36,23 +35,29 @@ extern "C" __weak void init()
 
 void __initHandler()
 {
-    _push_nowarn_gcc(_clWarn_gcc_use_after_free);
-    _push_nowarn_clang(_clWarn_clang_use_after_free);
+    _push_nowarn_gcc(_clwarn_gcc_use_after_free);
+    _push_nowarn_clang(_clwarn_clang_use_after_free);
     try
     {
+#if _libatmc_target_hosted
+        const sys::platform::thread_pool pool;
+#endif
+
         init();
 
+#if _libatmc_target_stm32
         vTaskStartScheduler();
+#endif
     }
     catch (const std::exception& ex)
     {
         std::println(stderr, "Exception thrown during call to `extern \"C\" void init()`: {}", ex.what());
-        _throw(terminate_exception());
+        _throw(sys::terminate_exception());
     }
     catch (...)
     {
-        std::println(stderr, "Unmanaged exception of type `{}` thrown during call to `extern \"C\" void init()`.", exception_type_name(std::current_exception()).get());
-        _throw(terminate_exception());
+        std::println(stderr, "Unmanaged exception of type `{}` thrown during call to `extern \"C\" void init()`.", sys::exception_type_name(std::current_exception()).get());
+        _throw(sys::terminate_exception());
     }
     _pop_nowarn_clang();
     _pop_nowarn_gcc();

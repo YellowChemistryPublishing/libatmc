@@ -76,7 +76,6 @@ namespace atmc
     TaskAllocator::ChunkHeader* TaskAllocator::stackTop;
 } // namespace atmc
 
-using namespace sys;
 using namespace atmc;
 
 void* ::sys::platform::task_operator_new(size_t sz) { return TaskAllocator::alloc(sz); }

@@ -10,22 +10,22 @@ namespace atmc
         Config() = delete;
 
         // v General
-        
-        constexpr static int AsyncThreadPriority = 1;
-        constexpr static int AsyncThreadStackSizeWords = 2048;
 
-        constexpr static int TaskPromiseStackSize = 4096;
+        static constexpr int AsyncThreadPriority = 1;
+        static constexpr int AsyncThreadStackSizeWords = 2048;
+
+        static constexpr int TaskPromiseStackSize = 4096;
 
         // Probably shouldn't change... v / ^ General
 
-        constexpr static int PinCountGPIO = 16;
+        static constexpr int PinCountGPIO = 16;
 
-        constexpr static int MaxADCChannels = 20;
-        constexpr static int AnalogConverterCount = 3;
+        static constexpr int MaxADCChannels = 20;
+        static constexpr int AnalogConverterCount = 3;
 
-        constexpr static int I2CBusCount = 4;
-        constexpr static int SPIBusCount = 3;
+        static constexpr int I2CBusCount = 4;
+        static constexpr int SPIBusCount = 3;
 
         // ^ Probably shouldn't change...
     };
-}
+} // namespace atmc
