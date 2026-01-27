@@ -8,20 +8,14 @@
 #include <LanguageSupport.h>
 #include <Target.h>
 
-// NOLINTBEGIN(misc-include-cleaner)
-
 #if _libatmc_target_stm32
-
-#include <FreeRTOS.h>
-
 #include <Task.h>
-
 #endif
 
 using namespace atmc;
 
 #if _libatmc_target_stm32
-void* operator new(size_t sz) // NOLINT(readability-inconsistent-declaration-parameter-name)
+void* operator new(size_t sz)
 {
     void* ret = pvPortMalloc(sz);
     if (!ret)
@@ -29,8 +23,8 @@ void* operator new(size_t sz) // NOLINT(readability-inconsistent-declaration-par
     else
         return ret;
 }
-void operator delete(void* p) noexcept { vPortFree(p); }         // NOLINT(readability-inconsistent-declaration-parameter-name)
-void operator delete(void* p, size_t) noexcept { vPortFree(p); } // NOLINT(readability-inconsistent-declaration-parameter-name)
+void operator delete(void* p) noexcept { vPortFree(p); }
+void operator delete(void* p, size_t) noexcept { vPortFree(p); }
 #endif
 
 extern "C" _weak void init() { }

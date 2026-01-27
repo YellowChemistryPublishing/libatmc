@@ -1,8 +1,11 @@
 #pragma once
 
-#include <runtime_headers.h>
+#include <module/sys>
+#include <runtime_headers.h> // NOLINT(misc-include-cleaner)
 
-#ifdef STM32H7xx
+#include <Target.h>
+
+#if _libatmc_target_stm32 && defined(STM32H7xx)
 #define _dma_rw __attribute__((section(".dma_data")))
 #else
 #define _dma_rw

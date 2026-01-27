@@ -30,7 +30,7 @@ sys::async entryPoint()
         else
             pinState = GPIOPin::High;
 
-        co_await task<>::delay(i32(ExampleConfig::BlinkyAlternateDuration));
+        co_await sys::task<>::delay(i32(ExampleConfig::BlinkyAlternateDuration));
     }
 }
 

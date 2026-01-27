@@ -1,10 +1,5 @@
 cmake_minimum_required(VERSION 3.30)
 
-include(cmake/stm32_gcc.cmake)
-
-project(libatmc)
-enable_language(ASM C CXX)
-
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     set(LIBATMC_DEVELOPMENT_MODE ON CACHE STRING "Build libcxxext in development mode.")
 else()
@@ -13,8 +8,15 @@ endif()
 
 # Config
 include(CMakeDependentOption)
-set(BOARD_NAME "STM32H753ZI")
+set(BOARD_NAME "Hosted")
 cmake_dependent_option(LIBATMC_EXAMPLES "Build examples." ON "LIBATMC_DEVELOPMENT_MODE" OFF)
+
+if(BOARD_NAME MATCHES "STM32")
+    include(cmake/stm32_gcc.cmake)
+endif()
+
+project(libatmc)
+enable_language(ASM C CXX)
 
 # Compiler settings.
 
@@ -26,6 +28,7 @@ if(NOT (CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_ID STREQUAL "G
     message(WARNING "Compiler set is not gcc, expect errors.")
 endif()
 
+include(libcxxext/cmake/clang_tidy.cmake)
 include(cmake/stm32_prog.cmake)
 
 # Target specific configuration.
@@ -42,50 +45,51 @@ else()
     message(FATAL_ERROR "Unknown MCU runtime.")
 endif()
 
-file(GLOB RUNTIME_LINKER_SCRIPT_QUERY
-    "stm32/${BOARD_NAME}*_FLASH.ld"
-)
-message(STATUS "Found linker script for runtime \"${RUNTIME_LINKER_SCRIPT_QUERY}\".")
-list(LENGTH RUNTIME_LINKER_SCRIPT_QUERY RUNTIME_LINKER_SCRIPT_QUERY_LENGTH)
-if(RUNTIME_LINKER_SCRIPT_QUERY_LENGTH EQUAL 0)
-    message(FATAL_ERROR "No linker script found for ${BOARD_NAME}.")
-elseif(RUNTIME_LINKER_SCRIPT_QUERY_LENGTH GREATER 1)
-    message(FATAL_ERROR "Multiple linker scripts found for ${BOARD_NAME}.")
-endif()
-list(GET RUNTIME_LINKER_SCRIPT_QUERY 0 RUNTIME_LINKER_SCRIPT)
-
-set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -T \"${RUNTIME_LINKER_SCRIPT}\"")
-set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -T \"${RUNTIME_LINKER_SCRIPT}\"")
-if(RUNTIME_LIBRARY STREQUAL "STM32H7xx")
-    set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -T \"${CMAKE_CURRENT_SOURCE_DIR}/stm32/STM32H7xx_DMA.ld\"")
-    set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -T \"${CMAKE_CURRENT_SOURCE_DIR}/stm32/STM32H7xx_DMA.ld\"")
-endif()
-
-file(GLOB RT_HEADERS
-    "stm32/Drivers/${RUNTIME_LIBRARY}_HAL_Driver/Inc/*.h"
-    "stm32/Core/Inc/*.h"
-)
-file(WRITE ${CMAKE_BINARY_DIR}/runtime_headers.h "#pragma once\n\n#ifdef __cplusplus\n#define register\n\nextern\"C\"\n{\n#endif\n\n")
-foreach(HEADER ${RT_HEADERS})
-    get_filename_component(HEADER ${HEADER} NAME)
-    if(NOT HEADER MATCHES "_template")
-        file(APPEND ${CMAKE_BINARY_DIR}/runtime_headers.h "#include \"${HEADER}\"\n")
+if(BOARD_NAME MATCHES "STM32")
+    file(GLOB RUNTIME_LINKER_SCRIPT_QUERY
+        "stm32/${BOARD_NAME}*_FLASH.ld"
+    )
+    message(STATUS "Found linker script for runtime \"${RUNTIME_LINKER_SCRIPT_QUERY}\".")
+    list(LENGTH RUNTIME_LINKER_SCRIPT_QUERY RUNTIME_LINKER_SCRIPT_QUERY_LENGTH)
+    if(RUNTIME_LINKER_SCRIPT_QUERY_LENGTH EQUAL 0)
+        message(FATAL_ERROR "No linker script found for ${BOARD_NAME}.")
+    elseif(RUNTIME_LINKER_SCRIPT_QUERY_LENGTH GREATER 1)
+        message(FATAL_ERROR "Multiple linker scripts found for ${BOARD_NAME}.")
     endif()
     list(GET RUNTIME_LINKER_SCRIPT_QUERY 0 RUNTIME_LINKER_SCRIPT)
 
-set(RT_INCLUDE_DIRS
-    "${CMAKE_BINARY_DIR}"
-    "${CMAKE_SOURCE_DIR}/stm32"
-    "${CMAKE_SOURCE_DIR}/stm32/Drivers/CMSIS/Include"
-    "${CMAKE_SOURCE_DIR}/stm32/Drivers/CMSIS/Device/ST/${RUNTIME_LIBRARY}/Include"
-    "${CMAKE_SOURCE_DIR}/stm32/Drivers/${RUNTIME_LIBRARY}_HAL_Driver/Inc"
-    "${CMAKE_SOURCE_DIR}/stm32/Core/Src"
-    "${CMAKE_SOURCE_DIR}/stm32/Core/Inc"
-    "${CMAKE_SOURCE_DIR}/freertos/include"
-    "${CMAKE_SOURCE_DIR}/core"
-)
-set(RT_DEFINITIONS "${MCU_ID}=1" "${RUNTIME_LIBRARY}=1")
-if(MCU_ID MATCHES "STM32")
+    set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -T \"${RUNTIME_LINKER_SCRIPT}\"")
+    set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -T \"${RUNTIME_LINKER_SCRIPT}\"")
+    if(RUNTIME_LIBRARY STREQUAL "STM32H7xx")
+        set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -T \"${CMAKE_CURRENT_SOURCE_DIR}/stm32/STM32H7xx_DMA.ld\"")
+        set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -T \"${CMAKE_CURRENT_SOURCE_DIR}/stm32/STM32H7xx_DMA.ld\"")
+    endif()
+
+    file(GLOB RT_HEADERS
+        "stm32/Drivers/${RUNTIME_LIBRARY}_HAL_Driver/Inc/*.h"
+        "stm32/Core/Inc/*.h"
+    )
+    file(WRITE ${CMAKE_BINARY_DIR}/runtime_headers.h "#pragma once\n\n#ifdef __cplusplus\n#define register\n\nextern\"C\"\n{\n#endif\n\n")
+    foreach(HEADER ${RT_HEADERS})
+        get_filename_component(HEADER ${HEADER} NAME)
+        if(NOT HEADER MATCHES "_template")
+            file(APPEND ${CMAKE_BINARY_DIR}/runtime_headers.h "#include \"${HEADER}\"\n")
+        endif()
+    endforeach()
+    file(APPEND ${CMAKE_BINARY_DIR}/runtime_headers.h "\n#ifdef __cplusplus\n}\n\n#undef register\n#endif\n")
+
+    set(RT_INCLUDE_DIRS
+        "${CMAKE_BINARY_DIR}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/stm32"
+        "${CMAKE_CURRENT_SOURCE_DIR}/stm32/Drivers/CMSIS/Include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/stm32/Drivers/CMSIS/Device/ST/${RUNTIME_LIBRARY}/Include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/stm32/Drivers/${RUNTIME_LIBRARY}_HAL_Driver/Inc"
+        "${CMAKE_CURRENT_SOURCE_DIR}/stm32/Core/Src"
+        "${CMAKE_CURRENT_SOURCE_DIR}/stm32/Core/Inc"
+        "${CMAKE_CURRENT_SOURCE_DIR}/freertos/include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/core"
+    )
+    set(RT_DEFINITIONS "${MCU_ID}=1" "${RUNTIME_LIBRARY}=1")
     set(RT_DEFINITIONS ${RT_DEFINITIONS} "STM32=1" "HAL_ADC_MODULE_ENABLED")
 elseif(BOARD_NAME STREQUAL "Hosted")
     file(WRITE ${CMAKE_BINARY_DIR}/runtime_headers.h "#pragma once\n")
@@ -164,22 +168,29 @@ list(FILTER CORE_SRCS EXCLUDE REGEX "rt_threading\..*$")
 
 add_library(atmc.Core STATIC ${CORE_SRCS})
 target_include_directories(atmc.Core PUBLIC "/" "core")
-target_link_libraries(atmc.Core PUBLIC rt freertos_kernel sys sys.Containers sys.Threading sys.BuildSupport.CompilerOptions sys.BuildSupport.WarningsAsErrors)
+target_link_libraries(atmc.Core PUBLIC rt sys sys.Containers sys.Threading sys.BuildSupport.CompilerOptions sys.BuildSupport.WarningsAsErrors)
 
 if(BOARD_NAME STREQUAL "Hosted")
-    target_lint_clang_tidy(atmc.Core "-header-filter=\"^${CMAKE_CURRENT_SOURCE_DIR}/core/.*\"" ${CORE_HEADERS})
+    target_lint_clang_tidy(atmc.Core "-header-filter=.*" ${CORE_HEADERS})
 endif()
 
 # Drivers Library
 
 file(GLOB_RECURSE DRIVERS_HEADERS CONFIGURE_DEPENDS
     "drivers/*.h"
+)
+list(FILTER DRIVERS_HEADERS EXCLUDE REGEX "FreeRTOSConfig\.h$")
+file(GLOB_RECURSE DRIVERS_SRCS CONFIGURE_DEPENDS
     "drivers/*.cpp"
 )
 
 add_library(atmc.Drivers INTERFACE)
 target_include_directories(atmc.Drivers INTERFACE "drivers")
 target_link_libraries(atmc.Drivers INTERFACE atmc.Core sys.BuildSupport.CompilerOptions sys.BuildSupport.WarningsAsErrors)
+
+if(BOARD_NAME STREQUAL "Hosted")
+    target_lint_clang_tidy(atmc.Drivers "-header-filter=.*" ${DRIVERS_HEADERS})
+endif()
 
 # Examples
 

@@ -1,13 +1,12 @@
 #pragma once
 
+#include <cstddef>
 #include <entry.h>
 // clang-format off
 #include <module/sys>
 #include <module/sys.Threading>
 // clang-format on
 #include <span>
-
-#include <module/sys>
 
 namespace atmc
 {
@@ -47,9 +46,9 @@ namespace atmc
         sys::task<sys::result<u16, HardwareStatus>> readUInt16LSBFirst(u16 memAddr)
         {
             byte data[2];
-            HardwareStatus res = co_await this->readMemory(memAddr, std::span(data, 2));
+            HardwareStatus res = co_await this->readMemory(memAddr, std::span(data));
             _coretif(res, res != HardwareStatus::Ok);
-            co_return (u16(data[1]) << 8_u16) | u16(data[0]);
+            co_return (u16(data[1]) << 8_u16) | u16(data[0]); // NOLINT(readability-magic-numbers)
         }
         /// @brief Read a 16-bit signed integer from a register.
         /// @param memAddr Register address.
@@ -57,7 +56,7 @@ namespace atmc
         sys::task<sys::result<i16, HardwareStatus>> readInt16LSBFirst(u16 memAddr)
         {
             byte data[2];
-            HardwareStatus res = co_await this->readMemory(memAddr, std::span(data, 2));
+            HardwareStatus res = co_await this->readMemory(memAddr, std::span(data));
             _coretif(res, res != HardwareStatus::Ok);
             co_return sys::s16fb2(u8(data[1]), u8(data[0]));
         }
@@ -72,7 +71,7 @@ namespace atmc
         sys::task<sys::result<T, HardwareStatus>> readMemoryAs(u16 memAddr, u16 dataSize = sizeof(T))
         {
             T ret;
-            HardwareStatus res = co_await this->readMemory(memAddr, std::span(reinterpret_cast<byte*>(&ret), +dataSize));
+            HardwareStatus res = co_await this->readMemory(memAddr, std::span(reinterpret_cast<byte*>(&ret), *dataSize));
             _coretif(res, res != HardwareStatus::Ok);
             co_return ret;
         }
@@ -86,11 +85,11 @@ namespace atmc
         requires (std::is_default_constructible_v<DataType>)
         sys::task<HardwareStatus> writeMemoryChecked(u16 memAddr, DataType data, u16 dataSize = sizeof(DataType))
         {
-            HardwareStatus res = co_await this->writeMemory(memAddr, std::span(reinterpret_cast<byte*>(&data), +dataSize));
+            HardwareStatus res = co_await this->writeMemory(memAddr, std::span(reinterpret_cast<byte*>(&data), *dataSize));
             _coretif(res, res != HardwareStatus::Ok);
 
             DataType checkData;
-            res = co_await this->readMemory(memAddr, std::span(reinterpret_cast<byte*>(&checkData), +dataSize));
+            res = co_await this->readMemory(memAddr, std::span(reinterpret_cast<byte*>(&checkData), *dataSize));
             _coretif(res, res != HardwareStatus::Ok);
             _coretif(HardwareStatus::Error, data != checkData);
 
