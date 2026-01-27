@@ -1,18 +1,28 @@
 #pragma once
 
+#include <atomic>
 #include <cassert>
-#include <numeric>
-#include <runtime_headers.h>
+#include <entry.h>
+// clang-format off
+#include <module/sys>
+#include <module/sys.Containers>
+#include <module/sys.Threading>
+// clang-format on
+#include <runtime_headers.h> // NOLINT(misc-include-cleaner)
 #include <span>
 
 #include <Config.h>
-#include <InplaceAtomicSet.h>
-#include <Result.h>
 #include <SerialInterfaceDevice.h>
-#include <SpinLock.h>
+#include <Target.h>
 
 namespace atmc
 {
+#if _libatmc_target_stm32
+    using I2CNativeHandle = I2C_HandleTypeDef;
+#else
+    using I2CNativeHandle = byte;
+#endif
+
     class I2CDevice;
 
     /// @brief I2C manager.
@@ -20,9 +30,9 @@ namespace atmc
     class I2CManager final
     {
     public:
-        static sys::InplaceAtomicSet<I2C_HandleTypeDef*, atmc::Config::I2CBusCount> txDone;
-        static sys::InplaceAtomicSet<I2C_HandleTypeDef*, atmc::Config::I2CBusCount> rxDone;
-        static_assert(std::atomic<I2C_HandleTypeDef*>::is_always_lock_free, "Atomic I2C handle must be lock-free.");
+        static sys::inplace_atomic_set<I2CNativeHandle*, atmc::Config::I2CBusCount> txDone;
+        static sys::inplace_atomic_set<I2CNativeHandle*, atmc::Config::I2CBusCount> rxDone;
+        static_assert(std::atomic<I2CNativeHandle*>::is_always_lock_free, "Atomic I2C handle must be lock-free.");
 
         I2CManager() = delete;
 
@@ -33,7 +43,7 @@ namespace atmc
     /// @note Pass `byref`.
     class I2CDevice final : public SerialInterfaceDevice
     {
-        I2C_HandleTypeDef* internalHandle;
+        I2CNativeHandle* internalHandle;
         u16 devAddr;
         u16 memAddrSize;
     public:
@@ -51,17 +61,26 @@ namespace atmc
         /// ...
         /// (&*hi2c)->~decltype(*&*hi2c)();
         /// ```
-        inline I2CDevice(sys::fenced_pointer<I2C_HandleTypeDef> hi2c, u16 devAddr, u16 memAddrSize) :
-            internalHandle(&*hi2c /* Contract implied: `hi2c != nullptr`. */), devAddr(devAddr), memAddrSize(memAddrSize)
-        { }
+        I2CDevice(I2CNativeHandle& hi2c, u16 devAddr, u16 memAddrSize) : internalHandle(&hi2c), devAddr(devAddr), memAddrSize(memAddrSize) { }
 
+#if _libatmc_target_stm32
+        HardwareStatus waitReadySync(i32 trials, i32 timeout = i32(HAL_MAX_DELAY)) override // NOLINT(google-default-arguments)
+#else
         /// @brief Wait for the device to be ready synchronously.
         /// @param trials Number of trials.
         /// @param timeout Timeout.
         /// @return Whether the operation was successful.
-        inline HardwareStatus waitReadySync(i32 trials, i32 timeout = HAL_MAX_DELAY) override
+        HardwareStatus waitReadySync(i32 trials, i32 timeout = i32::highest()) override // NOLINT(google-default-arguments)
+#endif
         {
-            return HardwareStatus(HAL_I2C_IsDeviceReady(this->internalHandle, +(this->devAddr << 1u), _asi(uint32_t, +trials), _asi(uint32_t, +timeout)));
+#if _libatmc_target_stm32
+            return HardwareStatus(HAL_I2C_IsDeviceReady(this->internalHandle, *(this->devAddr << 1_u16), sys::numeric_cast<uint32_t>(*trials, unsafe()),
+                                                        sys::numeric_cast<uint32_t>(*timeout, unsafe())));
+#else
+            (void)trials;
+            (void)timeout;
+            return HardwareStatus::Ok;
+#endif
         }
 
         /// @brief Read memory asynchronously.
@@ -78,13 +97,20 @@ namespace atmc
         /// ```
         sys::task<HardwareStatus> readMemory(u16 memAddr, std::span<byte> data) override
         {
-            HardwareStatus res = HardwareStatus(
-                HAL_I2C_Mem_Read_IT(this->internalHandle, +(this->devAddr << 1u), +memAddr, +this->memAddrSize, data.data(), std::saturate_cast<uint16_t>(data.size_bytes())));
-            _fence_value_co_return(res, res != HardwareStatus::Ok);
+#if _libatmc_target_stm32
+            HardwareStatus res = HardwareStatus(HAL_I2C_Mem_Read_IT(this->internalHandle, *(this->devAddr << 1_u16), *memAddr, *this->memAddrSize, data.data(),
+                                                                    sys::numeric_cast<uint16_t>(data.size_bytes(), unsafe())));
+            _coretif(res, res != HardwareStatus::Ok);
 
-            while (!I2CManager::rxDone.exchange(this->internalHandle, nullptr)) co_await sys::task<>::yield();
+            while (!I2CManager::rxDone.exchange(this->internalHandle, nullptr))
+                co_await sys::task<>::yield();
 
             co_return HardwareStatus::Ok;
+#else
+            (void)memAddr;
+            (void)data;
+            co_return HardwareStatus::Ok;
+#endif
         }
         /// @brief Write memory asynchronously.
         /// @param memAddr Memory address.
@@ -99,13 +125,20 @@ namespace atmc
         /// ```
         sys::task<HardwareStatus> writeMemory(u16 memAddr, std::span<byte> data) override
         {
-            HardwareStatus res = HardwareStatus(
-                HAL_I2C_Mem_Write_IT(this->internalHandle, +(this->devAddr << 1u), +memAddr, +this->memAddrSize, data.data(), std::saturate_cast<uint16_t>(data.size_bytes())));
-            _fence_value_co_return(res, res != HardwareStatus::Ok);
+#if _libatmc_target_stm32
+            HardwareStatus res = HardwareStatus(HAL_I2C_Mem_Write_IT(this->internalHandle, *(this->devAddr << 1_u16), *memAddr, *this->memAddrSize, data.data(),
+                                                                     sys::numeric_cast<uint16_t>(data.size_bytes(), unsafe())));
+            _coretif(res, res != HardwareStatus::Ok);
 
-            while (!I2CManager::txDone.exchange(this->internalHandle, nullptr)) co_await sys::task<>::yield();
+            while (!I2CManager::txDone.exchange(this->internalHandle, nullptr))
+                co_await sys::task<>::yield();
 
             co_return HardwareStatus::Ok;
+#else
+            (void)memAddr;
+            (void)data;
+            co_return HardwareStatus::Ok;
+#endif
         }
 
         friend class atmc::I2CManager;

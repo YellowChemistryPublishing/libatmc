@@ -4,18 +4,17 @@
 #include <module/core>
 #include <module/sys>
 
-using namespace sys;
 using namespace atmc;
 
 struct ExampleConfig final
 {
     ExampleConfig() = delete;
 
-    constexpr static AnalogPin potPin = AnalogPin(0, 0);
-    constexpr static PWMPin ledPin = PWMPin(0, 0);
+    static constexpr AnalogPin potPin = AnalogPin(0, 0);
+    static constexpr PWMPin ledPin = PWMPin(0, 0);
 };
 
-async entryPoint()
+sys::async entryPoint()
 {
     while (true)
     {
@@ -27,11 +26,8 @@ async entryPoint()
 
         GPIOManager::pwmWrite(ExampleConfig::ledPin, dc);
 
-        co_await task<>::delay(50);
+        co_await sys::task<>::delay(50_i32);
     }
 }
 
-void init()
-{
-    entryPoint();
-}
+void init() { entryPoint(); }

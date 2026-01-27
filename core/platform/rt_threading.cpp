@@ -25,14 +25,8 @@ namespace atmc
             size_t size;
             bool isFree = false;
 
-            inline unsigned char* data() noexcept
-            {
-                return reinterpret_cast<unsigned char*>(this) + sizeof(ChunkHeader);
-            }
-            inline void* next() noexcept
-            {
-                return reinterpret_cast<unsigned char*>(this) + sizeof(ChunkHeader) + this->size;
-            }
+            inline unsigned char* data() noexcept { return reinterpret_cast<unsigned char*>(this) + sizeof(ChunkHeader); }
+            inline void* next() noexcept { return reinterpret_cast<unsigned char*>(this) + sizeof(ChunkHeader) + this->size; }
         };
 
         /* Lazy.          */
@@ -69,7 +63,8 @@ namespace atmc
             ChunkHeader* header = _asr(ChunkHeader*, ptr) - 1;
             if (TaskAllocator::stackTop == header)
             {
-                do TaskAllocator::stackTop = TaskAllocator::stackTop->prevChunk;
+                do
+                    TaskAllocator::stackTop = TaskAllocator::stackTop->prevChunk;
                 while (TaskAllocator::stackTop && TaskAllocator::stackTop->isFree);
             }
             else
@@ -81,22 +76,15 @@ namespace atmc
     TaskAllocator::ChunkHeader* TaskAllocator::stackTop;
 } // namespace atmc
 
-using namespace sys;
 using namespace atmc;
 
-void* ::sys::platform::_task_operator_new(size_t sz)
-{
-    return TaskAllocator::alloc(sz);
-}
-void ::sys::platform::_task_operator_delete(void* ptr)
-{
-    TaskAllocator::free(ptr);
-}
-void ::sys::platform::_launch_async(void* addr)
+void* ::sys::platform::task_operator_new(size_t sz) { return TaskAllocator::alloc(sz); }
+void ::sys::platform::task_operator_delete(void* ptr) { TaskAllocator::free(ptr); }
+void ::sys::platform::launch_async(void* addr)
 {
     xTaskCreate([](void* pvParams)
     {
-        auto handle = std::coroutine_handle<async_promise>::from_address(pvParams);
+        auto handle = std::coroutine_handle<internal::async_promise>::from_address(pvParams);
         handle.resume();
         vTaskDelete(nullptr);
     }, "Async", atmc::Config::AsyncThreadStackSizeWords, addr, atmc::Config::AsyncThreadPriority, nullptr);

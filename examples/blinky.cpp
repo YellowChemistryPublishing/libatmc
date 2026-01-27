@@ -5,17 +5,20 @@
 #include <module/sys>
 
 using namespace atmc;
-using namespace sys;
 
 struct ExampleConfig final
 {
     ExampleConfig() = delete;
 
-    constexpr static GPIOPin BlinkyPin = GPIOPin::PC6;
-    constexpr static int BlinkyAlternateDuration = 1000;
+#if _libatmc_target_stm32
+    static constexpr GPIOPin BlinkyPin = GPIOPin::PC6;
+#else
+    static constexpr GPIOPin BlinkyPin = GPIOPin::PZ9;
+#endif
+    static constexpr int BlinkyAlternateDuration = 1000;
 };
 
-async entryPoint()
+sys::async entryPoint()
 {
     GPIOPin::State pinState = GPIOPin::High;
     while (true)
@@ -27,11 +30,8 @@ async entryPoint()
         else
             pinState = GPIOPin::High;
 
-        co_await task<>::delay(ExampleConfig::BlinkyAlternateDuration);
+        co_await sys::task<>::delay(i32(ExampleConfig::BlinkyAlternateDuration));
     }
 }
 
-void init()
-{
-    entryPoint();
-}
+void init() { entryPoint(); }
