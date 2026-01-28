@@ -1,3 +1,5 @@
+# Sync with `libcxxext/.clang-tidy`.
+
 Checks: >
     -*,
 

@@ -3,7 +3,6 @@
 #include <atomic>
 #include <bit>
 #include <board.h> // NOLINT(misc-include-cleaner)
-#include <cstddef>
 #include <cstdint>
 #include <entry.h>
 // clang-format off

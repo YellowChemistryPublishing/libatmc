@@ -1,0 +1,42 @@
+{
+    "checks": [
+        {
+            "name": "check:cppconf",
+            "script": "libcxxext/workflows/cppconf.py",
+            "with": ["-m=${target_arch}", "-p=${run_on}", "-cl=${compiler_name}", "-gen=${gen}", "-d=.", "-b=${target_arch}-${run_on}-${compiler_name}-build"]
+        },
+        {
+            "name": "check:cppbuild",
+            "script": "libcxxext/workflows/cppbuild.py",
+            "with": ["-m=${target_arch}", "-p=${run_on}", "-cl=${compiler_name}", "-gen=${gen}", "-d=.", "-b=${target_arch}-${run_on}-${compiler_name}-build"]
+        },
+        {
+            "name": "check:cpplint",
+            "script": "libcxxext/workflows/cpplint.py",
+            "with": ["-p=${run_on}", "-cl=${compiler_name}", "-d=.", "-b=${target_arch}-${run_on}-${compiler_name}-build"]
+        },
+        {
+            "name": "check:cppfmt",
+            "script": "libcxxext/workflows/cppfmt.py",
+            "with": ["-p=${run_on}", "-f=^(?!(.*build/|libcxxext/|freertos/|fatfs/|stm32/)).*\\.(h|cpp)$"]
+        }
+    ],
+    "on_push": [
+        {
+            "checkset": "x86_64-linux-gcc",
+            "with": { "run_on": "linux", "target_arch": "x86_64", "compiler_name": "gcc", "gen": "Ninja" },
+            "chains": { "check:cppconf": [], "check:cppbuild": ["check:cppconf"], "check:cpplint": ["check:cppconf"] }
+        },
+        {
+            "checkset": "x86_64-msys64-gcc",
+            "with": { "run_on": "msys64", "target_arch": "x86_64", "compiler_name": "gcc", "gen": "Ninja" },
+            "chains": { "check:cppconf": [], "check:cppbuild": ["check:cppconf"], "check:cpplint": ["check:cppconf"] }
+        },
+        {
+            "checkset": "generic-tools",
+            "with": { "run_on": "linux", "target_arch": "x86_64", "compiler_name": "clang", "gen": "Ninja" },
+            "chains": { "check:cppfmt": [] }
+        }
+    ],
+    "on_commit": []
+}
