@@ -3,7 +3,15 @@
         {
             "name": "check:cppconf",
             "script": "libcxxext/workflows/cppconf.py",
-            "with": ["-m=${target_arch}", "-p=${run_on}", "-cl=${compiler_name}", "-gen=${gen}", "-d=.", "-b=${target_arch}-${run_on}-${compiler_name}-build"]
+            "with": [
+                "-m=${target_arch}",
+                "-p=${run_on}",
+                "-cl=${compiler_name}",
+                "-gen=${gen}",
+                "-d=.",
+                "-b=${target_arch}-${run_on}-${compiler_name}-build",
+                "--extra-args=-DBOARD_NAME=Hosted"
+            ]
         },
         {
             "name": "check:cppbuild",

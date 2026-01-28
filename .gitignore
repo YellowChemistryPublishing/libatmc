@@ -14,6 +14,7 @@ _deps
 /.settings/
 /.vscode/
 /build/
+/*-build/
 
 /stm32/Core
 !/stm32/Core/Src/main.c

@@ -9,7 +9,7 @@ endif()
 # Config
 include(CMakeDependentOption)
 if(NOT BOARD_NAME)
-    set(BOARD_NAME "Hosted" CACHE STRING "Board name." FORCE) # i.e. STM32H753ZI
+    set(BOARD_NAME "Hosted" CACHE STRING "Board name.") # i.e. STM32H753ZI
 endif()
 cmake_dependent_option(LIBATMC_EXAMPLES "Build examples." ON "LIBATMC_DEVELOPMENT_MODE" OFF)
 
