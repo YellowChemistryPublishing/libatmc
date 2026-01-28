@@ -9,7 +9,7 @@ endif()
 # Config
 include(CMakeDependentOption)
 if(NOT BOARD_NAME)
-    set(BOARD_NAME "Hosted") # i.e. STM32H753ZI
+    set(BOARD_NAME "Hosted" CACHE STRING "Board name.") # i.e. STM32H753ZI
 endif()
 cmake_dependent_option(LIBATMC_EXAMPLES "Build examples." ON "LIBATMC_DEVELOPMENT_MODE" OFF)
 
@@ -154,7 +154,7 @@ if(BOARD_NAME MATCHES "STM32")
 endif()
 
 add_subdirectory(libcxxext)
-target_include_directories(sys.Threading PUBLIC "/")
+target_include_directories(sys.Threading PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(sys.Threading PUBLIC rt)
 
 # Core Library
@@ -169,7 +169,7 @@ file(GLOB_RECURSE CORE_SRCS CONFIGURE_DEPENDS
 list(FILTER CORE_SRCS EXCLUDE REGEX "rt_threading\..*$")
 
 add_library(atmc.Core STATIC ${CORE_SRCS})
-target_include_directories(atmc.Core PUBLIC "/" "core")
+target_include_directories(atmc.Core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}" "core")
 target_link_libraries(atmc.Core PUBLIC rt sys sys.Containers sys.Threading sys.BuildSupport.CompilerOptions sys.BuildSupport.WarningsAsErrors)
 
 if(BOARD_NAME STREQUAL "Hosted")
@@ -201,7 +201,7 @@ if(LIBATMC_EXAMPLES)
         set(EXAMPLE_NAME "example_${EXAMPLE_NAME}")
 
         add_executable(${EXAMPLE_NAME} ${EXAMPLE_FILE})
-        target_link_libraries(${EXAMPLE_NAME} PUBLIC atmc.Drivers sys.BuildSupport.CompilerOptions sys.BuildSupport.WarningsAsErrors)
+        target_link_libraries(${EXAMPLE_NAME} PUBLIC atmc.Core atmc.Drivers sys.BuildSupport.CompilerOptions sys.BuildSupport.WarningsAsErrors)
 
         target_run_stm32_programmer(${EXAMPLE_NAME})
     endforeach()
