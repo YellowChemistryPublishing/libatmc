@@ -1,10 +1,10 @@
 #pragma once
 
-#include <cstddef>
-#include <initializer_list>
+/// @file
 
 namespace atmc
 {
+    /// @note Static class.
     struct Config final
     {
         Config() = delete;

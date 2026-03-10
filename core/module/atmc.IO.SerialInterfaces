@@ -1,0 +1,5 @@
+#pragma once
+
+#include <I2CDevice.h>             // IWYU pragma: export
+#include <SPIDevice.h>             // IWYU pragma: export
+#include <SerialInterfaceDevice.h> // IWYU pragma: export

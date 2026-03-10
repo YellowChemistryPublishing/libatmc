@@ -10,7 +10,18 @@ BasedOnStyle: Microsoft
 #     Prefix: Lower
 #     Suffix: Lower
 IncludeBlocks: Preserve
-SortIncludes: CaseInsensitive
+SortIncludes: CaseSensitive
+IncludeCategories:
+    - Regex: "^<(module/[^.]+)>"
+      Priority: 10
+    - Regex: '^<(module/[^.]+\.[^.]+)>'
+      Priority: 11
+    - Regex: '^<(module/[^.]+\.[^.]+\.[^.]+)>'
+      Priority: 12
+    - Regex: "^<(module/.*)>"
+      Priority: 13
+    - Regex: ".*"
+      Priority: 100
 
 # Braces
 BreakBeforeBraces: Custom

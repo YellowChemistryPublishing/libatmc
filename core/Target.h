@@ -1,8 +1,8 @@
 #pragma once
 
-/// @defgroup HardwareTargets Target Hardware Detection Constants
+/// @file
 
-/// @addtogroup HardwareTargets
+/// @defgroup hardware_targets Target Hardware Detection Constants
 /// @{
 
 #define _libatmc_target_stm32 0

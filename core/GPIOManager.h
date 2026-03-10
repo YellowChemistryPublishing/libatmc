@@ -1,84 +1,84 @@
 #pragma once
 
+/// @file
+
 #include <atomic>
 #include <bit>
 #include <board.h> // NOLINT(misc-include-cleaner)
-#include <cstddef>
 #include <cstdint>
 #include <entry.h>
-// clang-format off
+#include <runtime_headers.h> // NOLINT(misc-include-cleaner)
+
 #include <module/sys>
 #include <module/sys.Threading>
-// clang-format on
-#include <runtime_headers.h> // NOLINT(misc-include-cleaner)
 
 #include <Config.h>
 #include <Target.h>
 
 #if _libatmc_target_stm32
-#define _gpio_declare_pin(port, pin) static const GPIOPin P##port##pin
-#define _gpio_declare_port_pins(port) \
-    _gpio_declare_pin(port, 0);       \
-    _gpio_declare_pin(port, 1);       \
-    _gpio_declare_pin(port, 2);       \
-    _gpio_declare_pin(port, 3);       \
-    _gpio_declare_pin(port, 4);       \
-    _gpio_declare_pin(port, 5);       \
-    _gpio_declare_pin(port, 6);       \
-    _gpio_declare_pin(port, 7);       \
-    _gpio_declare_pin(port, 8);       \
-    _gpio_declare_pin(port, 9);       \
-    _gpio_declare_pin(port, 10);      \
-    _gpio_declare_pin(port, 11);      \
-    _gpio_declare_pin(port, 12);      \
-    _gpio_declare_pin(port, 13);      \
-    _gpio_declare_pin(port, 14);      \
-    _gpio_declare_pin(port, 15)
-#define _gpio_declare_ports()   \
-    _gpio_declare_port_pins(A); \
-    _gpio_declare_port_pins(B); \
-    _gpio_declare_port_pins(C); \
-    _gpio_declare_port_pins(D); \
-    _gpio_declare_port_pins(E); \
-    _gpio_declare_port_pins(F); \
-    _gpio_declare_port_pins(G); \
-    _gpio_declare_port_pins(H); \
-    _gpio_declare_port_pins(I); \
-    _gpio_declare_port_pins(J); \
-    _gpio_declare_port_pins(K)
-#define _gpio_define_pin(port, pin) constexpr GPIOPin GPIOPin::P##port##pin(GPIO##port##_BASE, u16(GPIO_PIN_##pin))
-#define _gpio_define_port_pins(port) \
-    _gpio_define_pin(port, 0);       \
-    _gpio_define_pin(port, 1);       \
-    _gpio_define_pin(port, 2);       \
-    _gpio_define_pin(port, 3);       \
-    _gpio_define_pin(port, 4);       \
-    _gpio_define_pin(port, 5);       \
-    _gpio_define_pin(port, 6);       \
-    _gpio_define_pin(port, 7);       \
-    _gpio_define_pin(port, 8);       \
-    _gpio_define_pin(port, 9);       \
-    _gpio_define_pin(port, 10);      \
-    _gpio_define_pin(port, 11);      \
-    _gpio_define_pin(port, 12);      \
-    _gpio_define_pin(port, 13);      \
-    _gpio_define_pin(port, 14);      \
-    _gpio_define_pin(port, 15)
-#define _gpio_define_ports()   \
-    _gpio_define_port_pins(A); \
-    _gpio_define_port_pins(B); \
-    _gpio_define_port_pins(C); \
-    _gpio_define_port_pins(D); \
-    _gpio_define_port_pins(E); \
-    _gpio_define_port_pins(F); \
-    _gpio_define_port_pins(G); \
-    _gpio_define_port_pins(H); \
-    _gpio_define_port_pins(I); \
-    _gpio_define_port_pins(J); \
-    _gpio_define_port_pins(K)
+#define _internal_gpio_declare_pin(port, pin) static const GPIOPin P##port##pin
+#define _internal_gpio_declare_port_pins(port) \
+    _internal_gpio_declare_pin(port, 0);       \
+    _internal_gpio_declare_pin(port, 1);       \
+    _internal_gpio_declare_pin(port, 2);       \
+    _internal_gpio_declare_pin(port, 3);       \
+    _internal_gpio_declare_pin(port, 4);       \
+    _internal_gpio_declare_pin(port, 5);       \
+    _internal_gpio_declare_pin(port, 6);       \
+    _internal_gpio_declare_pin(port, 7);       \
+    _internal_gpio_declare_pin(port, 8);       \
+    _internal_gpio_declare_pin(port, 9);       \
+    _internal_gpio_declare_pin(port, 10);      \
+    _internal_gpio_declare_pin(port, 11);      \
+    _internal_gpio_declare_pin(port, 12);      \
+    _internal_gpio_declare_pin(port, 13);      \
+    _internal_gpio_declare_pin(port, 14);      \
+    _internal_gpio_declare_pin(port, 15)
+#define _internal_gpio_declare_ports()   \
+    _internal_gpio_declare_port_pins(A); \
+    _internal_gpio_declare_port_pins(B); \
+    _internal_gpio_declare_port_pins(C); \
+    _internal_gpio_declare_port_pins(D); \
+    _internal_gpio_declare_port_pins(E); \
+    _internal_gpio_declare_port_pins(F); \
+    _internal_gpio_declare_port_pins(G); \
+    _internal_gpio_declare_port_pins(H); \
+    _internal_gpio_declare_port_pins(I); \
+    _internal_gpio_declare_port_pins(J); \
+    _internal_gpio_declare_port_pins(K)
+#define _internal_gpio_define_pin(port, pin) constexpr GPIOPin GPIOPin::P##port##pin(GPIO##port##_BASE, u16(GPIO_PIN_##pin))
+#define _internal_gpio_define_port_pins(port) \
+    _internal_gpio_define_pin(port, 0);       \
+    _internal_gpio_define_pin(port, 1);       \
+    _internal_gpio_define_pin(port, 2);       \
+    _internal_gpio_define_pin(port, 3);       \
+    _internal_gpio_define_pin(port, 4);       \
+    _internal_gpio_define_pin(port, 5);       \
+    _internal_gpio_define_pin(port, 6);       \
+    _internal_gpio_define_pin(port, 7);       \
+    _internal_gpio_define_pin(port, 8);       \
+    _internal_gpio_define_pin(port, 9);       \
+    _internal_gpio_define_pin(port, 10);      \
+    _internal_gpio_define_pin(port, 11);      \
+    _internal_gpio_define_pin(port, 12);      \
+    _internal_gpio_define_pin(port, 13);      \
+    _internal_gpio_define_pin(port, 14);      \
+    _internal_gpio_define_pin(port, 15)
+#define _internal_gpio_define_ports()   \
+    _internal_gpio_define_port_pins(A); \
+    _internal_gpio_define_port_pins(B); \
+    _internal_gpio_define_port_pins(C); \
+    _internal_gpio_define_port_pins(D); \
+    _internal_gpio_define_port_pins(E); \
+    _internal_gpio_define_port_pins(F); \
+    _internal_gpio_define_port_pins(G); \
+    _internal_gpio_define_port_pins(H); \
+    _internal_gpio_define_port_pins(I); \
+    _internal_gpio_define_port_pins(J); \
+    _internal_gpio_define_port_pins(K)
 #else
-#define _gpio_declare_ports() static const GPIOPin PZ9;
-#define _gpio_define_ports() constexpr GPIOPin GPIOPin::PZ9(0, 0);
+#define _internal_gpio_declare_ports() static const GPIOPin PZ9;
+#define _internal_gpio_define_ports() constexpr GPIOPin GPIOPin::PZ9(0, 0);
 #endif
 
 namespace atmc
@@ -99,7 +99,7 @@ namespace atmc
     /// @note Pass `byval`.
     struct GPIOPin
     {
-        _gpio_declare_ports(); // NOLINT(bugprone-dynamic-static-initializers)
+        _internal_gpio_declare_ports(); // NOLINT(bugprone-dynamic-static-initializers)
 
         /// @brief The state of a GPIO pin.
         using State = int;
@@ -125,7 +125,7 @@ namespace atmc
         u16 pin;
     };
 
-    _gpio_define_ports();
+    _internal_gpio_define_ports();
 
     struct AnalogPin final
     {
@@ -272,12 +272,12 @@ namespace atmc
             // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
             if (!GPIOManager::adcFlags[pin.adcIndex].test_and_set())
             {
-                _push_nowarn_gcc(_clwarn_gcc_cast_align);
-                _push_nowarn_clang(_clwarn_clang_cast_align);
+                _nowarn_begin_one_gcc(_clwarn_gcc_cast_align);
+                _nowarn_begin_one_clang(_clwarn_clang_cast_align);
                 // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index, cppcoreguidelines-pro-type-const-cast)
                 HardwareStatus res = _as(HardwareStatus, HAL_ADC_Start_DMA(hadc, _asr(uint32_t*, _asc(uint16_t*, GPIOManager::adcRaw[pin.adcIndex])), hadc->Init.NbrOfConversion));
-                _pop_nowarn_clang();
-                _pop_nowarn_gcc();
+                _nowarn_end_clang();
+                _nowarn_end_gcc();
                 if (res != HardwareStatus::Ok)
                 {
                     GPIOManager::adcFlags[pin.adcIndex].clear(); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)

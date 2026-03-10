@@ -1,5 +1,17 @@
 # Sync with `libcxxext/.clangd`.
 
 CompileFlags:
-    Add: [-std=c++26]
-    Remove: [-fconcepts-diagnostics-depth=4, -mcpu=cortex-m4, -mfpu=fpv4-sp-d16, -mfloat-abi=hard]
+    Add:
+        - -std=c++26
+        - -DSTM32=1
+        - -I..
+        - -I../build
+        - -I../libcxxext/sys
+        - -I../libcxxext/sys.Containers
+        - -I../libcxxext/sys.Threading
+        - -I../core
+    Remove:
+        - -fconcepts-diagnostics-depth=4
+        - -mcpu=cortex-m4
+        - -mfpu=fpv4-sp-d16
+        - -mfloat-abi=hard

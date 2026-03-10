@@ -1,12 +1,13 @@
 #pragma once
 
+/// @file
+
 #include <cstddef>
 #include <entry.h>
-// clang-format off
+#include <span>
+
 #include <module/sys>
 #include <module/sys.Threading>
-// clang-format on
-#include <span>
 
 namespace atmc
 {
@@ -43,20 +44,20 @@ namespace atmc
         /// @brief Read a 16-bit unsigned integer from a register.
         /// @param memAddr Register address.
         /// @return The value read.
-        sys::task<sys::result<u16, HardwareStatus>> readUInt16LSBFirst(u16 memAddr)
+        /* NOLINT(readability-convert-member-functions-to-static) */ sys::task<sys::result<u16, HardwareStatus>> readUInt16LSBFirst(u16 memAddr)
         {
             byte data[2];
-            HardwareStatus res = co_await this->readMemory(memAddr, std::span(data));
+            const HardwareStatus res /* NOLINT(cppcoreguidelines-init-variables) */ = co_await this->readMemory(memAddr, std::span(data));
             _coretif(res, res != HardwareStatus::Ok);
             co_return (u16(data[1]) << 8_u16) | u16(data[0]); // NOLINT(readability-magic-numbers)
         }
         /// @brief Read a 16-bit signed integer from a register.
         /// @param memAddr Register address.
         /// @return The value read.
-        sys::task<sys::result<i16, HardwareStatus>> readInt16LSBFirst(u16 memAddr)
+        /* NOLINT(readability-convert-member-functions-to-static) */ sys::task<sys::result<i16, HardwareStatus>> readInt16LSBFirst(u16 memAddr)
         {
             byte data[2];
-            HardwareStatus res = co_await this->readMemory(memAddr, std::span(data));
+            const HardwareStatus res /* NOLINT(cppcoreguidelines-init-variables) */ = co_await this->readMemory(memAddr, std::span(data));
             _coretif(res, res != HardwareStatus::Ok);
             co_return sys::s16fb2(u8(data[1]), u8(data[0]));
         }

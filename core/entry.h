@@ -1,5 +1,7 @@
 #pragma once
 
+/// @file
+
 #include <runtime_headers.h> // NOLINT(misc-include-cleaner)
 
 #ifdef __cplusplus

@@ -27,5 +27,5 @@ issue!
 | License                  | [LICENSE](LICENSE)                 |
 | Style Guide              | [codestyle.md](codestyle.md)       |
 | C/C++ Formatting Rules   | [clang-format](.clang-format)      |
-| Global Library Config    | [Config.h](Config.h)               |
+| Global Library Config    | [Config.h](core/Config.h)          |
 | stm32 Usage Instructions | [readme/stm32.md](readme/stm32.md) |

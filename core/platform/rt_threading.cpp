@@ -2,15 +2,14 @@
 
 #include <coroutine>
 
-// clang-format off
 #include <FreeRTOS.h>
-#include <../../freertos/include/task.h>
-// clang-format on
 
+#include <../../freertos/include/task.h>
 #include <Config.h>
 #include <LanguageSupport.h>
 #include <TaskEx.h>
 #include <Thread.h>
+
 
 namespace atmc
 {

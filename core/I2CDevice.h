@@ -1,17 +1,16 @@
 #pragma once
 
-#include <atomic>
+#include <atomic> // NOLINT(misc-include-cleaner)
 #include <cassert>
 #include <entry.h>
-// clang-format off
-#include <module/sys>
-#include <module/sys.Containers>
-#include <module/sys.Threading>
-// clang-format on
 #include <runtime_headers.h> // NOLINT(misc-include-cleaner)
-#include <span>
+#include <span>              // NOLINT(misc-include-cleaner)
 
-#include <Config.h>
+#include <module/sys>
+#include <module/sys.Containers> // NOLINT(misc-include-cleaner)
+#include <module/sys.Threading>
+
+#include <Config.h> // NOLINT(misc-include-cleaner)
 #include <SerialInterfaceDevice.h>
 #include <Target.h>
 
@@ -53,15 +52,15 @@ namespace atmc
         /// @param memAddrSize Memory address size.
         /// @attention Lifetime assumptions!
         /// ```cpp
-        /// (&*hi2c)->decltype(*&*hi2c)(...);
+        /// I2CNativeHandle* hi2c = ...;
         /// ...
-        /// this->I2CDevice(...);
+        /// this->I2CDevice(*hi2c, ...);
         /// ...
         /// this->~I2CDevice();
         /// ...
-        /// (&*hi2c)->~decltype(*&*hi2c)();
+        /// hi2c->~decltype(*hi2c)();
         /// ```
-        I2CDevice(I2CNativeHandle& hi2c, u16 devAddr, u16 memAddrSize) : internalHandle(&hi2c), devAddr(devAddr), memAddrSize(memAddrSize) { }
+        I2CDevice(I2CNativeHandle& hi2c, u16 devAddr, u16 memAddrSize) : /* NOLINT(hicpp-member-init) */ internalHandle(&hi2c), devAddr(devAddr), memAddrSize(memAddrSize) { }
 
 #if _libatmc_target_stm32
         HardwareStatus waitReadySync(i32 trials, i32 timeout = i32(HAL_MAX_DELAY)) override // NOLINT(google-default-arguments)
@@ -74,8 +73,8 @@ namespace atmc
 #endif
         {
 #if _libatmc_target_stm32
-            return HardwareStatus(HAL_I2C_IsDeviceReady(this->internalHandle, *(this->devAddr << 1_u16), sys::numeric_cast<uint32_t>(*trials, unsafe()),
-                                                        sys::numeric_cast<uint32_t>(*timeout, unsafe())));
+            return HardwareStatus(HAL_I2C_IsDeviceReady(this->internalHandle, *(this->devAddr << 1_u16), sys::bnumeric_cast<uint32_t>(*trials, unsafe()),
+                                                        sys::bnumeric_cast<uint32_t>(*timeout, unsafe())));
 #else
             (void)trials;
             (void)timeout;
@@ -89,17 +88,17 @@ namespace atmc
         /// @return Whether the operation was successful.
         /// @attention Lifetime assumptions!
         /// ```cpp
-        /// data->decltype(data)(...);
+        /// data.decltype(data)(...);
         /// ...
         /// ... = co_await I2CManager::readMemory(...);
         /// ...
-        /// data->~decltype(data)();
+        /// data.~decltype(data)();
         /// ```
         sys::task<HardwareStatus> readMemory(u16 memAddr, std::span<byte> data) override
         {
 #if _libatmc_target_stm32
             HardwareStatus res = HardwareStatus(HAL_I2C_Mem_Read_IT(this->internalHandle, *(this->devAddr << 1_u16), *memAddr, *this->memAddrSize, data.data(),
-                                                                    sys::numeric_cast<uint16_t>(data.size_bytes(), unsafe())));
+                                                                    sys::bnumeric_cast<uint16_t>(data.size_bytes(), unsafe())));
             _coretif(res, res != HardwareStatus::Ok);
 
             while (!I2CManager::rxDone.exchange(this->internalHandle, nullptr))
@@ -117,17 +116,17 @@ namespace atmc
         /// @param data Data to write.
         /// @return Whether the operation was successful.
         /// ```cpp
-        /// data->decltype(data)(...);
+        /// data.decltype(data)(...);
         /// ...
         /// ... = co_await I2CManager::writeMemory(...);
         /// ...
-        /// data->~decltype(data)();
+        /// data.~decltype(data)();
         /// ```
         sys::task<HardwareStatus> writeMemory(u16 memAddr, std::span<byte> data) override
         {
 #if _libatmc_target_stm32
             HardwareStatus res = HardwareStatus(HAL_I2C_Mem_Write_IT(this->internalHandle, *(this->devAddr << 1_u16), *memAddr, *this->memAddrSize, data.data(),
-                                                                     sys::numeric_cast<uint16_t>(data.size_bytes(), unsafe())));
+                                                                     sys::bnumeric_cast<uint16_t>(data.size_bytes(), unsafe())));
             _coretif(res, res != HardwareStatus::Ok);
 
             while (!I2CManager::txDone.exchange(this->internalHandle, nullptr))

@@ -1,11 +1,12 @@
 #include <cstdio>
 #include <entry.h>
 #include <exception>
-#include <module/sys>
+#include <new> // NOLINT(misc-include-cleaner)
 #include <print>
 #include <rt_threading.h>
 
-#include <LanguageSupport.h>
+#include <module/sys>
+
 #include <Target.h>
 
 // NOLINTBEGIN(misc-include-cleaner)
@@ -23,11 +24,10 @@ using namespace atmc;
 #if _libatmc_target_stm32
 void* operator new(size_t sz) // NOLINT(readability-inconsistent-declaration-parameter-name)
 {
-    void* ret = pvPortMalloc(sz);
+    void* const ret = pvPortMalloc(sz);
     if (!ret)
-        _throw(std::bad_alloc());
-    else
-        return ret;
+        throw std::bad_alloc();
+    return ret;
 }
 void operator delete(void* p) noexcept { vPortFree(p); }         // NOLINT(readability-inconsistent-declaration-parameter-name)
 void operator delete(void* p, size_t) noexcept { vPortFree(p); } // NOLINT(readability-inconsistent-declaration-parameter-name)
@@ -41,8 +41,6 @@ extern "C" _weak void init() { }
 
 void __initHandler()
 {
-    _push_nowarn_gcc(_clwarn_gcc_use_after_free);
-    _push_nowarn_clang(_clwarn_clang_use_after_free);
     try
     {
 #if _libatmc_target_hosted
@@ -58,15 +56,13 @@ void __initHandler()
     catch (const std::exception& ex)
     {
         std::println(stderr, "Exception thrown during call to `extern \"C\" void init()`: {}", ex.what());
-        _throw(sys::terminate_exception());
+        _contract_assert(false, "Exception thrown in `extern \"C\" void init()`.");
     }
     catch (...)
     {
-        std::println(stderr, "Unmanaged exception of type `{}` thrown during call to `extern \"C\" void init()`.", sys::exception_type_name(std::current_exception()).get());
-        _throw(sys::terminate_exception());
+        std::println(stderr, "Unknown exception thrown during call to `extern \"C\" void init()`.");
+        _contract_assert(false, "Exception thrown in `extern \"C\" void init()`.");
     }
-    _pop_nowarn_clang();
-    _pop_nowarn_gcc();
 }
 
 // NOLINTEND(misc-include-cleaner)

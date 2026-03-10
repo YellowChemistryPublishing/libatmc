@@ -1,8 +1,11 @@
 #pragma once
 
+/// @file
+
 #include <module/sys>
 
 #include <FreeRTOS.h>
+
 #include <runtime_headers.h>
 #include <task.h>
 
